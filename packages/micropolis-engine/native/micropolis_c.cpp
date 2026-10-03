@@ -85,4 +85,143 @@ const unsigned short *mp_map(MPEngine *e) {
     return (const unsigned short *)e->sim.getMapAddress();
 }
 
+long mp_city_pop(MPEngine *e) {
+    return e->sim.cityPop;
+}
+
+int mp_city_score(MPEngine *e) {
+    return e->sim.cityScore;
+}
+
+int mp_city_class(MPEngine *e) {
+    return e->sim.cityClass;
+}
+
+int mp_city_tax(MPEngine *e) {
+    return e->sim.cityTax;
+}
+
+void mp_set_city_tax(MPEngine *e, int tax) {
+    e->sim.setCityTax(tax);
+}
+
+void mp_get_demands(MPEngine *e, float *r, float *c, float *i) {
+    e->sim.getDemands(r, c, i);
+}
+
+float mp_road_percent(MPEngine *e) {
+    return e->sim.roadPercent;
+}
+
+float mp_police_percent(MPEngine *e) {
+    return e->sim.policePercent;
+}
+
+float mp_fire_percent(MPEngine *e) {
+    return e->sim.firePercent;
+}
+
+void mp_set_road_percent(MPEngine *e, float p) {
+    e->sim.roadPercent = p;
+    e->sim.updateFundEffects();
+}
+
+void mp_set_police_percent(MPEngine *e, float p) {
+    e->sim.policePercent = p;
+    e->sim.updateFundEffects();
+}
+
+void mp_set_fire_percent(MPEngine *e, float p) {
+    e->sim.firePercent = p;
+    e->sim.updateFundEffects();
+}
+
+void mp_set_funds(MPEngine *e, long funds) {
+    e->sim.setFunds((int)funds);
+}
+
+void mp_set_passes(MPEngine *e, int passes) {
+    e->sim.setPasses(passes);
+}
+
+void mp_set_speed(MPEngine *e, int speed) {
+    e->sim.setSpeed(speed);
+}
+
+void mp_pause(MPEngine *e) {
+    e->sim.pause();
+}
+
+void mp_resume(MPEngine *e) {
+    e->sim.resume();
+}
+
+int mp_is_paused(MPEngine *e) {
+    return e->sim.simPaused ? 1 : 0;
+}
+
+void mp_set_auto_budget(MPEngine *e, int enable) {
+    e->sim.setAutoBudget(enable != 0);
+}
+
+void mp_set_auto_bulldoze(MPEngine *e, int enable) {
+    e->sim.setAutoBulldoze(enable != 0);
+}
+
+void mp_set_enable_disasters(MPEngine *e, int enable) {
+    e->sim.setEnableDisasters(enable != 0);
+}
+
+void mp_generate_map(MPEngine *e, int seed) {
+    e->sim.generateMap(seed);
+}
+
+int mp_do_tool(MPEngine *e, int tool, int x, int y) {
+    return e->sim.doTool((EditingTool)tool, x, y);
+}
+
+int mp_save_city(MPEngine *e, const char *path) {
+    return e->sim.saveFile(path) ? 1 : 0;
+}
+
+void mp_make_disaster(MPEngine *e, int which) {
+    switch (which) {
+        case 0: e->sim.makeFire(); break;
+        case 1: e->sim.makeFlood(); break;
+        case 2: e->sim.makeEarthquake(); break;
+        case 3: e->sim.makeMonster(); break;
+        case 4: e->sim.makeTornado(); break;
+        case 5: e->sim.makeMeltdown(); break;
+    }
+}
+
+int mp_get_sprites(MPEngine *e, MPSprite *out, int maxCount) {
+    int count = 0;
+    for (SimSprite *sprite = e->sim.spriteList; sprite && count < maxCount; sprite = sprite->next) {
+        if (sprite->frame != 0) {
+            out[count].type = sprite->type;
+            out[count].frame = sprite->frame;
+            out[count].x = sprite->x;
+            out[count].y = sprite->y;
+            out[count].xHot = sprite->xHot;
+            out[count].yHot = sprite->yHot;
+            count++;
+        }
+    }
+    return count;
+}
+
+void mp_get_history(MPEngine *e, int which, short *out) {
+    short *src;
+    switch (which) {
+        case 0: src = e->sim.resHist; break;
+        case 1: src = e->sim.comHist; break;
+        case 2: src = e->sim.indHist; break;
+        default: return;
+    }
+    for (int i = 0; i < 480; i++) {
+        out[i] = src[i];
+    }
+}
+
 }
