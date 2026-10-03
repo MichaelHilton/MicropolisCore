@@ -10,5 +10,6 @@ let package = Package(
                 dependencies: [.product(name: "MicropolisEngine", package: "micropolis-engine")]),
         .executableTarget(name: "MicropolisMac", dependencies: ["MicropolisKit"], resources: [.copy("Resources")]),
         .testTarget(name: "MicropolisKitTests", dependencies: ["MicropolisKit"]),
+        .testTarget(name: "MicropolisMacTests", dependencies: ["MicropolisMac"]),
     ]
 )
