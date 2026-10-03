@@ -10,6 +10,17 @@ a commit message.
 
 ---
 
+## Setup
+
+Before building the app for the first time, run:
+```sh
+apps/micropolis-mac/scripts/sync-resources.sh
+```
+
+This copies the tile atlas, sprite sheets, city files, and sounds into the app bundle. You only need to run it once, or again if new resources are added to the repo.
+
+---
+
 ## Rules for every step
 
 1. **Do exactly one step per session.** Don't start the next step, and don't "improve" earlier steps unless the current step says to.

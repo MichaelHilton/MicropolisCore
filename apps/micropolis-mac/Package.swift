@@ -8,7 +8,7 @@ let package = Package(
     targets: [
         .target(name: "MicropolisKit",
                 dependencies: [.product(name: "MicropolisEngine", package: "micropolis-engine")]),
-        .executableTarget(name: "MicropolisMac", dependencies: ["MicropolisKit"]),
+        .executableTarget(name: "MicropolisMac", dependencies: ["MicropolisKit"], resources: [.copy("Resources")]),
         .testTarget(name: "MicropolisKitTests", dependencies: ["MicropolisKit"]),
     ]
 )
