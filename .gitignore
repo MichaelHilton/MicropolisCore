@@ -95,3 +95,8 @@ apps/screen-angel/modules/soul-angel/bridges/sims1/fixtures/*
 !apps/screen-angel/modules/soul-angel/bridges/sims1/fixtures/README.md
 # Font contact sheets and metrics dumps: regenerate with export-fonts, the pack is the asset.
 apps/screen-angel/modules/soul-angel/bridges/sims1/exports/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
