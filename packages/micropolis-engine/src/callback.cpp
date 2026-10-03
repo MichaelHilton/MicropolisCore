@@ -79,7 +79,14 @@
 
 
 #include "micropolis.h"
+#if defined(__EMSCRIPTEN__)
 #include <emscripten.h>
+#else
+// Native (non-WASM) builds: console logging via EM_ASM is a no-op.
+#define EM_ASM(...) ((void)0)
+#define EM_ASM_(...) ((void)0)
+#define EM_ASM_ARGS(...) ((void)0)
+#endif
 
 
 ConsoleCallback::~ConsoleCallback() {
