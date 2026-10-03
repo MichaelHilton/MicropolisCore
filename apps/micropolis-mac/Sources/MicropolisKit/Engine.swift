@@ -24,12 +24,126 @@ public enum HistoryKind: Int {
 
 public final class Engine {
     private let handle: OpaquePointer
+    public weak var delegate: EngineDelegate?
 
     public static let width = 120
     public static let height = 100
 
     public init() {
         handle = mp_create()!
+        setupCallbacks()
+    }
+
+    private func setupCallbacks() {
+        var cb = MPCallbacks()
+        cb.context = Unmanaged.passUnretained(self).toOpaque()
+
+        cb.didLoadCity = { ctx, filename in
+            let engine = Unmanaged<Engine>.fromOpaque(ctx!).takeUnretainedValue()
+            engine.delegate?.engineDidLoadCity(filename: String(cString: filename!))
+        }
+
+        cb.didGenerateMap = { ctx, seed in
+            let engine = Unmanaged<Engine>.fromOpaque(ctx!).takeUnretainedValue()
+            engine.delegate?.engineDidGenerateMap(seed: Int(seed))
+        }
+
+        cb.didTool = { ctx, name, x, y in
+            let engine = Unmanaged<Engine>.fromOpaque(ctx!).takeUnretainedValue()
+            engine.delegate?.engineDidTool(name: String(cString: name!), x: Int(x), y: Int(y))
+        }
+
+        cb.makeSound = { ctx, channel, sound, x, y in
+            let engine = Unmanaged<Engine>.fromOpaque(ctx!).takeUnretainedValue()
+            engine.delegate?.engineMakeSound(channel: String(cString: channel!), sound: String(cString: sound!), x: Int(x), y: Int(y))
+        }
+
+        cb.sendMessage = { ctx, messageIndex, x, y, picture, important in
+            let engine = Unmanaged<Engine>.fromOpaque(ctx!).takeUnretainedValue()
+            engine.delegate?.engineSendMessage(index: Int(messageIndex), x: Int(x), y: Int(y), picture: picture != 0, important: important != 0)
+        }
+
+        cb.autoGoto = { ctx, x, y, message in
+            let engine = Unmanaged<Engine>.fromOpaque(ctx!).takeUnretainedValue()
+            engine.delegate?.engineAutoGoto(x: Int(x), y: Int(y), message: String(cString: message!))
+        }
+
+        cb.showBudgetAndWait = { ctx in
+            let engine = Unmanaged<Engine>.fromOpaque(ctx!).takeUnretainedValue()
+            engine.delegate?.engineShowBudgetAndWait()
+        }
+
+        cb.showZoneStatus = { ctx, tileCategory, density, landValue, crime, pollution, growth, x, y in
+            let engine = Unmanaged<Engine>.fromOpaque(ctx!).takeUnretainedValue()
+            engine.delegate?.engineShowZoneStatus(category: Int(tileCategory), density: Int(density), landValue: Int(landValue), crime: Int(crime), pollution: Int(pollution), growth: Int(growth), x: Int(x), y: Int(y))
+        }
+
+        cb.updateDate = { ctx, year, month in
+            let engine = Unmanaged<Engine>.fromOpaque(ctx!).takeUnretainedValue()
+            engine.delegate?.engineUpdateDate(year: Int(year), month: Int(month))
+        }
+
+        cb.updateFunds = { ctx, funds in
+            let engine = Unmanaged<Engine>.fromOpaque(ctx!).takeUnretainedValue()
+            engine.delegate?.engineUpdateFunds(funds: Int(funds))
+        }
+
+        cb.updateDemand = { ctx, r, c, i in
+            let engine = Unmanaged<Engine>.fromOpaque(ctx!).takeUnretainedValue()
+            engine.delegate?.engineUpdateDemand(residential: r, commercial: c, industrial: i)
+        }
+
+        cb.updateCityName = { ctx, name in
+            let engine = Unmanaged<Engine>.fromOpaque(ctx!).takeUnretainedValue()
+            engine.delegate?.engineUpdateCityName(name: String(cString: name!))
+        }
+
+        cb.updateEvaluation = { ctx in
+            let engine = Unmanaged<Engine>.fromOpaque(ctx!).takeUnretainedValue()
+            engine.delegate?.engineUpdateEvaluation()
+        }
+
+        cb.updateHistory = { ctx in
+            let engine = Unmanaged<Engine>.fromOpaque(ctx!).takeUnretainedValue()
+            engine.delegate?.engineUpdateHistory()
+        }
+
+        cb.updateBudget = { ctx in
+            let engine = Unmanaged<Engine>.fromOpaque(ctx!).takeUnretainedValue()
+            engine.delegate?.engineUpdateBudget()
+        }
+
+        cb.updatePaused = { ctx, paused in
+            let engine = Unmanaged<Engine>.fromOpaque(ctx!).takeUnretainedValue()
+            engine.delegate?.engineUpdatePaused(paused: paused != 0)
+        }
+
+        cb.updateSpeed = { ctx, speed in
+            let engine = Unmanaged<Engine>.fromOpaque(ctx!).takeUnretainedValue()
+            engine.delegate?.engineUpdateSpeed(speed: Int(speed))
+        }
+
+        cb.updateTaxRate = { ctx, tax in
+            let engine = Unmanaged<Engine>.fromOpaque(ctx!).takeUnretainedValue()
+            engine.delegate?.engineUpdateTaxRate(tax: Int(tax))
+        }
+
+        cb.startEarthquake = { ctx, strength in
+            let engine = Unmanaged<Engine>.fromOpaque(ctx!).takeUnretainedValue()
+            engine.delegate?.engineStartEarthquake(strength: Int(strength))
+        }
+
+        cb.didWinGame = { ctx in
+            let engine = Unmanaged<Engine>.fromOpaque(ctx!).takeUnretainedValue()
+            engine.delegate?.engineDidWinGame()
+        }
+
+        cb.didLoseGame = { ctx in
+            let engine = Unmanaged<Engine>.fromOpaque(ctx!).takeUnretainedValue()
+            engine.delegate?.engineDidLoseGame()
+        }
+
+        mp_set_callbacks(handle, &cb)
     }
 
     deinit {

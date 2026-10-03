@@ -3,42 +3,86 @@
 
 class CCallback : public Callback {
 public:
+    MPCallbacks cbs = {};
+
     virtual ~CCallback() {}
-    virtual void autoGoto(Micropolis *micropolis, emscripten::val callbackVal, int x, int y, std::string message) override {}
-    virtual void didGenerateMap(Micropolis *micropolis, emscripten::val callbackVal, int seed) override {}
-    virtual void didLoadCity(Micropolis *micropolis, emscripten::val callbackVal, std::string filename) override {}
+    virtual void autoGoto(Micropolis *micropolis, emscripten::val callbackVal, int x, int y, std::string message) override {
+        if (cbs.autoGoto) cbs.autoGoto(cbs.context, x, y, message.c_str());
+    }
+    virtual void didGenerateMap(Micropolis *micropolis, emscripten::val callbackVal, int seed) override {
+        if (cbs.didGenerateMap) cbs.didGenerateMap(cbs.context, seed);
+    }
+    virtual void didLoadCity(Micropolis *micropolis, emscripten::val callbackVal, std::string filename) override {
+        if (cbs.didLoadCity) cbs.didLoadCity(cbs.context, filename.c_str());
+    }
     virtual void didLoadScenario(Micropolis *micropolis, emscripten::val callbackVal, std::string name, std::string fname) override {}
-    virtual void didLoseGame(Micropolis *micropolis, emscripten::val callbackVal) override {}
+    virtual void didLoseGame(Micropolis *micropolis, emscripten::val callbackVal) override {
+        if (cbs.didLoseGame) cbs.didLoseGame(cbs.context);
+    }
     virtual void didSaveCity(Micropolis *micropolis, emscripten::val callbackVal, std::string filename) override {}
-    virtual void didTool(Micropolis *micropolis, emscripten::val callbackVal, std::string name, int x, int y) override {}
-    virtual void didWinGame(Micropolis *micropolis, emscripten::val callbackVal) override {}
+    virtual void didTool(Micropolis *micropolis, emscripten::val callbackVal, std::string name, int x, int y) override {
+        if (cbs.didTool) cbs.didTool(cbs.context, name.c_str(), x, y);
+    }
+    virtual void didWinGame(Micropolis *micropolis, emscripten::val callbackVal) override {
+        if (cbs.didWinGame) cbs.didWinGame(cbs.context);
+    }
     virtual void didntLoadCity(Micropolis *micropolis, emscripten::val callbackVal, std::string filename) override {}
     virtual void didntSaveCity(Micropolis *micropolis, emscripten::val callbackVal, std::string filename) override {}
-    virtual void makeSound(Micropolis *micropolis, emscripten::val callbackVal, std::string channel, std::string sound, int x, int y) override {}
+    virtual void makeSound(Micropolis *micropolis, emscripten::val callbackVal, std::string channel, std::string sound, int x, int y) override {
+        if (cbs.makeSound) cbs.makeSound(cbs.context, channel.c_str(), sound.c_str(), x, y);
+    }
     virtual void newGame(Micropolis *micropolis, emscripten::val callbackVal) override {}
     virtual void saveCityAs(Micropolis *micropolis, emscripten::val callbackVal, std::string filename) override {}
-    virtual void sendMessage(Micropolis *micropolis, emscripten::val callbackVal, int messageIndex, int x, int y, bool picture, bool important) override {}
-    virtual void showBudgetAndWait(Micropolis *micropolis, emscripten::val callbackVal) override {}
-    virtual void showZoneStatus(Micropolis *micropolis, emscripten::val callbackVal, int tileCategoryIndex, int populationDensityIndex, int landValueIndex, int crimeRateIndex, int pollutionIndex, int growthRateIndex, int x, int y) override {}
+    virtual void sendMessage(Micropolis *micropolis, emscripten::val callbackVal, int messageIndex, int x, int y, bool picture, bool important) override {
+        if (cbs.sendMessage) cbs.sendMessage(cbs.context, messageIndex, x, y, picture ? 1 : 0, important ? 1 : 0);
+    }
+    virtual void showBudgetAndWait(Micropolis *micropolis, emscripten::val callbackVal) override {
+        if (cbs.showBudgetAndWait) cbs.showBudgetAndWait(cbs.context);
+    }
+    virtual void showZoneStatus(Micropolis *micropolis, emscripten::val callbackVal, int tileCategoryIndex, int populationDensityIndex, int landValueIndex, int crimeRateIndex, int pollutionIndex, int growthRateIndex, int x, int y) override {
+        if (cbs.showZoneStatus) cbs.showZoneStatus(cbs.context, tileCategoryIndex, populationDensityIndex, landValueIndex, crimeRateIndex, pollutionIndex, growthRateIndex, x, y);
+    }
     virtual void simulateRobots(Micropolis *micropolis, emscripten::val callbackVal) override {}
     virtual void simulateChurch(Micropolis *micropolis, emscripten::val callbackVal, int posX, int posY, int churchNumber) override {}
-    virtual void startEarthquake(Micropolis *micropolis, emscripten::val callbackVal, int strength) override {}
+    virtual void startEarthquake(Micropolis *micropolis, emscripten::val callbackVal, int strength) override {
+        if (cbs.startEarthquake) cbs.startEarthquake(cbs.context, strength);
+    }
     virtual void startGame(Micropolis *micropolis, emscripten::val callbackVal) override {}
     virtual void startScenario(Micropolis *micropolis, emscripten::val callbackVal, int scenario) override {}
-    virtual void updateBudget(Micropolis *micropolis, emscripten::val callbackVal) override {}
-    virtual void updateCityName(Micropolis *micropolis, emscripten::val callbackVal, std::string cityName) override {}
-    virtual void updateDate(Micropolis *micropolis, emscripten::val callbackVal, int cityYear, int cityMonth) override {}
-    virtual void updateDemand(Micropolis *micropolis, emscripten::val callbackVal, float r, float c, float i) override {}
-    virtual void updateEvaluation(Micropolis *micropolis, emscripten::val callbackVal) override {}
-    virtual void updateFunds(Micropolis *micropolis, emscripten::val callbackVal, int totalFunds) override {}
+    virtual void updateBudget(Micropolis *micropolis, emscripten::val callbackVal) override {
+        if (cbs.updateBudget) cbs.updateBudget(cbs.context);
+    }
+    virtual void updateCityName(Micropolis *micropolis, emscripten::val callbackVal, std::string cityName) override {
+        if (cbs.updateCityName) cbs.updateCityName(cbs.context, cityName.c_str());
+    }
+    virtual void updateDate(Micropolis *micropolis, emscripten::val callbackVal, int cityYear, int cityMonth) override {
+        if (cbs.updateDate) cbs.updateDate(cbs.context, cityYear, cityMonth);
+    }
+    virtual void updateDemand(Micropolis *micropolis, emscripten::val callbackVal, float r, float c, float i) override {
+        if (cbs.updateDemand) cbs.updateDemand(cbs.context, r, c, i);
+    }
+    virtual void updateEvaluation(Micropolis *micropolis, emscripten::val callbackVal) override {
+        if (cbs.updateEvaluation) cbs.updateEvaluation(cbs.context);
+    }
+    virtual void updateFunds(Micropolis *micropolis, emscripten::val callbackVal, int totalFunds) override {
+        if (cbs.updateFunds) cbs.updateFunds(cbs.context, totalFunds);
+    }
     virtual void updateGameLevel(Micropolis *micropolis, emscripten::val callbackVal, int gameLevel) override {}
-    virtual void updateHistory(Micropolis *micropolis, emscripten::val callbackVal) override {}
+    virtual void updateHistory(Micropolis *micropolis, emscripten::val callbackVal) override {
+        if (cbs.updateHistory) cbs.updateHistory(cbs.context);
+    }
     virtual void updateMap(Micropolis *micropolis, emscripten::val callbackVal) override {}
     virtual void updateOptions(Micropolis *micropolis, emscripten::val callbackVal) override {}
     virtual void updatePasses(Micropolis *micropolis, emscripten::val callbackVal, int passes) override {}
-    virtual void updatePaused(Micropolis *micropolis, emscripten::val callbackVal, bool simPaused) override {}
-    virtual void updateSpeed(Micropolis *micropolis, emscripten::val callbackVal, int speed) override {}
-    virtual void updateTaxRate(Micropolis *micropolis, emscripten::val callbackVal, int cityTax) override {}
+    virtual void updatePaused(Micropolis *micropolis, emscripten::val callbackVal, bool simPaused) override {
+        if (cbs.updatePaused) cbs.updatePaused(cbs.context, simPaused ? 1 : 0);
+    }
+    virtual void updateSpeed(Micropolis *micropolis, emscripten::val callbackVal, int speed) override {
+        if (cbs.updateSpeed) cbs.updateSpeed(cbs.context, speed);
+    }
+    virtual void updateTaxRate(Micropolis *micropolis, emscripten::val callbackVal, int cityTax) override {
+        if (cbs.updateTaxRate) cbs.updateTaxRate(cbs.context, cityTax);
+    }
 };
 
 struct MPEngine {
@@ -222,6 +266,10 @@ void mp_get_history(MPEngine *e, int which, short *out) {
     for (int i = 0; i < 480; i++) {
         out[i] = src[i];
     }
+}
+
+void mp_set_callbacks(MPEngine *e, const MPCallbacks *callbacks) {
+    e->callback->cbs = *callbacks;
 }
 
 }

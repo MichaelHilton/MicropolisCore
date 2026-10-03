@@ -20,6 +20,32 @@ typedef enum { MP_RESULT_NO_MONEY = -2, MP_RESULT_NEED_BULLDOZE = -1, MP_RESULT_
 
 typedef struct { int type, frame, x, y, xHot, yHot; } MPSprite;
 
+typedef struct MPCallbacks {
+    void *context;
+    void (*didLoadCity)(void *ctx, const char *filename);
+    void (*didGenerateMap)(void *ctx, int seed);
+    void (*didTool)(void *ctx, const char *name, int x, int y);
+    void (*makeSound)(void *ctx, const char *channel, const char *sound, int x, int y);
+    void (*sendMessage)(void *ctx, int messageIndex, int x, int y, int picture, int important);
+    void (*autoGoto)(void *ctx, int x, int y, const char *message);
+    void (*showBudgetAndWait)(void *ctx);
+    void (*showZoneStatus)(void *ctx, int tileCategory, int density, int landValue,
+                           int crime, int pollution, int growth, int x, int y);
+    void (*updateDate)(void *ctx, int year, int month);
+    void (*updateFunds)(void *ctx, int funds);
+    void (*updateDemand)(void *ctx, float r, float c, float i);
+    void (*updateCityName)(void *ctx, const char *name);
+    void (*updateEvaluation)(void *ctx);
+    void (*updateHistory)(void *ctx);
+    void (*updateBudget)(void *ctx);
+    void (*updatePaused)(void *ctx, int paused);
+    void (*updateSpeed)(void *ctx, int speed);
+    void (*updateTaxRate)(void *ctx, int tax);
+    void (*startEarthquake)(void *ctx, int strength);
+    void (*didWinGame)(void *ctx);
+    void (*didLoseGame)(void *ctx);
+} MPCallbacks;
+
 MPEngine *mp_create(void);
 void mp_destroy(MPEngine *e);
 
@@ -61,6 +87,8 @@ void mp_make_disaster(MPEngine *e, int which);
 
 int  mp_get_sprites(MPEngine *e, MPSprite *out, int maxCount);
 void mp_get_history(MPEngine *e, int which, short *out);
+
+void mp_set_callbacks(MPEngine *e, const MPCallbacks *callbacks);
 
 #ifdef __cplusplus
 }

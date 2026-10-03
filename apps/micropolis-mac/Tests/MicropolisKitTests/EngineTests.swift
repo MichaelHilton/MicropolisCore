@@ -2,6 +2,37 @@ import Foundation
 import XCTest
 @testable import MicropolisKit
 
+class RecordingDelegate: EngineDelegate {
+    var didLoadCityFilename: String?
+    var didGenerateMapSeed: Int?
+    var didToolEvents: [(name: String, x: Int, y: Int)] = []
+    var updateDateEvents: [(year: Int, month: Int)] = []
+    var updateFundsValues: [Int] = []
+    var noDelegateTestActive = false
+
+    func engineDidLoadCity(filename: String) {
+        didLoadCityFilename = filename
+    }
+
+    func engineDidGenerateMap(seed: Int) {
+        didGenerateMapSeed = seed
+    }
+
+    func engineDidTool(name: String, x: Int, y: Int) {
+        didToolEvents.append((name, x, y))
+    }
+
+    func engineUpdateDate(year: Int, month: Int) {
+        if !noDelegateTestActive {
+            updateDateEvents.append((year, month))
+        }
+    }
+
+    func engineUpdateFunds(funds: Int) {
+        updateFundsValues.append(funds)
+    }
+}
+
 final class EngineTests: XCTestCase {
 
     var repoRoot: URL {
@@ -153,5 +184,89 @@ final class EngineTests: XCTestCase {
         }
 
         try? FileManager.default.removeItem(at: tempFile)
+    }
+
+    func testDidLoadCityFires() {
+        let engine = Engine()
+        let delegate = RecordingDelegate()
+        engine.delegate = delegate
+
+        let cityPath = repoRoot.appendingPathComponent("content/micropolis/cities/haight.cty")
+        engine.loadCity(at: cityPath)
+
+        if delegate.didLoadCityFilename == nil {
+            XCTFail("didLoadCity callback should have fired")
+        } else if !delegate.didLoadCityFilename!.contains("haight") {
+            XCTFail("didLoadCity filename should contain 'haight', got: \(delegate.didLoadCityFilename!)")
+        }
+    }
+
+    func testUpdateDateFires() {
+        let engine = Engine()
+        let delegate = RecordingDelegate()
+        engine.delegate = delegate
+
+        let cityPath = repoRoot.appendingPathComponent("content/micropolis/cities/haight.cty")
+        engine.loadCity(at: cityPath)
+
+        for _ in 0..<2000 {
+            engine.tick()
+        }
+
+        if delegate.updateDateEvents.isEmpty {
+            XCTFail("updateDate callback should have fired at least once")
+        }
+    }
+
+    func testDidToolFires() {
+        let engine = Engine()
+        let delegate = RecordingDelegate()
+        engine.delegate = delegate
+
+        engine.generateMap(seed: 1)
+        engine.setFunds(100000)
+
+        var dirtX = -1, dirtY = -1
+        for x in 0..<Engine.width {
+            for y in 0..<Engine.height {
+                if (engine.tile(x: x, y: y) & 0x3FF) == 0 {
+                    dirtX = x
+                    dirtY = y
+                    break
+                }
+            }
+            if dirtX != -1 { break }
+        }
+
+        if dirtX == -1 {
+            XCTFail("No dirt tiles found")
+            return
+        }
+
+        engine.apply(.road, x: dirtX, y: dirtY)
+
+        var found = false
+        for event in delegate.didToolEvents {
+            if event.x == dirtX && event.y == dirtY {
+                found = true
+                break
+            }
+        }
+
+        if !found {
+            XCTFail("didTool callback should have fired for tool at (\(dirtX), \(dirtY))")
+        }
+    }
+
+    func testNoDelegateNoCrash() {
+        let engine = Engine()
+        engine.delegate = nil
+
+        let cityPath = repoRoot.appendingPathComponent("content/micropolis/cities/haight.cty")
+        engine.loadCity(at: cityPath)
+
+        for _ in 0..<500 {
+            engine.tick()
+        }
     }
 }
