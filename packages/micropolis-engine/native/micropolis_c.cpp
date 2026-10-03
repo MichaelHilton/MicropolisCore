@@ -74,11 +74,11 @@ long mp_total_funds(MPEngine *e) {
 }
 
 int mp_city_year(MPEngine *e) {
-    return e->sim.cityYear;
+    return (int)e->sim.cityYear;
 }
 
 int mp_city_month(MPEngine *e) {
-    return e->sim.cityMonth;
+    return (int)e->sim.cityMonth;
 }
 
 const unsigned short *mp_map(MPEngine *e) {
