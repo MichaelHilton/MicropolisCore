@@ -269,4 +269,68 @@ final class EngineTests: XCTestCase {
             engine.tick()
         }
     }
+
+    func testSpritesAppear() {
+        let engine = Engine()
+        let cityPath = repoRoot.appendingPathComponent("content/micropolis/cities/scenario_tokyo.cty")
+        let loaded = engine.loadCity(at: cityPath)
+
+        if !loaded {
+            XCTFail("Failed to load scenario_tokyo.cty")
+            return
+        }
+
+        var spriteFound = false
+        for _ in 0..<5000 {
+            let sprites = engine.sprites()
+            if !sprites.isEmpty {
+                spriteFound = true
+                break
+            }
+            engine.tick()
+        }
+
+        if !spriteFound {
+            engine.makeDisaster(3)
+            for _ in 0..<100 {
+                engine.tick()
+                let sprites = engine.sprites()
+                if !sprites.isEmpty {
+                    spriteFound = true
+                    break
+                }
+            }
+        }
+
+        if !spriteFound {
+            XCTFail("No sprites appeared within 5000 ticks or after monster disaster")
+        }
+    }
+
+    func testHistoryData() {
+        let engine = Engine()
+        let cityPath = repoRoot.appendingPathComponent("content/micropolis/cities/haight.cty")
+        let loaded = engine.loadCity(at: cityPath)
+
+        if !loaded {
+            XCTFail("Failed to load haight.cty")
+            return
+        }
+
+        for _ in 0..<3000 {
+            engine.tick()
+        }
+
+        let resHistory = engine.history(.residential)
+
+        if resHistory.count != 480 {
+            XCTFail("Residential history should have 480 entries, got \(resHistory.count)")
+            return
+        }
+
+        let hasNonZero = resHistory.contains { $0 != 0 }
+        if !hasNonZero {
+            XCTFail("Residential history should have at least one non-zero entry")
+        }
+    }
 }
