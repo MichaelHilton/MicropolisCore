@@ -34,6 +34,7 @@ class MapNSView: NSView {
 
     private var mapLayer: CALayer?
     private var contentLayer: CALayer?
+    private var spriteLayer: CALayer?
     private var lastMapVersion = -1
     private var lastDragTile: (x: Int, y: Int)? = nil
     private var toolMessageTimer: Timer? = nil
@@ -67,6 +68,10 @@ class MapNSView: NSView {
         let contentLayer = CALayer()
         mapLayer.addSublayer(contentLayer)
         self.contentLayer = contentLayer
+
+        let spriteLayer = CALayer()
+        layer?.addSublayer(spriteLayer)
+        self.spriteLayer = spriteLayer
     }
 
     func updateMap() {
@@ -78,6 +83,11 @@ class MapNSView: NSView {
 
         if let image = renderer.makeImage() {
             mapLayer?.contents = image
+        }
+
+        let sprites = gameModel.engine.sprites()
+        if let spriteLayer = spriteLayer {
+            gameModel.spriteRenderer.updateSprites(sprites, in: spriteLayer)
         }
 
         updateLayout()

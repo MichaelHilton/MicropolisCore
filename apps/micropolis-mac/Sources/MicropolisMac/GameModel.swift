@@ -7,6 +7,7 @@ final class GameModel: EngineDelegate {
     let engine = Engine()
     let tileAtlas: TileAtlas
     var renderer: MapRenderer!  // Initialized in init after tileAtlas
+    let spriteRenderer = SpriteRenderer()
 
     var year: Int = 0
     var month: Int = 0

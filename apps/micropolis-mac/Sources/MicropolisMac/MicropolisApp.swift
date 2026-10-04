@@ -46,6 +46,15 @@ struct MicropolisApp: App {
                     model.setSpeed(3)
                 }
             }
+
+            CommandMenu("Disasters") {
+                Button("Fire") { model.engine.makeDisaster(0) }
+                Button("Flood") { model.engine.makeDisaster(1) }
+                Button("Earthquake") { model.engine.makeDisaster(2) }
+                Button("Monster") { model.engine.makeDisaster(3) }
+                Button("Tornado") { model.engine.makeDisaster(4) }
+                Button("Meltdown") { model.engine.makeDisaster(5) }
+            }
         }
     }
 }
