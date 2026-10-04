@@ -56,8 +56,7 @@ struct ContentView: View {
     var body: some View {
         VStack(spacing: 0) {
             HUDView()
-            Text("map goes here")
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            MapView(gameModel: model)
         }
         .frame(minWidth: 800, minHeight: 600)
     }

@@ -5,6 +5,9 @@ import MicropolisKit
 @Observable
 final class GameModel: EngineDelegate {
     let engine = Engine()
+    let tileAtlas: TileAtlas
+    var renderer: MapRenderer!  // Initialized in init after tileAtlas
+
     var year: Int = 0
     var month: Int = 0
     var funds: Int = 0
@@ -17,6 +20,13 @@ final class GameModel: EngineDelegate {
     nonisolated(unsafe) private var timer: Timer?
 
     init() {
+        do {
+            self.tileAtlas = try TileAtlas(atlasURL: Assets.tileAtlas)
+        } catch {
+            fatalError("Failed to load tile atlas: \(error)")
+        }
+        self.renderer = MapRenderer(tileAtlas: tileAtlas)
+
         engine.delegate = self
 
         let cityPath = Assets.city("haight")
@@ -74,6 +84,7 @@ final class GameModel: EngineDelegate {
         for _ in 0..<passes {
             engine.tick()
         }
+        renderer.update(cells: engine.mapSnapshot())
         mapVersion += 1
         population = engine.population
     }
