@@ -16,6 +16,8 @@ final class GameModel: EngineDelegate {
     var speed: Int = 0
     var lastMessage: String?
     var mapVersion: Int = 0
+    var selectedTool: Tool = .query
+    var toolMessage: String?
 
     nonisolated(unsafe) private var timer: Timer?
 

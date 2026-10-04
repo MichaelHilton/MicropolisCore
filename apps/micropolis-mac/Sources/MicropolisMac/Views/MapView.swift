@@ -35,6 +35,10 @@ class MapNSView: NSView {
     private var mapLayer: CALayer?
     private var contentLayer: CALayer?
     private var lastMapVersion = -1
+    private var lastDragTile: (x: Int, y: Int)? = nil
+    private var toolMessageTimer: Timer? = nil
+
+    private let lineDrawTools: [Tool] = [.road, .railroad, .wire, .bulldozer, .park]
 
     init(gameModel: GameModel) {
         self.gameModel = gameModel
@@ -134,6 +138,12 @@ class MapNSView: NSView {
         removeTrackingArea(trackingArea)
     }
 
+    override func mouseDown(with event: NSEvent) {
+        let location = event.locationInWindow
+        guard let tile = tile(at: location) else { return }
+        applyTool(at: tile)
+    }
+
     override func mouseMoved(with event: NSEvent) {
         if NSEvent.modifierFlags.contains(.option) {
             // Option-drag handled in mouseDragged
@@ -146,6 +156,55 @@ class MapNSView: NSView {
             offset.x += delta.x * zoom
             offset.y += delta.y * zoom
             updateLayout()
+        } else {
+            let location = event.locationInWindow
+            guard let tile = tile(at: location) else { return }
+
+            if lineDrawTools.contains(gameModel.selectedTool) {
+                if let lastTile = lastDragTile {
+                    let path = Bresenham.line(from: lastTile, to: tile)
+                    for point in path {
+                        applyTool(at: point)
+                    }
+                } else {
+                    applyTool(at: tile)
+                }
+                lastDragTile = tile
+            }
+        }
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        lastDragTile = nil
+    }
+
+    private func applyTool(at tile: (x: Int, y: Int)) {
+        let result = gameModel.engine.apply(gameModel.selectedTool, x: tile.x, y: tile.y)
+
+        let message: String?
+        switch result {
+        case .noMoney:
+            message = "Not enough funds"
+        case .needBulldoze:
+            message = "Bulldoze first"
+        case .failed:
+            message = "Can't build there"
+        case .ok:
+            message = nil
+        default:
+            message = nil
+        }
+
+        if let message = message {
+            gameModel.toolMessage = message
+            toolMessageTimer?.invalidate()
+            toolMessageTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) { [weak self] _ in
+                Task { @MainActor in
+                    self?.gameModel.toolMessage = nil
+                }
+            }
+        } else {
+            gameModel.toolMessage = nil
         }
     }
 

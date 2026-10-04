@@ -6,36 +6,44 @@ struct HUDView: View {
     let monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
     var body: some View {
-        HStack(spacing: 16) {
-            Text("\(monthName) \(model.year)")
-                .font(.system(.body, design: .monospaced))
-
-            HStack {
-                Text("$\(model.funds)")
+        VStack(spacing: 0) {
+            HStack(spacing: 16) {
+                Text("\(monthName) \(model.year)")
                     .font(.system(.body, design: .monospaced))
-            }
 
-            HStack {
-                Text("\(model.population)")
-                    .font(.system(.body, design: .monospaced))
-            }
+                HStack {
+                    Text("$\(model.funds)")
+                        .font(.system(.body, design: .monospaced))
+                }
 
-            Spacer()
+                HStack {
+                    Text("\(model.population)")
+                        .font(.system(.body, design: .monospaced))
+                }
 
-            Picker("Speed", selection: Binding(
-                get: { model.speed },
-                set: { model.setSpeed($0) }
-            )) {
-                Text("Pause").tag(0)
-                Text("Slow").tag(1)
-                Text("Medium").tag(2)
-                Text("Fast").tag(3)
+                if let message = model.toolMessage {
+                    Text(message)
+                        .font(.system(.caption, design: .default))
+                        .foregroundColor(.red)
+                }
+
+                Spacer()
+
+                Picker("Speed", selection: Binding(
+                    get: { model.speed },
+                    set: { model.setSpeed($0) }
+                )) {
+                    Text("Pause").tag(0)
+                    Text("Slow").tag(1)
+                    Text("Medium").tag(2)
+                    Text("Fast").tag(3)
+                }
+                .pickerStyle(.segmented)
             }
-            .pickerStyle(.segmented)
+            .padding(8)
+            .background(Color(nsColor: .controlBackgroundColor))
+            .border(Color(nsColor: .separatorColor), width: 1)
         }
-        .padding(8)
-        .background(Color(nsColor: .controlBackgroundColor))
-        .border(Color(nsColor: .separatorColor), width: 1)
     }
 
     var monthName: String {
