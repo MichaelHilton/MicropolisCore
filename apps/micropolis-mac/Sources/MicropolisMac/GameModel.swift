@@ -22,6 +22,7 @@ final class GameModel: EngineDelegate {
     var currentMessage: String?
     var importantMessageGoTo: (x: Int, y: Int)?
     var autoGoto: Bool = true
+    var showBudgetSheet: Bool = false
 
     nonisolated(unsafe) private var timer: Timer?
     private var messageTimer: Timer?
@@ -126,7 +127,10 @@ final class GameModel: EngineDelegate {
             importantMessageGoTo = (x, y)
         }
     }
-    func engineShowBudgetAndWait() {}
+    func engineShowBudgetAndWait() {
+        showBudgetSheet = true
+        pauseSimulation()
+    }
     func engineShowZoneStatus(category: Int, density: Int, landValue: Int, crime: Int, pollution: Int, growth: Int, x: Int, y: Int) {}
     func engineUpdateDate(year: Int, month: Int) {
         self.year = year

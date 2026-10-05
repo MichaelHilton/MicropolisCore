@@ -13,6 +13,9 @@ struct MicropolisApp: App {
         WindowGroup {
             ContentView()
                 .environment(model)
+                .sheet(isPresented: $model.showBudgetSheet) {
+                    BudgetView()
+                }
         }
         .commands {
             CommandGroup(replacing: .appSettings) {
@@ -23,6 +26,13 @@ struct MicropolisApp: App {
             }
 
             CommandMenu("Simulation") {
+                Button("Budget") {
+                    model.showBudgetSheet = true
+                }
+                .keyboardShortcut("b", modifiers: .command)
+
+                Divider()
+
                 Button(model.paused ? "Resume" : "Pause") {
                     if model.paused {
                         model.resumeSimulation()
