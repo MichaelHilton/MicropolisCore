@@ -18,6 +18,22 @@ struct MicropolisApp: App {
                 }
         }
         .defaultSize(width: 960, height: 700)
+
+        Window("Graphs", id: "graphs") {
+            Text("Residential: \(model.engine.history(.residential))")
+                .padding()
+        }
+        .keyboardShortcut("g", modifiers: .command)
+
+        Window("Evaluation", id: "evaluation") {
+            VStack(spacing: 12) {
+                Text("City Class: \(model.cityClass)")
+                Text("Population: \(model.population)")
+                Spacer()
+            }
+            .padding()
+        }
+        .keyboardShortcut("e", modifiers: .command)
         .commands {
             CommandGroup(replacing: .appSettings) {
                 Button("About Micropolis") {

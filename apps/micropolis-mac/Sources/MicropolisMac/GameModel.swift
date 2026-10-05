@@ -23,9 +23,16 @@ final class GameModel: EngineDelegate {
     var importantMessageGoTo: (x: Int, y: Int)?
     var autoGoto: Bool = true
     var showBudgetSheet: Bool = false
+    var showGraphsWindow: Bool = false
+    var showEvaluationWindow: Bool = false
     var cityName: String = "Unnamed City"
     var currentFileURL: URL?
     var hasUnsavedChanges: Bool = false
+    var demandResidential: Float = 0
+    var demandCommercial: Float = 0
+    var demandIndustrial: Float = 0
+    var cityScore: Int = 0
+    var cityClass: Int = 0
 
     nonisolated(unsafe) private var timer: Timer?
     private var messageTimer: Timer?
@@ -164,11 +171,17 @@ final class GameModel: EngineDelegate {
     func engineUpdateFunds(funds: Int) {
         self.funds = funds
     }
-    func engineUpdateDemand(residential: Float, commercial: Float, industrial: Float) {}
+    func engineUpdateDemand(residential: Float, commercial: Float, industrial: Float) {
+        self.demandResidential = residential
+        self.demandCommercial = commercial
+        self.demandIndustrial = industrial
+    }
     func engineUpdateCityName(name: String) {
         self.cityName = name
     }
-    func engineUpdateEvaluation() {}
+    func engineUpdateEvaluation() {
+        self.cityClass = engine.cityClass
+    }
     func engineUpdateHistory() {}
     func engineUpdateBudget() {}
     func engineUpdatePaused(paused: Bool) {
