@@ -23,6 +23,9 @@ final class GameModel: EngineDelegate {
     var importantMessageGoTo: (x: Int, y: Int)?
     var autoGoto: Bool = true
     var showBudgetSheet: Bool = false
+    var cityName: String = "Unnamed City"
+    var currentFileURL: URL?
+    var hasUnsavedChanges: Bool = false
 
     nonisolated(unsafe) private var timer: Timer?
     private var messageTimer: Timer?
@@ -97,6 +100,28 @@ final class GameModel: EngineDelegate {
         population = engine.population
     }
 
+    func newCity(seed: Int) {
+        engine.generateMap(seed: seed)
+        currentFileURL = nil
+        hasUnsavedChanges = false
+        cityName = "Unnamed City"
+    }
+
+    func loadCity(from url: URL) {
+        if engine.loadCity(at: url) {
+            currentFileURL = url
+            hasUnsavedChanges = false
+            cityName = url.deletingPathExtension().lastPathComponent
+        }
+    }
+
+    func saveCity(to url: URL) {
+        if engine.saveCity(at: url) {
+            currentFileURL = url
+            hasUnsavedChanges = false
+        }
+    }
+
     deinit {
         timer?.invalidate()
     }
@@ -140,7 +165,9 @@ final class GameModel: EngineDelegate {
         self.funds = funds
     }
     func engineUpdateDemand(residential: Float, commercial: Float, industrial: Float) {}
-    func engineUpdateCityName(name: String) {}
+    func engineUpdateCityName(name: String) {
+        self.cityName = name
+    }
     func engineUpdateEvaluation() {}
     func engineUpdateHistory() {}
     func engineUpdateBudget() {}
