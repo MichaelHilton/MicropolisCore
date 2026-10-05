@@ -19,8 +19,12 @@ final class GameModel: EngineDelegate {
     var mapVersion: Int = 0
     var selectedTool: Tool = .query
     var toolMessage: String?
+    var currentMessage: String?
+    var importantMessageGoTo: (x: Int, y: Int)?
+    var autoGoto: Bool = true
 
     nonisolated(unsafe) private var timer: Timer?
+    private var messageTimer: Timer?
 
     init() {
         do {
@@ -101,9 +105,27 @@ final class GameModel: EngineDelegate {
     func engineDidTool(name: String, x: Int, y: Int) {}
     func engineMakeSound(channel: String, sound: String, x: Int, y: Int) {}
     func engineSendMessage(index: Int, x: Int, y: Int, picture: Bool, important: Bool) {
-        lastMessage = nil
+        currentMessage = Messages.text(for: index)
+        if important && x >= 0 && y >= 0 {
+            importantMessageGoTo = (x, y)
+            if autoGoto {
+                // Will be handled by the view to scroll the map
+            }
+        }
+        messageTimer?.invalidate()
+        messageTimer = Timer.scheduledTimer(withTimeInterval: 4.0, repeats: false) { [weak self] _ in
+            Task { @MainActor in
+                self?.currentMessage = nil
+                self?.importantMessageGoTo = nil
+            }
+        }
     }
-    func engineAutoGoto(x: Int, y: Int, message: String) {}
+    func engineAutoGoto(x: Int, y: Int, message: String) {
+        if autoGoto && x >= 0 && y >= 0 {
+            // Will be handled by the view to scroll the map
+            importantMessageGoTo = (x, y)
+        }
+    }
     func engineShowBudgetAndWait() {}
     func engineShowZoneStatus(category: Int, density: Int, landValue: Int, crime: Int, pollution: Int, growth: Int, x: Int, y: Int) {}
     func engineUpdateDate(year: Int, month: Int) {

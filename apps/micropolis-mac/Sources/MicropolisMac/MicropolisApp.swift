@@ -65,6 +65,7 @@ struct ContentView: View {
     var body: some View {
         VStack(spacing: 0) {
             HUDView()
+            MessageBar()
             HStack(spacing: 0) {
                 ToolPalette()
                 MapView(gameModel: model)
