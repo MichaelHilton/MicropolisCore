@@ -33,6 +33,7 @@ final class GameModel: EngineDelegate {
     var demandIndustrial: Float = 0
     var cityScore: Int = 0
     var cityClass: Int = 0
+    var zoneStatus: ZoneStatusInfo?
 
     nonisolated(unsafe) private var timer: Timer?
     private var messageTimer: Timer?
@@ -165,7 +166,9 @@ final class GameModel: EngineDelegate {
         showBudgetSheet = true
         pauseSimulation()
     }
-    func engineShowZoneStatus(category: Int, density: Int, landValue: Int, crime: Int, pollution: Int, growth: Int, x: Int, y: Int) {}
+    func engineShowZoneStatus(category: Int, density: Int, landValue: Int, crime: Int, pollution: Int, growth: Int, x: Int, y: Int) {
+        self.zoneStatus = ZoneStatusInfo(category: category, density: density, landValue: landValue, crime: crime, pollution: pollution, growth: growth, x: x, y: y)
+    }
     func engineUpdateDate(year: Int, month: Int) {
         self.year = year
         self.month = month
