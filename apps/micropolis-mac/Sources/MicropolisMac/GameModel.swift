@@ -136,7 +136,9 @@ final class GameModel: EngineDelegate {
     func engineDidLoadCity(filename: String) {}
     func engineDidGenerateMap(seed: Int) {}
     func engineDidTool(name: String, x: Int, y: Int) {}
-    func engineMakeSound(channel: String, sound: String, x: Int, y: Int) {}
+    func engineMakeSound(channel: String, sound: String, x: Int, y: Int) {
+        SoundManager.shared.play(soundName: sound)
+    }
     func engineSendMessage(index: Int, x: Int, y: Int, picture: Bool, important: Bool) {
         currentMessage = Messages.text(for: index)
         if important && x >= 0 && y >= 0 {
