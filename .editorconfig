@@ -12,10 +12,6 @@ trim_trailing_whitespace = true
 indent_style = space
 indent_size = 2
 
-[*.{svelte,ts,js,mjs,cjs}]
-indent_style = tab
-indent_size = 4
-
 [makefile]
 indent_style = tab
 

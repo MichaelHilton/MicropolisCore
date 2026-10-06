@@ -116,7 +116,6 @@ Full details: [MOOLLM: A Microworld Operating System for LLM Orchestration](http
 | [schema-mechanism](https://github.com/SimHacker/moollm/tree/main/skills/schema-mechanism) | Drescher's causal learning -- agents discover cause and effect in the sim |
 | [experiment](https://github.com/SimHacker/moollm/tree/main/skills/experiment) | Systematic simulation: SIMULATE, EVALUATE, ITERATE, ANALYZE cycles |
 | [adversarial-committee](https://github.com/SimHacker/moollm/tree/main/skills/adversarial-committee) | Multi-perspective debate between AI tutors with incompatible values |
-| Micropolis CLI | Doc-first terminal automation through `pnpm run micropolis -- about --format yaml` and `api --format yaml` |
 | [speed-of-light](https://github.com/SimHacker/moollm/tree/main/skills/speed-of-light) | Multiple agent turns inside a single LLM call, no round-trip latency |
 
 **Speed of Light vs Carrier Pigeon:** Most AI agent systems coordinate *between* LLM calls -- 500ms+ per hop, precision degrades each hop, every turn re-tokenizes the full context. MOOLLM skills run *during* one LLM call -- multiple agents iterating dozens of times inside a single generation, instant latency, perfect precision. AI tutors can debate a zoning decision, explore alternatives, and reach a recommendation in one call rather than a slow chain of API round-trips. Full writeup: [Speed of Light vs Carrier Pigeon](https://github.com/SimHacker/moollm/blob/main/designs/SPEED-OF-LIGHT-VS-CARRIER-PIGEON.md).

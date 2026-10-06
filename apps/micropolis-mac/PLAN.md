@@ -12,6 +12,11 @@ a commit message.
 (packaging `Micropolis.app`) is next. For how to build, run and test the app as
 it is today, see [README.md](README.md).
 
+**Historical note:** This plan was written while the web app was still in the
+repo. On the `swift-only` branch the web app, `apps/micropolis/` and
+`src/emscripten.cpp` are gone, so paths to them below no longer exist. The
+tile atlas and sprite sheets now live in `content/micropolis/tilesets/png/`.
+
 ---
 
 ## Setup
