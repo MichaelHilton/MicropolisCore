@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 import MicropolisKit
 
 @MainActor
@@ -127,6 +127,39 @@ final class GameModel: EngineDelegate {
         if engine.saveCity(at: url) {
             currentFileURL = url
             hasUnsavedChanges = false
+        }
+    }
+
+    func showOpenPanel() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.init(filenameExtension: "cty")!]
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+
+        panel.begin { response in
+            if response == .OK, let url = panel.url {
+                self.loadCity(from: url)
+            }
+        }
+    }
+
+    func showSavePanel() {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.init(filenameExtension: "cty")!]
+        panel.nameFieldStringValue = cityName + ".cty"
+
+        panel.begin { response in
+            if response == .OK, let url = panel.url {
+                self.saveCity(to: url)
+            }
+        }
+    }
+
+    func save() {
+        if let url = currentFileURL {
+            saveCity(to: url)
+        } else {
+            showSavePanel()
         }
     }
 

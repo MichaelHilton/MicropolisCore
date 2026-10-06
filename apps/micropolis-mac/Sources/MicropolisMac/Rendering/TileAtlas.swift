@@ -8,6 +8,7 @@ final class TileAtlas {
 
     private var tileImages: [CGImage]
     private var atlasBytes: [UInt8]
+    private var buildingCache: [Int: CGImage] = [:]
 
     init(atlasURL: URL) throws {
         guard let imageSource = CGImageSourceCreateWithURL(atlasURL as CFURL, nil),
@@ -40,6 +41,35 @@ final class TileAtlas {
 
     var bytes: [UInt8] {
         atlasBytes
+    }
+
+    /// Draws a `size`×`size` building whose tiles run row-major from `base`,
+    /// the same layout the engine uses when it places a building.
+    func buildingImage(base: Int, size: Int) -> CGImage? {
+        if let cached = buildingCache[base] { return cached }
+        let pixels = size * tileSize
+        guard let context = CGContext(
+            data: nil,
+            width: pixels,
+            height: pixels,
+            bitsPerComponent: 8,
+            bytesPerRow: 0,
+            space: CGColorSpace(name: CGColorSpace.sRGB)!,
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return nil }
+
+        context.interpolationQuality = .none
+        for row in 0..<size {
+            for col in 0..<size {
+                // CoreGraphics' origin is bottom-left, so the first row goes on top.
+                let rect = CGRect(x: col * tileSize, y: (size - 1 - row) * tileSize,
+                                  width: tileSize, height: tileSize)
+                context.draw(image(for: base + row * size + col), in: rect)
+            }
+        }
+        let image = context.makeImage()
+        buildingCache[base] = image
+        return image
     }
 
     private static func cropTile(from atlas: CGImage, index: Int) throws -> CGImage {

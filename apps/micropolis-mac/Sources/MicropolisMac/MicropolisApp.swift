@@ -12,10 +12,11 @@ struct MicropolisApp: App {
     var body: some Scene {
         WindowGroup(model.cityName) {
             ContentView()
-                .environment(model)
                 .sheet(isPresented: $model.showBudgetSheet) {
                     BudgetView()
+                        .environment(model)
                 }
+                .environment(model)
         }
         .defaultSize(width: 960, height: 700)
 
@@ -59,7 +60,7 @@ struct MicropolisApp: App {
                     Divider()
 
                     Button("Open…") {
-                        openCity()
+                        model.showOpenPanel()
                     }
                     .keyboardShortcut("o", modifiers: .command)
 
@@ -74,16 +75,12 @@ struct MicropolisApp: App {
                     Divider()
 
                     Button("Save") {
-                        if let url = model.currentFileURL {
-                            model.saveCity(to: url)
-                        } else {
-                            saveAsCity()
-                        }
+                        model.save()
                     }
                     .keyboardShortcut("s", modifiers: .command)
 
                     Button("Save As…") {
-                        saveAsCity()
+                        model.showSavePanel()
                     }
                     .keyboardShortcut("s", modifiers: [.command, .shift])
                 }
@@ -139,31 +136,6 @@ struct MicropolisApp: App {
             }
         }
     }
-
-    private func openCity() {
-        let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.init(filenameExtension: "cty")!]
-        panel.canChooseFiles = true
-        panel.canChooseDirectories = false
-
-        panel.begin { response in
-            if response == .OK, let url = panel.url {
-                model.loadCity(from: url)
-            }
-        }
-    }
-
-    private func saveAsCity() {
-        let panel = NSSavePanel()
-        panel.allowedContentTypes = [.init(filenameExtension: "cty")!]
-        panel.nameFieldStringValue = model.cityName + ".cty"
-
-        panel.begin { response in
-            if response == .OK, let url = panel.url {
-                model.saveCity(to: url)
-            }
-        }
-    }
 }
 
 struct ContentView: View {
@@ -172,12 +144,15 @@ struct ContentView: View {
     var body: some View {
         VStack(spacing: 0) {
             HUDView()
-            MessageBar()
             HStack(spacing: 0) {
                 ToolPalette()
-                MapView(gameModel: model)
+                VStack(spacing: 0) {
+                    MapView(gameModel: model)
+                    StatusLine()
+                }
             }
         }
+        .background(DOS.lightGray)
         .frame(minWidth: 800, minHeight: 600)
     }
 }
