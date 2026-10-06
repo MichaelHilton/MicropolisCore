@@ -11,7 +11,7 @@ that only makes sense because the app is looking at a game about people. Product
 show/community framing live in the WillWrightShowForFood repo
 (`catalogs/soul-city/soul-angel.yml`, `apps/soul-angel/`).
 
-**License: source-available, commercial rights reserved. See [LICENSE.md](LICENSE.md).**
+**License: source-available, commercial rights reserved. See [LICENSE.md](../../LICENSE.md).**
 
 ## What it is
 
@@ -72,7 +72,7 @@ the Prefab lineage are in [`SCREEN-ANGEL.yml`](../../SCREEN-ANGEL.yml).
 | [OUT-OF-GAME-JOBS.yml](OUT-OF-GAME-JOBS.yml) | A Sim goes to work and work is a different game: the egg she leaves behind, the outcome that comes back, and the rabbit hole with something playable in it |
 | [SOUL-EMIGRATION.yml](SOUL-EMIGRATION.yml) | How a soul leaves a game and lands in a better one; object packs and why they are never the headline |
 | [`../../SCREEN-ANGEL.yml`](../../SCREEN-ANGEL.yml) | **The app this module lives in** — selectors and events over accessibility APIs plus pixel recognition, harvested from 2013–2026 with sources. Start at [`../../README.md`](../../README.md) for the full spec map |
-| [LICENSE.md](LICENSE.md) | Source-available terms — build on it, plug into it; commercial rights reserved |
+| [LICENSE.md](../../LICENSE.md) | Source-available terms — build on it, plug into it; commercial rights reserved |
 
 ## Subsumed: stream-gateway
 

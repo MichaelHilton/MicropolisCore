@@ -7,7 +7,7 @@ MediaWiki table of contents was removed. Source: github.com/SimHacker/jquery-pie
 
 *Why it's here: the pie menus were the thing Don actually built on top of the transparent
 overlay in 2013. aQuery was the layer that would have let them read their contents out of live
-applications. See [`../AQUERY.yml`](../AQUERY.yml) and [`2013-email-thread.md`](2013-email-thread.md).*
+applications. See [`../SCREEN-ANGEL.yml`](../SCREEN-ANGEL.yml) and [`2013-email-thread.md`](2013-email-thread.md).*
 
 ---
 

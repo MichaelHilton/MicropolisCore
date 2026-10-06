@@ -13,7 +13,7 @@ It centers the unified `micropolis` CLI and the modules it exposes: save files, 
 
 ## Current CLI
 
-From `MicropolisCore/micropolis`:
+From `MicropolisCore/apps/micropolis`:
 
 ```bash
 pnpm run micropolis -- city info ../../content/micropolis/cities/scenario_tokyo.cty
@@ -34,7 +34,7 @@ pnpm run micropolis -- bus propose city.generate-random --actor llm --reason "st
 - `apps/micropolis/cli/meta/`: `about` and `api` self-description.
 - `apps/micropolis/src/lib/wasm/`: browser/node WASM loaders and shared heap/callback helpers.
 - `apps/micropolis/src/lib/MicropolisReactive.svelte.ts`: current reactive bridge.
-- `apps/micropolis/src/lib/*TileRenderer.ts`: WebGL current renderer, Canvas/WebGPU retained work-in-progress renderers.
+- `packages/tile-renderer/src/*TileRenderer.ts`: WebGL current renderer, Canvas/WebGPU retained work-in-progress renderers.
 - `documentation/designs/renderer-plugin-roadmap.md`: renderer plugin, client-rendered previews, and headless-browser batch rendering direction.
 
 ## Status

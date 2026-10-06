@@ -6,9 +6,9 @@
 > marked with `TODO(virtual-cursor)` comments in `PieMenu.svelte`, `TileView.svelte`,
 > and `routes/+layout.svelte`.
 
-**Design spec:** [`documentation/designs/virtual-cursor-layer.md`](../../../../documentation/designs/virtual-cursor-layer.md)
-· Pie consumer: [`virtual-pointer-and-pie-cursors.md`](../../../../documentation/designs/virtual-pointer-and-pie-cursors.md)
-· Compositing: [`map-compositing-and-measurement.md`](../../../../documentation/designs/map-compositing-and-measurement.md)
+**Design spec:** [`documentation/designs/virtual-cursor-layer.md`](../../../../../documentation/designs/virtual-cursor-layer.md)
+· Pie consumer: [`virtual-pointer-and-pie-cursors.md`](../../../../../documentation/designs/virtual-pointer-and-pie-cursors.md)
+· Compositing: [`map-compositing-and-measurement.md`](../../../../../documentation/designs/map-compositing-and-measurement.md)
 
 ## The idea
 

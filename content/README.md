@@ -8,7 +8,7 @@ that points into `micropolis/`, `vitamoo/` (e.g. **`sims-demo`** exchange + asse
 
 | Path | Purpose |
 |------|---------|
-| **`micropolis/`** | Bundled sim assets: **`cities/`** (.cty saves), **`data/`** (XML/strings), **`images/`**, **`sounds/`**, **`tilesets/`** — consumed by the WASM preload, CLI samples, and archived OpenLaszlo under **`documentation/openlaszlo-micropolis/`**. |
+| **`micropolis/`** | Bundled sim assets: **`cities/`** (.cty saves), **`data/`** (XML/strings), **`images/`**, **`sounds/`**, **`tilesets/`** — consumed by the WASM preload, CLI samples, and archived OpenLaszlo under **`documentation/openlaszlo/`**. |
 | **`vitamoo/`** | VitaMoo-facing packs: e.g. **`sims-demo/`** (exchange JSON + sample meshes/textures); the VitaMooSpace app serves this tree via **`apps/vitamoospace/static/data`** (symlink). Use a googlable project name; avoid trademarked franchise names in paths and public URLs. |
 | **`yoot/`** | Tower-vertical empire lineage: scenarios, plug-in/tower-kit-style manifests, fictionalized assets—named for **Yoot** as creator umbrella (not Maxis/EA/other retail marks). See `content/yoot/README.md`. |
 | **`shared/`** | Branding, legal, i18n, or hub copy used by more than one vertical. |

@@ -1,12 +1,12 @@
 # Micropolis CLI
 
-One CLI exposes the Micropolis modules for humans, scripts, terminal agents, and external tools.
+One CLI exposes the Micropolis modules for humans, scripts, terminal agents, and external tools. Run it from `apps/micropolis/` (pnpm runs scripts from the package directory, so paths are relative to it).
 
 ```bash
 pnpm run micropolis -- about --format yaml
 pnpm run micropolis -- api --format yaml
-pnpm run micropolis -- city info ../../../content/micropolis/cities/haight.cty --format yaml
-pnpm run micropolis -- city export ../../../content/micropolis/cities/haight.cty --include-map --format csv
+pnpm run micropolis -- city info ../../content/micropolis/cities/haight.cty --format yaml
+pnpm run micropolis -- city export ../../content/micropolis/cities/haight.cty --include-map --format csv
 pnpm run micropolis -- sim smoke --ticks 10 --format yaml
 pnpm run micropolis -- bus list --format yaml
 ```

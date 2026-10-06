@@ -8,6 +8,10 @@ This plan is written to be executed **one step at a time** by an agent. Each
 step has a goal, the files it touches, instructions, acceptance criteria, and
 a commit message.
 
+**Status:** Steps 0–19 are done (see `git log -- apps/micropolis-mac`). Step 20
+(packaging `Micropolis.app`) is next. For how to build, run and test the app as
+it is today, see [README.md](README.md).
+
 ---
 
 ## Setup
@@ -62,6 +66,7 @@ packages/micropolis-engine/
 
 apps/micropolis-mac/
   Package.swift                 # NEW: Swift package for the app
+  README.md                     # build, run, layout
   PLAN.md                       # this file
   scripts/sync-resources.sh     # copies art/cities/sounds into Resources/
   scripts/make-app.sh           # assembles Micropolis.app

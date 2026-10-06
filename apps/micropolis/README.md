@@ -29,22 +29,24 @@ See the root **`README.md`** for Emscripten SDK setup.
 
 ## Developing
 
-Install dependencies from the repo root (or **`cd apps/micropolis`** if you already ran **`pnpm install`** at root):
+After **`pnpm install`** at the repo root:
 
 ```bash
 cd apps/micropolis
-pnpm install
-pnpm run dev
+pnpm run dev:vite       # Vite only, uses the committed WASM in src/lib/
+pnpm run dev            # Vite + rebuild the engine whenever packages/micropolis-engine/src changes (needs Emscripten)
 
-# or start the server and open the app in a new browser tab
-pnpm run dev -- --open
+# open the app in a new browser tab
+pnpm run dev:vite -- --open
 ```
+
+The game is at **`/play/micropolis`**; **`/`** is a hub page.
 
 The Vite config copies the generated `.wasm` and `.data` files into the served/build output so the browser can load them.
 
 ## Building
 
-Production build (SvelteKit prerender; **`prebuild`** refreshes WASM):
+Production build (SvelteKit prerender; **`prebuild`** rebuilds the WASM engine, so Emscripten must be on `PATH`):
 
 ```bash
 pnpm run build
@@ -145,29 +147,23 @@ model.)
 
 ### Routing
 
-- **Root Page (`/`):** This is a standard SvelteKit route (`src/routes/+page.svelte`) that directly renders the main `MicropolisView` component. It does not use the markdown content pages.
+- **Hub (`/`):** `src/routes/+page.svelte`, a landing page linking to the playgrounds.
+- **Game (`/play/micropolis`):** `src/routes/play/micropolis/`, renders `MicropolisView`. `/play/sims` is the VitaMoo playground.
+- **Other app routes:** `/all` (all content on one page), `/render` (software map renderer), `/rss` (feed).
 - **Content Pages (`/pages/...`):** All markdown-driven content is served under the `/pages/` path prefix.
 - **Dynamic Route:** A single generic dynamic route `src/routes/pages/[...path]/` handles all content pages.
-- **Server Logic (`+page.server.js`):** The server load function for this route:
+- **Server Logic (`+page.server.ts`):** The server load function for this route:
     - Parses the `params.path` array.
     - Uses helpers from `navigationTree.ts` (`findNodeByUrl`) to locate the corresponding node in the site structure.
-    - Uses the `contentSlug` from the node and helpers from `markdownContent.js` (`getContentFilePath`, `readContentFile`) to read the `.md` and render it to HTML.
+    - Uses the `contentSlug` from the node and helpers from `markdownContent.js` (`getContentFilePath`, `readContentFile`) to read the `README.md` and render it to HTML.
     - Passes the navigation node data and the rendered HTML (`pageContent`) to the page component.
     - Includes an `entries()` function that uses `getPrerenderEntries` from `navigationTree.ts` to tell SvelteKit which content pages to prerender during the build.
 - **Page Component (`+page.svelte`):** The generic page component:
-    - Receives the `node` and `pageContent` data.
-    - Renders the page title from `node.title`.
-    - Renders the sub-navigation dynamically if `node.children` exists.
+    - Receives `title`, `header`, `description`, `children`, `fullPath`, and `pageContent`.
+    - Renders the page title and sub-navigation (from `children`).
     - Renders the raw `pageContent` using `{@html ...}`.
 - **Other Routes:** Standard SvelteKit routes (e.g., `/login`, `/admin`) can be created at the root level without conflicting with the `/pages/[...path]` catch-all.
 
-### (Future) Svelte Component Injection / typed blocks
+### (Future) Svelte components in Markdown
 
-- **Concept:** Embed interactive Svelte components inside Markdown content — the federation goal (see `FEDERATION.md` / `PRIOR-ART.md`). The intended approach is the mdsvex / typed-fenced-block pattern used by donhopkins.com (e.g. ` ```chart ` → a component), rather than HTML-comment markers.
-- **Status:** Not yet implemented in this app. The old `<!-- SVELTE_COMPONENT:Name -->` marker + `readAndParseContentFile` approach was removed with Jekyll; it will be reintroduced via the shared content package.
-- **Page Rendering:** The generic `src/routes/pages/[...path]/+page.svelte` has commented-out logic and a component registry (`injectableRegistry`) to render this array, using `{@html}` for HTML parts and `<svelte:component>` for component parts.
-- **Current Status:** **Disabled by default.** The server `load` function currently calls `readContentFile` (loading raw HTML) and returns `isParsed: false`. Component injection is **not active**.
-- **Enabling (Future):** To enable this for a specific page, you would need to:
-    1.  Add metadata (e.g., `injectComponents: true`) to the page's node in `navigationTree.js`.
-    2.  Modify the `load` function in `src/routes/pages/[...path]/+page.server.js` to check this metadata and call `readAndParseContentFile` instead of `readContentFile`, returning `isParsed: true`.
-    3.  Ensure the required Svelte components are registered in `injectableRegistry` in `src/routes/pages/[...path]/+page.svelte`.
+Not implemented. The plan is to embed interactive Svelte components in Markdown content using the mdsvex / typed-fenced-block pattern from donhopkins.com (e.g. ` ```chart ` → a component). The old `<!-- SVELTE_COMPONENT:Name -->` marker approach was removed with Jekyll.

@@ -2,7 +2,7 @@
 
 **Open source city simulation, based on the original SimCity Classic by Will Wright.**
 
-C++ engine compiled to WebAssembly. Runs in any browser. Runs headless in Node.js. SvelteKit frontend with WebGL tile rendering. CLI tools for city file analysis and editing.
+C++ engine compiled to WebAssembly. Runs in any browser. Runs headless in Node.js. SvelteKit frontend with WebGL tile rendering. CLI tools for city file analysis and editing. A native SwiftUI macOS app built on the same engine.
 
 **Live demo:** [micropolisweb.com](https://micropolisweb.com)
 
@@ -27,41 +27,45 @@ This repo, MicropolisCore, is the C++ simulation engine extracted from the full 
 ## Architecture
 
 ```
-packages/micropolis-engine/   C++ simulation core (makefile + Emscripten → WASM)
-  src/
-    micropolis.h           Main engine header
-    micropolis.cpp         Core simulation
-    emscripten.cpp         Embind bindings for JS/WASM
-    fileio.cpp             Save/load (.cty files)
-    simulate.cpp           Simulation loop
-    zone.cpp, traffic.cpp, power.cpp, budget.cpp, ...
+packages/
+  micropolis-engine/       C++ simulation core, shared by every front end
+    src/                   Engine sources (micropolis.h, simulate.cpp, zone.cpp, traffic.cpp, ...)
+      emscripten.cpp       Embind bindings for JS/WASM
+    makefile               Emscripten build → micropolisengine.{js,wasm,data}
+    native/                Plain C API (micropolis_c.h) for native hosts
+    Package.swift          SwiftPM library "MicropolisEngine" (src/ + native/, no Emscripten)
+  tile-renderer/           Map tile renderers (Canvas 2D, WebGL2, WebGPU, software)
+  render-core/             Shared viewport, holodeck plugins, WebGPU compositor shell
+  vitamoo/                 Sims 1 animation core: CMX/SKN/CFP parsers, skeletons, IFF/FAR I/O
+  mooshow/                 WebGPU stage, camera, picking for VitaMoo
+  sims-io/                 Sims file-format I/O (TypeScript)
+  optical-codec/           Optical-channel reader and test bench for Screen Angel
 
-apps/screen-angel/         Screen Angel — selectors, events and recognition over any app's
+apps/
+  micropolis/              SvelteKit web app (the micropolisweb.com site)
+    src/lib/
+      wasm/                Browser/Node WASM loaders and heap helpers
+      MicropolisReactive.svelte.ts  Reactive engine bridge
+      MicropolisSimulator.ts        WASM engine wrapper
+      TileView.svelte      Map display component
+      micropolisengine.*   Committed WASM build output
+    src/routes/            Hub (/), game (/play/micropolis), content pages (/pages/...)
+    cli/                   `micropolis` CLI (city files, visualization, headless sim, command bus)
+    website/pages/         Markdown content pages
+  micropolis-mac/          Native macOS app (SwiftUI) on the shared C++ engine
+  vitamoospace/            SvelteKit VitaMoo character demo (WebGPU)
+  screen-angel/            Screen Angel: selectors, events and recognition over any app's
                            interface, in a transparent click-through Electron overlay
-                           (source-available, see apps/screen-angel/LICENSE.md).
-  modules/soul-angel/      SoulAngel — its first module: DVR, Soul Album, machinima/stream
-                           studio, per-game Soul Bridges.
-    bridges/sims1/         The Sims 1 bridge and Transmogrifier tools.
+                           (source-available, see apps/screen-angel/LICENSE.md)
+    modules/soul-angel/    Its first module, with per-game Soul Bridges (bridges/sims1/)
+  yoot/                    Placeholder for a future tower-sim app
 
-apps/micropolis/           SvelteKit application
-  src/lib/
-    wasm/                  Browser/Node WASM loaders and heap helpers
-    i18n/                  Translation-key helpers for UI-facing metadata
-    MicropolisReactive.svelte.ts Reactive engine bridge
-    TileView.svelte        Map display component
-packages/tile-renderer/    Shared tile renderers (Canvas 2D, WebGL2, WebGPU, software)
-    MicropolisSimulator.ts WASM engine wrapper
-  cli/
-    entry.ts               Unified CLI entrypoint
-    city/                  Save-file analysis/editing modules
-    wasm/                  Headless WASM simulator commands
-    bus/                   Command-bus CLI commands
-    lib/format.ts          JSON/YAML/CSV output helpers
-    constants/             Tile definitions, world constants
-
-content/micropolis/        Sim bundled assets (`cities/`, `data/`, `images/`, `sounds/`, `tilesets/`)
-  cities/                  Save files (.cty) including all 8 scenarios
+content/                   Shared assets (see content/README.md)
+  micropolis/              cities/ (.cty saves incl. all 8 scenarios), data/, images/, sounds/, tilesets/
+  vitamoo/                 Sims demo assets
 documentation/             Manuals, talks, notes, designs, historical archives (see documentation/README.md)
+skills/                    Agent skills for the Micropolis CLI and command bus
+scripts/                   Repo checks (monorepo structure, documentation links)
 ```
 
 ### Reactive Bridge
@@ -283,7 +287,7 @@ You need:
 - Git.
 - Python 3.
 - GNU Make.
-- Emscripten SDK (`emcc`, `em++`, `emar`) for rebuilding the C++ engine to WebAssembly.
+- Emscripten SDK (`emcc`, `em++`, `emar`) for rebuilding the C++ engine to WebAssembly. The built engine (`micropolisengine.{js,wasm,data}`) is committed in `apps/micropolis/src/lib/`, so the CLI, tests, and `pnpm --filter micropolis run dev:vite` work without it.
 
 On macOS, install the basic native tools first:
 
@@ -365,7 +369,7 @@ From the **MicropolisCore** repository root (monorepo):
 ```bash
 pnpm install
 pnpm --filter micropolis dev    # Development server
-pnpm --filter micropolis build  # Production build (includes Jekyll step as configured)
+pnpm --filter micropolis build  # Production build (rebuilds the WASM engine first)
 ```
 
 The Vite config copies `micropolisengine.wasm` and `micropolisengine.data` from `src/lib/` into the app build output so the browser can load them.
@@ -412,6 +416,19 @@ pnpm --filter micropolis dev
 ```
 
 For Soul City-style development with MOOLLM, follow **Soul City setup (Cursor + MOOLLM)** at the top of this section before or alongside these steps.
+
+### macOS App
+
+`apps/micropolis-mac/` is a native SwiftUI app that links the C++ engine directly through the SwiftPM package in `packages/micropolis-engine/` (no WebAssembly, no Emscripten). It needs macOS 14+ and Xcode with Swift 5.9 or later.
+
+```bash
+cd apps/micropolis-mac
+scripts/sync-resources.sh   # copy tiles, sprites, cities and sounds into Sources/MicropolisMac/Resources/
+swift run MicropolisMac     # build and launch
+swift test                  # engine wrapper and app tests
+```
+
+See [apps/micropolis-mac/README.md](apps/micropolis-mac/README.md).
 
 ## Links
 

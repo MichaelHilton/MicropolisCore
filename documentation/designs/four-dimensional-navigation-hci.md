@@ -62,7 +62,7 @@ The framing transfers cleanly to UI: a momentum-scroll *continuing past finger l
 
 ## Ron Reisman, NASA Ames
 
-The phrase Don repeatedly uses — "HCI that saves lives" — is Ron Reisman's framing of ATC user interface work. From Don's writing (also in the [chat-transcript](chat-transcript.txt) at L5132):
+The phrase Don repeatedly uses — "HCI that saves lives" — is Ron Reisman's framing of ATC user interface work. From Don's writing:
 
 > Mouse movement and gesture design is "three dimensional navigation" in the same sense that air traffic control involves "four dimensional navigation" (which I heard of from NASA AMES researcher Ron Reisman, who said he could bring a Cray to its knees calculating the envelope of velocity, longitude, latitude, and altitude over time to use the least amount of fuel and optimize time — and help optimize the work and attention of air traffic controllers — REAL IMPORTANT HCI THAT SAVES LIVES).
 

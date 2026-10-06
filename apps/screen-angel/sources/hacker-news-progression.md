@@ -3,7 +3,7 @@
 Eighteen comments contain the word "aQuery". All of them are Don's — nobody else on Hacker News
 has ever used the word. He posted the idea repeatedly over ten years, adding something each
 time and never writing the code. This table records what each post contributed that the
-previous ones did not, so the design in [`../AQUERY.yml`](../AQUERY.yml) can state each idea
+previous ones did not, so the design in [`../SCREEN-ANGEL.yml`](../SCREEN-ANGEL.yml) can state each idea
 once and point back here for provenance.
 
 Six further comments discuss Prefab without naming aQuery; they are listed at the end.
@@ -19,7 +19,7 @@ Six further comments discuss Prefab without naming aQuery; they are listed at th
 | 2017-03-08 | [13817649](https://news.ycombinator.com/item?id=13817649) | The Unix-Haters Handbook | Reframes aQuery as the answer to "how should you design a programmable window manager today," chained to the NeWS/X11 history. First time the hidden-WebView prototype story enters the Hacker News record. |
 | 2017-04-24 | [14182061](https://news.ycombinator.com/item?id=14182061) | Show HN: Stack, tiling WM for Windows | Fullest Prefab bibliography with abstracts. Hopgood's *Methodology of Window Management*. Clearest scope statement: "programming window management, accessibility, screen scraping, pattern recognition and automation in JavaScript." |
 | 2017-09-12 | [15227953](https://news.ycombinator.com/item?id=15227953) | A font to make sparklines in seconds | A name-drop, but with a new application: sonifying a graph for a screen reader, pitch proportional to value. |
-| 2017-09-25 | [15327767](https://news.ycombinator.com/item?id=15327767) | X and NeWS history | **The tightest definition he ever wrote** — quoted at the top of `AQUERY.yml`. Frames Dixon and Fogarty as proof that pixel-based deconstruction works and needs marrying to platform accessibility APIs through a scripting language. |
+| 2017-09-25 | [15327767](https://news.ycombinator.com/item?id=15327767) | X and NeWS history | **The tightest definition he ever wrote** — quoted at the top of `SCREEN-ANGEL.yml`. Frames Dixon and Fogarty as proof that pixel-based deconstruction works and needs marrying to platform accessibility APIs through a scripting language. |
 | 2017-09-25 | [15327997](https://news.ycombinator.com/item?id=15327997) | X and NeWS history | **The most technical post.** A platform-independent selector language implemented natively like `querySelector`; the pattern engine sending asynchronous events back to JavaScript; handlers bound to pixel patterns *and* accessibility patterns for objects that don't exist yet; using the cheap native API to narrow which pixels are worth scraping; wrapping a recognized YouTube player in an abstract VideoPlayer widget; PhoneGap/Cordova and NativeScript as native-bridge precedent. |
 | 2018-05-18 | [17105728](https://news.ycombinator.com/item?id=17105728) | Pie Menus: A 30-Year Retrospective | Repositions aQuery as accessibility infrastructure rather than window-manager plumbing. The payoff he names is integrating Dasher deeply enough to drive real applications, for people with limited motion. |
 | 2018-12-31 | [18797587](https://news.ycombinator.com/item?id=18797587) | Show HN: Autumn, a macOS window manager | **Dates the prototype and admits its fate.** Slate issue opened June 2013; Slate's last commit was February 2013; no feedback; abandoned. "It actually worked!" |

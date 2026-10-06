@@ -117,7 +117,7 @@ This is missing from stroke recognisers (you never see the "decision boundary" b
 
 ## Number of items per ring matters
 
-From a different part of the [chat transcript](chat-transcript.txt) (also in Don's Medium writing): the *number* of items in a ring controls how learnable the ring is.
+From Don's Medium writing: the *number* of items in a ring controls how learnable the ring is.
 
 | Items | Mental framework available |
 |---|---|
