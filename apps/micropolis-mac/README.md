@@ -1,8 +1,7 @@
 # Micropolis for macOS
 
-A native SwiftUI app that runs the same C++ simulation engine as the web app,
-compiled natively rather than to WebAssembly. The engine is shared, not forked:
-the web build is unchanged.
+A native SwiftUI app built directly on the Micropolis C++ simulation engine.
+(The WebAssembly build and web app live on the `main` branch.)
 
 ## Requirements
 
@@ -20,7 +19,7 @@ swift run MicropolisMac
 ```
 
 `sync-resources.sh` copies the classic tile atlas and sprite sheets
-(`apps/micropolis/src/lib/images/tilesets/`), the city files
+(`content/micropolis/tilesets/png/`), the city files
 (`content/micropolis/cities/`), and the sounds (`content/micropolis/sounds/`)
 into `Sources/MicropolisMac/Resources/`. That directory is gitignored, and the
 build fails without it.
@@ -40,7 +39,7 @@ messages, budget, and line drawing.
 
 ```
 packages/micropolis-engine/
-  Package.swift                 SwiftPM library "MicropolisEngine": src/ + native/, minus emscripten.cpp
+  Package.swift                 SwiftPM library "MicropolisEngine": src/ + native/
   native/include/micropolis_c.h Plain C API, the only header Swift sees
   native/micropolis_c.cpp       C API implementation and the callback bridge
 
@@ -63,10 +62,10 @@ and a C header with plain types imports cleanly without interop flags.
 
 ## Engine changes
 
-Simulation logic in `packages/micropolis-engine/src/*.cpp` is shared with the
-web app. Native glue belongs in `packages/micropolis-engine/native/`. Any edit to
-engine sources must leave the Emscripten build seeing exactly the code it saw
-before (guard with `#if defined(__EMSCRIPTEN__)`).
+Native glue belongs in `packages/micropolis-engine/native/`. The engine sources
+in `packages/micropolis-engine/src/` still carry their `__EMSCRIPTEN__` guards
+and stand-ins; keep them so changes stay easy to share with the web build on
+`main`.
 
 ## Status
 

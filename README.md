@@ -2,7 +2,7 @@
 
 **Open source city simulation, based on the original SimCity Classic by Will Wright.**
 
-C++ engine compiled to WebAssembly. Runs in any browser. Runs headless in Node.js. SvelteKit frontend with WebGL tile rendering. CLI tools for city file analysis and editing. A native SwiftUI macOS app built on the same engine.
+Native macOS app in SwiftUI, built directly on the C++ simulation engine.
 
 **Live demo:** [micropolisweb.com](https://micropolisweb.com)
 
@@ -22,102 +22,29 @@ Full email thread: [documentation/designs/jeff-braun-toho-godzilla-email-2024-02
 
 At the time, "Micropolis" was also the name of a hard disk drive manufacturer. They eventually changed names and went out of business, but the company was recently restructured as [Micropolis GmbH](https://www.micropolis.com). The owner is an old school hacker who was generous enough to grant the [Micropolis Public Name License](MicropolisPublicNameLicense.md), which allows the game to use the name Micropolis under reasonable conditions. Many thanks to Micropolis GmbH for this courtesy -- check out their [BBS primer](https://www.micropolis.com/micropolis-bbs-primer), [robotics primer](https://www.micropolis.com/micropolis-robotics-primer), and [data storage primer](https://www.micropolis.com/micropolis-data-storage-primer).
 
-This repo, MicropolisCore, is the C++ simulation engine extracted from the full [micropolis repo](https://github.com/SimHacker/micropolis), stripped down, cleaned up, compiled to WebAssembly with Emscripten/Embind, and wrapped in a modern SvelteKit web application.
+This repo, MicropolisCore, is the C++ simulation engine extracted from the full [micropolis repo](https://github.com/SimHacker/micropolis), stripped down, cleaned up, and wrapped in a native SwiftUI app for macOS. (The WebAssembly build and SvelteKit web app live on the `main` branch.)
 
 ## Architecture
 
 ```
-packages/
-  micropolis-engine/       C++ simulation core, shared by every front end
-    src/                   Engine sources (micropolis.h, simulate.cpp, zone.cpp, traffic.cpp, ...)
-      emscripten.cpp       Embind bindings for JS/WASM
-    makefile               Emscripten build → micropolisengine.{js,wasm,data}
-    native/                Plain C API (micropolis_c.h) for native hosts
-    Package.swift          SwiftPM library "MicropolisEngine" (src/ + native/, no Emscripten)
-  tile-renderer/           Map tile renderers (Canvas 2D, WebGL2, WebGPU, software)
-  render-core/             Shared viewport, holodeck plugins, WebGPU compositor shell
-  vitamoo/                 Sims 1 animation core: CMX/SKN/CFP parsers, skeletons, IFF/FAR I/O
-  mooshow/                 WebGPU stage, camera, picking for VitaMoo
-  sims-io/                 Sims file-format I/O (TypeScript)
-  optical-codec/           Optical-channel reader and test bench for Screen Angel
+packages/micropolis-engine/      C++ simulation core, built as the SwiftPM library "MicropolisEngine"
+  Package.swift
+  src/                           Engine sources (micropolis.cpp, simulate.cpp, zone.cpp, traffic.cpp, ...)
+  native/include/micropolis_c.h  Plain C API, the only header Swift sees
+  native/micropolis_c.cpp        C API implementation and the engine callback bridge
 
-apps/
-  micropolis/              SvelteKit web app (the micropolisweb.com site)
-    src/lib/
-      wasm/                Browser/Node WASM loaders and heap helpers
-      MicropolisReactive.svelte.ts  Reactive engine bridge
-      MicropolisSimulator.ts        WASM engine wrapper
-      TileView.svelte      Map display component
-      micropolisengine.*   Committed WASM build output
-    src/routes/            Hub (/), game (/play/micropolis), content pages (/pages/...)
-    cli/                   `micropolis` CLI (city files, visualization, headless sim, command bus)
-    website/pages/         Markdown content pages
-  micropolis-mac/          Native macOS app (SwiftUI) on the shared C++ engine
-  vitamoospace/            SvelteKit VitaMoo character demo (WebGPU)
-  screen-angel/            Screen Angel: selectors, events and recognition over any app's
-                           interface, in a transparent click-through Electron overlay
-                           (source-available, see apps/screen-angel/LICENSE.md)
-    modules/soul-angel/    Its first module, with per-game Soul Bridges (bridges/sims1/)
-  yoot/                    Placeholder for a future tower-sim app
+apps/micropolis-mac/             Native macOS app (SwiftUI, macOS 14+)
+  Package.swift
+  scripts/sync-resources.sh      Copies game assets from content/ into Sources/MicropolisMac/Resources/
+  Sources/MicropolisKit/         Swift wrapper around the C API (Engine, EngineDelegate); no UI
+  Sources/MicropolisMac/         SwiftUI app: windows, menus, map rendering, tools, budget, sound
+  Tests/                         XCTest (MicropolisKitTests) and Swift Testing (MicropolisMacTests)
 
-content/                   Shared assets (see content/README.md)
-  micropolis/              cities/ (.cty saves incl. all 8 scenarios), data/, images/, sounds/, tilesets/
-  vitamoo/                 Sims demo assets
-documentation/             Manuals, talks, notes, designs, historical archives (see documentation/README.md)
-skills/                    Agent skills for the Micropolis CLI and command bus
-scripts/                   Repo checks (monorepo structure, documentation links)
+content/micropolis/              Game assets: cities/ (.cty, including all 8 scenarios), sounds/, tilesets/
+documentation/                   Manuals, talks, notes, designs, historical archives (see documentation/README.md)
 ```
 
-### Reactive Bridge
-
-The WASM engine talks to the Svelte UI through a callback chain:
-
-```
-C++ Micropolis Core (WASM)
-    calls callback
-Embind JSCallback Wrapper
-    delegates
-MicropolisReactive.engineCallback
-    updates
-$state / $derived Runes
-    triggers
-Svelte 5 Runtime
-    updates DOM
-UI Components + WebGL Renderer
-```
-
-## CLI Tool
-
-The `micropolis` CLI reads, analyzes, visualizes, edits, and patches `.cty` save files, runs the WASM simulator headlessly, and exposes the command bus.
-
-Run from the `apps/micropolis/` package directory after `pnpm install` at the repo root (or prefix with `pnpm --filter micropolis run` from the MicropolisCore root).
-
-```bash
-cd apps/micropolis
-
-# City information and analysis (paths relative to this directory)
-pnpm run micropolis -- city info ../../content/micropolis/cities/scenario_tokyo.cty
-pnpm run micropolis -- city analyze ../../content/micropolis/cities/scenario_boston.cty
-pnpm run micropolis -- city analyze --format json ../../content/micropolis/cities/radial.cty
-
-# Visualize as ASCII, emoji, or monospace
-pnpm run micropolis -- visualize ascii --row 20 --col 30 --width 30 --height 15 ../../content/micropolis/cities/scenario_tokyo.cty
-pnpm run micropolis -- visualize emoji ../../content/micropolis/cities/radial.cty
-
-# Edit city metadata
-pnpm run micropolis -- city edit city.cty --funds 50000 --tax 9 --year 1960
-
-# Patch scenario files with the values the engine injects at runtime
-pnpm run micropolis -- city patch-scenario ../../content/micropolis/cities/scenario_tokyo.cty --dry-run
-
-# Export to JSON (with optional tile map data)
-pnpm run micropolis -- city export --format json --include-map city.cty
-
-# Pipe from stdin
-cat city.cty | pnpm run micropolis -- city info -
-```
-
-Full test suite and command reference: [documentation/notes/micropolis-js-tests.md](documentation/notes/micropolis-js-tests.md)
+The app links the C++ engine directly. Swift calls the C API in `micropolis_c.h`, and engine callbacks (messages, sounds, map changes) come back through `EngineDelegate`.
 
 ## Soul City: The Vision
 
@@ -228,7 +155,7 @@ The full MOOLLM skill registry: [121 skills](https://github.com/SimHacker/moollm
 | 2008 | **Micropolis** (Don Hopkins, OLPC) | Open source GPL-3, constructionist education |
 | 2010 | **MediaGraph** (Don Hopkins, Stupid Fun Club) | Unity3D music navigation with pie menus, roads, and CA, collaboration with Will Wright |
 | 2011 | **Bar Karma / Storymaker / Urban Safari** (Don Hopkins, SFC) | Branching narrative as spatial graph -- multi-user storytelling server + apps + geo storytelling on maps |
-| Now | **MicropolisCore** | C++/WASM, SvelteKit, WebGL, CLI tools, MOOLLM AI tutors |
+| Now | **MicropolisCore** | C++ engine, native SwiftUI macOS app |
 
 ### Related Research
 
@@ -252,183 +179,28 @@ His key trick: recursive weight-sharing in fractal convolutional blocks, where e
 
 ## Building
 
-### Soul City setup (Cursor + MOOLLM)
-
-**Soul City** ties this repository to [MOOLLM](https://github.com/SimHacker/moollm) — the microworld skill framework where the **micropolis** skill, AI tutors, and related designs live. To work across engine code, the SvelteKit app, and MOOLLM skills in one flow:
-
-1. **Check out MOOLLM and MicropolisCore in the same directory** (sibling folders under one parent, e.g. `~/Developer/` or `~/src/`):
-
-   ```bash
-   mkdir -p ~/Developer && cd ~/Developer
-   git clone https://github.com/SimHacker/MicropolisCore.git
-   git clone https://github.com/SimHacker/moollm.git
-   ```
-
-   Keeping them side-by-side makes paths predictable and matches how multi-root workspaces list folders.
-
-2. **Add both repositories to your Cursor workspace** — and any other related checkouts you use (e.g. SimObliterator Suite for VitaMoo, design-only repos): use **File → Add Folder to Workspace…** (or your OS equivalent) and include each repo root, or open a multi-root `.code-workspace` file that lists those paths. Cursor can index and search across all of them together.
-
-3. **Follow MOOLLM’s setup and install instructions first** (clone is already done if you used step 1):
-
-   - [MOOLLM README — Quick Start](https://github.com/SimHacker/moollm#quick-start)
-   - [MOOLLM QUICKSTART.md](https://github.com/SimHacker/moollm/blob/main/QUICKSTART.md) — open the repo in Cursor and wait until **Settings → Cursor Settings → Indexing → Codebase Indexing** reaches **100%**, as in MOOLLM’s quickstart.
-
-4. **Then** install and build MicropolisCore using the prerequisites and commands below (Emscripten, `pnpm`, WASM engine, `micropolis` app).
-
-Using the same layout with **other AI coding tools** (for example **Claude Code**) is plausible so both trees stay in context, but that workflow is **not yet tested or documented** here—Cursor + MOOLLM is the supported path today.
-
-MOOLLM does not replace the Node/pnpm toolchain here; it complements this repo for skills, YAML Jazz, and agent orchestration alongside the engine and web app.
-
-### Prerequisites
-
-You need:
-
-- Node.js 20+ and [pnpm](https://pnpm.io/installation) (this repo uses `pnpm` at the root; enable Corepack with `corepack enable` if you use the version pinned in the root `package.json`).
-- Git.
-- Python 3.
-- GNU Make.
-- Emscripten SDK (`emcc`, `em++`, `emar`) for rebuilding the C++ engine to WebAssembly. The built engine (`micropolisengine.{js,wasm,data}`) is committed in `apps/micropolis/src/lib/`, so the CLI, tests, and `pnpm --filter micropolis run dev:vite` work without it.
-
-On macOS, install the basic native tools first:
-
-```bash
-xcode-select --install
-```
-
-### Install Emscripten SDK
-
-The engine build uses Emscripten/Embind. If `emcc --version` does not work, install `emsdk`:
-
-```bash
-# Pick a parent directory for developer tools.
-mkdir -p ~/Developer
-cd ~/Developer
-
-git clone https://github.com/emscripten-core/emsdk.git
-cd emsdk
-./emsdk install latest
-./emsdk activate latest
-
-# Activate for the current shell.
-source ./emsdk_env.sh
-emcc --version
-```
-
-To make Emscripten available in future shells, add this to your shell startup file:
-
-```bash
-source ~/Developer/emsdk/emsdk_env.sh
-```
-
-If you prefer not to auto-activate it in every shell, run that `source` command only before rebuilding the engine.
-
-On macOS with Homebrew, this also works:
-
-```bash
-brew install emscripten
-emcc --version
-```
-
-### WASM Engine
-
-The engine is a **pnpm workspace package** (`@micropolis/engine-wasm` in `packages/micropolis-engine/`). It is still built with **GNU make** and **Emscripten** (no CMake). A normal **`pnpm --filter micropolis run build`** runs **`prebuild`**, which invokes **`pnpm --filter @micropolis/engine-wasm run build`** → **`make install`** in that directory.
-
-To rebuild the engine only:
-
-```bash
-cd packages/micropolis-engine
-make clean install
-```
-
-Or from the repo root:
-
-```bash
-pnpm --filter @micropolis/engine-wasm run build
-```
-
-`make install` builds the C++ engine and copies these generated artifacts into `apps/micropolis/src/lib/`:
-
-```text
-micropolisengine.js
-micropolisengine.wasm
-micropolisengine.data
-```
-
-The checked-in makefile builds the engine for browser, worker, and Node environments:
-
-```text
--s 'ENVIRONMENT=web,worker,node'
-```
-
-Node support is required for `pnpm --filter micropolis run micropolis -- sim ...` (or `cd apps/micropolis && pnpm run micropolis -- sim ...`).
-
-### SvelteKit App
-
-From the **MicropolisCore** repository root (monorepo):
-
-```bash
-pnpm install
-pnpm --filter micropolis dev    # Development server
-pnpm --filter micropolis build  # Production build (rebuilds the WASM engine first)
-```
-
-The Vite config copies `micropolisengine.wasm` and `micropolisengine.data` from `src/lib/` into the app build output so the browser can load them.
-
-### CLI Tool
-
-```bash
-cd apps/micropolis   # or from repo root: pnpm --filter micropolis run micropolis -- ...
-pnpm run micropolis -- --help
-pnpm run micropolis -- about --format yaml
-pnpm run micropolis -- api --format yaml
-```
-
-The CLI is the main terminal surface for city files, visualization, headless WASM simulation, and command-bus operations. It supports text output where useful and structured `json`, `yaml`, and `csv` formats where appropriate.
-
-After rebuilding the engine with Emscripten:
-
-```bash
-cd apps/micropolis
-pnpm run micropolis -- sim info --format yaml
-pnpm run micropolis -- sim smoke --ticks 10 --format yaml
-```
-
-The `sim` branch loads the Emscripten/Embind WASM module in Node, instantiates `Micropolis`, loads a bundled city from the engine data package, runs ticks, and prints structured state. It is the foundation for GitHub Actions replay, command timeline validation, and agent-driven simulations.
-
-### Quick Full Setup
-
-From a fresh clone:
-
-```bash
-# 1. Activate Emscripten.
-source ~/Developer/emsdk/emsdk_env.sh
-
-# 2. Install monorepo dependencies (Micropolis and VitaMooSpace apps, shared packages, VitaMoo libraries, engine workspace stub).
-pnpm install
-
-# 3. Build the C++/WASM engine (requires Emscripten on PATH).
-pnpm --filter @micropolis/engine-wasm run build
-
-# 4. Verify CLI, WASM simulator, and web app (skip step 3 if artifacts are already in apps/micropolis/src/lib/).
-pnpm --filter micropolis run micropolis -- city info ../../content/micropolis/cities/haight.cty
-pnpm --filter micropolis run micropolis -- sim smoke --ticks 1
-pnpm --filter micropolis dev
-```
-
-For Soul City-style development with MOOLLM, follow **Soul City setup (Cursor + MOOLLM)** at the top of this section before or alongside these steps.
-
-### macOS App
-
-`apps/micropolis-mac/` is a native SwiftUI app that links the C++ engine directly through the SwiftPM package in `packages/micropolis-engine/` (no WebAssembly, no Emscripten). It needs macOS 14+ and Xcode with Swift 5.9 or later.
+Requires macOS 14+ and Xcode with Swift 5.9 or later.
 
 ```bash
 cd apps/micropolis-mac
-scripts/sync-resources.sh   # copy tiles, sprites, cities and sounds into Sources/MicropolisMac/Resources/
-swift run MicropolisMac     # build and launch
-swift test                  # engine wrapper and app tests
+scripts/sync-resources.sh   # first time, and whenever content/ changes
+swift run MicropolisMac
 ```
 
-See [apps/micropolis-mac/README.md](apps/micropolis-mac/README.md).
+`sync-resources.sh` copies the city files, sounds, tile atlas and sprite sheets from `content/micropolis/` into `Sources/MicropolisMac/Resources/`. That directory is gitignored, and the build fails without it.
+
+### Tests
+
+```bash
+cd apps/micropolis-mac
+swift test
+```
+
+### C++ API docs
+
+```bash
+doxygen Doxyfile   # generates html/ from packages/micropolis-engine/src
+```
 
 ## Links
 

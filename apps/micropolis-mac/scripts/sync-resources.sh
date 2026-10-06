@@ -17,10 +17,10 @@ mkdir -p "$RESOURCES_DIR/sounds"
 cp "$REPO_ROOT/content/micropolis/cities"/*.cty "$RESOURCES_DIR/cities/"
 
 # Copy tile atlas
-cp "$REPO_ROOT/apps/micropolis/src/lib/images/tilesets/classic.png" "$RESOURCES_DIR/tiles/classic.png"
+cp "$REPO_ROOT/content/micropolis/tilesets/png/classic.png" "$RESOURCES_DIR/tiles/classic.png"
 
 # Copy classic sprite sheets
-cp "$REPO_ROOT/apps/micropolis/src/lib/images/tilesets/classic-sprite-"*.png "$RESOURCES_DIR/sprites/"
+cp "$REPO_ROOT/content/micropolis/tilesets/png/classic-sprite-"*.png "$RESOURCES_DIR/sprites/"
 
 # Copy sounds
 cp "$REPO_ROOT/content/micropolis/sounds"/*.mp3 "$RESOURCES_DIR/sounds/"

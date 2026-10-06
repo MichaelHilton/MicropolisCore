@@ -9,12 +9,7 @@ let package = Package(
         .target(
             name: "MicropolisEngine",
             path: ".",
-            exclude: [
-                "makefile", "package.json", "Package.swift",
-                "src/emscripten.cpp",
-                "src/micropolisengine_lib.js",
-                "src/micropolisengine_template.html",
-            ],
+            exclude: ["Package.swift"],
             sources: ["src", "native"],
             publicHeadersPath: "native/include"
         )
