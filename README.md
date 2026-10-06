@@ -18,11 +18,11 @@ The name "Micropolis" was the original working title Will Wright suggested. EA g
 
 > "Maxis was sued by Toho. We never referred to the name Godzilla, our monster on the box cover was a T-Rex looking character, but... a few magazine reviews called the monster, Godzilla. That was all it took. Toho called it 'confusion in the marketplace'. We paid $50k for Godzilla to go away. In all honesty, Toho liked Maxis, they said $50k was the minimum they take for Godzilla infringement. I doubt you will need to worry about Toho, as long as there are no magazine reviews that call the monster Godzilla."
 
-Full email thread: [documentation/designs/jeff-braun-toho-godzilla-email-2024-02-17.md](documentation/designs/jeff-braun-toho-godzilla-email-2024-02-17.md). Box scans, monster and tornado covers, back, and side panels: [documentation/box-art](documentation/box-art/README.md).
+Full email thread: [jeff-braun-toho-godzilla-email-2024-02-17.md](https://github.com/SimHacker/MicropolisCore/blob/main/documentation/designs/jeff-braun-toho-godzilla-email-2024-02-17.md). Box scans, monster and tornado covers, back, and side panels: [box-art](https://github.com/SimHacker/MicropolisCore/blob/main/documentation/box-art/README.md).
 
 At the time, "Micropolis" was also the name of a hard disk drive manufacturer. They eventually changed names and went out of business, but the company was recently restructured as [Micropolis GmbH](https://www.micropolis.com). The owner is an old school hacker who was generous enough to grant the [Micropolis Public Name License](MicropolisPublicNameLicense.md), which allows the game to use the name Micropolis under reasonable conditions. Many thanks to Micropolis GmbH for this courtesy -- check out their [BBS primer](https://www.micropolis.com/micropolis-bbs-primer), [robotics primer](https://www.micropolis.com/micropolis-robotics-primer), and [data storage primer](https://www.micropolis.com/micropolis-data-storage-primer).
 
-This repo, MicropolisCore, is the C++ simulation engine extracted from the full [micropolis repo](https://github.com/SimHacker/micropolis), stripped down, cleaned up, and wrapped in a native SwiftUI app for macOS. (The WebAssembly build and SvelteKit web app live on the `main` branch.)
+This repo, MicropolisCore, is the C++ simulation engine extracted from the full [micropolis repo](https://github.com/SimHacker/micropolis), stripped down, cleaned up, and wrapped in a native SwiftUI app for macOS. (The WebAssembly build, the SvelteKit web app and the full [documentation archive](https://github.com/SimHacker/MicropolisCore/blob/main/documentation/README.md) — manuals, talks, designs and history — live on the `main` branch.)
 
 ## Architecture
 
@@ -41,7 +41,6 @@ apps/micropolis-mac/             Native macOS app (SwiftUI, macOS 14+)
   Tests/                         XCTest (MicropolisKitTests) and Swift Testing (MicropolisMacTests)
 
 content/micropolis/              Game assets: cities/ (.cty, including all 8 scenarios), sounds/, tilesets/
-documentation/                   Manuals, talks, notes, designs, historical archives (see documentation/README.md)
 ```
 
 The app links the C++ engine directly. Swift calls the C API in `micropolis_c.h`, and engine callbacks (messages, sounds, map changes) come back through `EngineDelegate`.
@@ -148,7 +147,7 @@ The full MOOLLM skill registry: [121 skills](https://github.com/SimHacker/moollm
 |------|---------|-----------|
 | 1989 | **SimCity** (Will Wright) | City as sandbox, emergent systems as toys |
 | 1991 | **HyperLook SimCity** (Don Hopkins, Sun) | NeWS/PostScript networking, axis of eval |
-| 1993 | **SimCityNet** (Don Hopkins, DUX) | [Multiplayer X11/TCL/Tk](https://www.youtube.com/watch?v=_fVl4dGwUrA), demoed at InterCHI '93 Amsterdam — [accepted proposal](documentation/historical/1993-interchi-simcitynet-proposal.md) |
+| 1993 | **SimCityNet** (Don Hopkins, DUX) | [Multiplayer X11/TCL/Tk](https://www.youtube.com/watch?v=_fVl4dGwUrA), demoed at InterCHI '93 Amsterdam — [accepted proposal](https://github.com/SimHacker/MicropolisCore/blob/main/documentation/historical/1993-interchi-simcitynet-proposal.md) |
 | 1995 | **DreamScape** (Don Hopkins, Kaleida ScriptX) | "Nurturing environment," rooms + objects + web, WWDC demo |
 | 2000 | **The Sims** (Will Wright) | Digital dollhouse, nurturing environment for stories |
 | 2008 | **Micropolis** (Don Hopkins, OLPC) | Open source GPL-3, constructionist education |
@@ -195,12 +194,6 @@ cd apps/micropolis-mac
 swift test
 ```
 
-### C++ API docs
-
-```bash
-doxygen Doxyfile   # generates html/ from packages/micropolis-engine/src
-```
-
 ## Links
 
 | Resource | URL |
@@ -216,7 +209,7 @@ doxygen Doxyfile   # generates html/ from packages/micropolis-engine/src
 
 | Resource | URL |
 |----------|-----|
-| **SimCityNet InterCHI '93 Proposal** | [documentation/historical/1993-interchi-simcitynet-proposal.md](documentation/historical/1993-interchi-simcitynet-proposal.md) ([art.net original](http://www.art.net/~hopkins/Don/simcity/simcitynet.html)) |
+| **SimCityNet InterCHI '93 Proposal** | [1993-interchi-simcitynet-proposal.md](https://github.com/SimHacker/MicropolisCore/blob/main/documentation/historical/1993-interchi-simcitynet-proposal.md) ([art.net original](http://www.art.net/~hopkins/Don/simcity/simcitynet.html)) |
 | **SimCityNet Announcement (1993)** | [art.net/~hopkins/Don/simcity](http://www.art.net/~hopkins/Don/simcity/simcity-announcement.html) |
 | **Open Sourcing SimCity** | [donhopkins.medium.com](https://donhopkins.medium.com/open-sourcing-simcity-58470a27) |
 | **DreamScape WWDC 1995** | [donhopkins.medium.com](https://donhopkins.medium.com/1995-apple-world-wide-developers-conference-kaleida-labs-scriptx-demo-64271dd65570) |

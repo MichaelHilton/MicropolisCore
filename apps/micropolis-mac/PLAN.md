@@ -618,7 +618,7 @@ public func apply(_ tool: Tool, x: Int, y: Int) -> ToolResult
 **Instructions**
 - `scripts/make-app.sh`: runs `sync-resources.sh`, then `swift build -c release`, then assembles `build/Micropolis.app/Contents/{MacOS,Resources}`. Copy the executable and the SwiftPM resource bundle (`MicropolisMac_MicropolisMac.bundle` from `.build/release/`) into `Contents/Resources`, because `Bundle.module` looks there in an app bundle. Verify this by launching.
 - Write an `Info.plist` with `CFBundleIdentifier` `org.micropolis.mac`, `CFBundleName` `Micropolis`, `LSMinimumSystemVersion` 14.0, `NSHighResolutionCapable` true, and a `CFBundleDocumentTypes` entry for the `.cty` extension (role Editor).
-- Build an `.icns` from a city icon in `content/micropolis/images` (for example `icon_city.png`) using `sips` and `iconutil`.
+- Build an `.icns` from a city icon (`content/micropolis/images/icon_city.png` on the `main` branch) using `sips` and `iconutil`.
 - Ad-hoc sign it: `codesign --force --deep -s - build/Micropolis.app`.
 - Gitignore `apps/micropolis-mac/build/`.
 - Handle opening a `.cty` file from Finder (`onOpenURL`, or `NSApplicationDelegate` `application(_:open:)`).

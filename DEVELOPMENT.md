@@ -5,7 +5,6 @@
 | Tool | Version | Notes |
 |------|---------|-------|
 | Xcode / Swift | Swift 5.9+, macOS 14+ | Builds the C++ engine and the SwiftUI app through SwiftPM |
-| [Doxygen](https://www.doxygen.nl/) | any | Optional, only for C++ API docs |
 
 No Node, pnpm or Emscripten is needed.
 
@@ -28,7 +27,7 @@ swift test --filter MapViewTests           # one Swift Testing suite
 swift test --enable-code-coverage          # with coverage (llvm-cov)
 ```
 
-`MapRendererTests.performanceFirstUpdate` checks wall-clock time (< 50 ms) and can fail on a busy machine.
+`MapRendererTests.performanceFirstUpdate` checks wall-clock time (< 50 ms in release builds, < 500 ms in debug) and can fail on a busy machine.
 
 ## Repository layout
 
@@ -36,7 +35,4 @@ swift test --enable-code-coverage          # with coverage (llvm-cov)
 apps/micropolis-mac/        SwiftUI app (MicropolisKit wrapper + MicropolisMac app + tests)
 packages/micropolis-engine/ C++ engine as the SwiftPM library "MicropolisEngine"
 content/micropolis/         Cities, sounds and tilesets copied in by sync-resources.sh
-documentation/              Manuals, designs and historical archives
-Doxyfile                    C++ API docs: `doxygen Doxyfile`
-scripts/check-doc-links.py  Checks relative links under documentation/
 ```
