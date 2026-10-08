@@ -116,6 +116,32 @@ final class EngineWrapperTests: XCTestCase {
         XCTAssertGreaterThan(engine.year, yearBefore)
     }
 
+    /// Calls every default directly, including the ones no simulation reaches.
+    func testEveryDefaultDelegateMethodDoesNothing() {
+        let d: EngineDelegate = MinimalDelegate()
+        d.engineDidLoadCity(filename: "x")
+        d.engineDidGenerateMap(seed: 1)
+        d.engineDidTool(name: "road", x: 1, y: 2)
+        d.engineMakeSound(channel: "c", sound: "s", x: 0, y: 0)
+        d.engineSendMessage(index: 1, x: 0, y: 0, picture: false, important: false)
+        d.engineAutoGoto(x: 0, y: 0, message: "m")
+        d.engineShowBudgetAndWait()
+        d.engineShowZoneStatus(category: 1, density: 1, landValue: 1, crime: 1, pollution: 1, growth: 1, x: 0, y: 0)
+        d.engineUpdateDate(year: 1900, month: 1)
+        d.engineUpdateFunds(funds: 1)
+        d.engineUpdateDemand(residential: 0, commercial: 0, industrial: 0)
+        d.engineUpdateCityName(name: "n")
+        d.engineUpdateEvaluation()
+        d.engineUpdateHistory()
+        d.engineUpdateBudget()
+        d.engineUpdatePaused(paused: false)
+        d.engineUpdateSpeed(speed: 1)
+        d.engineUpdateTaxRate(tax: 7)
+        d.engineStartEarthquake(strength: 1)
+        d.engineDidWinGame()
+        d.engineDidLoseGame()
+    }
+
     // MARK: Callbacks
 
     /// The engine's category is a 1-based index into its tile-category list,
