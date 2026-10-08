@@ -18,8 +18,63 @@ public struct Sprite {
     public let yHot: Int
 }
 
-public enum HistoryKind: Int {
-    case residential = 0, commercial = 1, industrial = 2
+public enum HistoryKind: Int, CaseIterable {
+    case residential = 0, commercial, industrial, money, crime, pollution
+}
+
+/// Data layers shown by the map window, one value per tile.
+public enum OverlayKind: Int32, CaseIterable {
+    case population = 0, growth, traffic, pollution, crime, landValue, police, fire, power
+}
+
+public enum Disaster: Int32, CaseIterable {
+    case fire = 0, flood, earthquake, monster, tornado, meltdown, airCrash
+}
+
+public enum GameLevel: Int, CaseIterable {
+    case easy = 0, medium, hard
+}
+
+/// The 8 built-in scenarios, numbered as the engine's Scenario enum.
+public enum Scenario: Int32, CaseIterable {
+    case dullsville = 1, sanFrancisco, hamburg, bern, tokyo, detroit, boston, rio
+}
+
+/// What the evaluation window shows.
+public struct Evaluation: Equatable {
+    public let yes: Int
+    /// Worst problems first: engine problem id and percent of voters.
+    public let problems: [(id: Int, votes: Int)]
+    public let population: Int
+    public let populationDelta: Int
+    public let assessedValue: Int
+    public let cityClass: Int
+    public let gameLevel: Int
+    public let score: Int
+    public let scoreDelta: Int
+
+    public static func == (a: Evaluation, b: Evaluation) -> Bool {
+        a.yes == b.yes && a.problems.map(\.id) == b.problems.map(\.id)
+            && a.problems.map(\.votes) == b.problems.map(\.votes)
+            && a.population == b.population && a.populationDelta == b.populationDelta
+            && a.assessedValue == b.assessedValue && a.cityClass == b.cityClass
+            && a.gameLevel == b.gameLevel && a.score == b.score && a.scoreDelta == b.scoreDelta
+    }
+}
+
+/// This year's tax take and what each department asked for.
+public struct BudgetFigures: Equatable {
+    public let taxesCollected: Int
+    public let roadRequested: Int
+    public let policeRequested: Int
+    public let fireRequested: Int
+
+    public init(taxesCollected: Int, roadRequested: Int, policeRequested: Int, fireRequested: Int) {
+        self.taxesCollected = taxesCollected
+        self.roadRequested = roadRequested
+        self.policeRequested = policeRequested
+        self.fireRequested = fireRequested
+    }
 }
 
 public final class Engine {
@@ -280,8 +335,8 @@ public final class Engine {
         mp_save_city(handle, url.path) != 0
     }
 
-    public func makeDisaster(_ which: Int) {
-        mp_make_disaster(handle, Int32(which))
+    public func makeDisaster(_ disaster: Disaster) {
+        mp_make_disaster(handle, disaster.rawValue)
     }
 
     public func sprites() -> [Sprite] {
@@ -294,5 +349,62 @@ public final class Engine {
         var buffer = [Int16](repeating: 0, count: 480)
         mp_get_history(handle, Int32(kind.rawValue), &buffer)
         return buffer.map { Int($0) }
+    }
+
+    /// One value per tile, column-major (index `x * height + y`) like the map.
+    public func overlay(_ kind: OverlayKind) -> [Int16] {
+        var buffer = [Int16](repeating: 0, count: Engine.width * Engine.height)
+        mp_get_overlay(handle, kind.rawValue, &buffer)
+        return buffer
+    }
+
+    public func evaluation() -> Evaluation {
+        var e = MPEvaluation()
+        mp_get_evaluation(handle, &e)
+        let ids = [e.problems.0, e.problems.1, e.problems.2, e.problems.3]
+        let votes = [e.problemVotes.0, e.problemVotes.1, e.problemVotes.2, e.problemVotes.3]
+        let problems = zip(ids, votes).filter { $0.0 >= 0 }.map { (id: Int($0.0), votes: Int($0.1)) }
+        return Evaluation(yes: Int(e.yes), problems: problems, population: e.population,
+                          populationDelta: e.populationDelta, assessedValue: e.assessedValue,
+                          cityClass: Int(e.cityClass), gameLevel: Int(e.gameLevel),
+                          score: Int(e.score), scoreDelta: Int(e.scoreDelta))
+    }
+
+    public func budgetFigures() -> BudgetFigures {
+        var b = MPBudget()
+        mp_get_budget(handle, &b)
+        return BudgetFigures(taxesCollected: b.taxFund, roadRequested: b.roadFund,
+                             policeRequested: b.policeFund, fireRequested: b.fireFund)
+    }
+
+    public var gameLevel: GameLevel {
+        GameLevel(rawValue: Int(mp_game_level(handle))) ?? .easy
+    }
+
+    /// Sets the level and its starting funds ($20,000, $10,000 or $5,000).
+    public func setGameLevel(_ level: GameLevel) {
+        mp_set_game_level(handle, Int32(level.rawValue))
+    }
+
+    public func setCityName(_ name: String) {
+        mp_set_city_name(handle, name)
+    }
+
+    /// `resourceDirectory` must contain `cities/scenario_*.cty`.
+    @discardableResult
+    public func loadScenario(_ scenario: Scenario, resourceDirectory: URL) -> Bool {
+        mp_load_scenario(handle, scenario.rawValue, resourceDirectory.path) != 0
+    }
+
+    public func setTile(x: Int, y: Int, cell: UInt16) {
+        mp_set_tile(handle, Int32(x), Int32(y), cell)
+    }
+
+    public func smoothTerrain() {
+        mp_smooth_terrain(handle)
+    }
+
+    public func setAnimation(animateAll: Bool, frequent: Bool) {
+        mp_set_animation(handle, animateAll ? 1 : 0, frequent ? 1 : 0)
     }
 }

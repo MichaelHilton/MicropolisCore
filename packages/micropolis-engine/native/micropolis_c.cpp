@@ -1,6 +1,9 @@
 #include "../src/micropolis.h"
 #include "include/micropolis_c.h"
 
+#include <unistd.h>
+#include <climits>
+
 class CCallback : public Callback {
 public:
     MPCallbacks cbs = {};
@@ -88,7 +91,20 @@ public:
 struct MPEngine {
     Micropolis sim;
     CCallback *callback;
+    bool animateAll = true;
+    bool frequentAnimation = true;
+    unsigned long tickCount = 0;
 };
+
+/** Copies a coarse overlay map out at one value per world tile. */
+template <typename MAP>
+static void copyOverlay(const MAP &map, short *out) {
+    for (int x = 0; x < WORLD_W; x++) {
+        for (int y = 0; y < WORLD_H; y++) {
+            out[x * WORLD_H + y] = (short)map.worldGet(x, y);
+        }
+    }
+}
 
 extern "C" {
 
@@ -110,7 +126,15 @@ int mp_load_city(MPEngine *e, const char *path) {
 
 void mp_tick(MPEngine *e) {
     e->sim.simTick();
-    e->sim.animateTiles();
+    e->tickCount++;
+    if (e->animateAll && (e->frequentAnimation || e->tickCount % 2 == 0)) {
+        e->sim.animateTiles();
+    }
+}
+
+void mp_set_animation(MPEngine *e, int animateAll, int frequent) {
+    e->animateAll = animateAll != 0;
+    e->frequentAnimation = frequent != 0;
 }
 
 long mp_total_funds(MPEngine *e) {
@@ -236,6 +260,13 @@ void mp_make_disaster(MPEngine *e, int which) {
         case 3: e->sim.makeMonster(); break;
         case 4: e->sim.makeTornado(); break;
         case 5: e->sim.makeMeltdown(); break;
+        case 6: {
+            // DOS "Air Crash": blow up a plane in flight, as a mid-air
+            // collision does in doAirplaneSprite.
+            SimSprite *plane = e->sim.getSprite(SPRITE_AIRPLANE);
+            if (plane) e->sim.explodeSprite(plane);
+            break;
+        }
     }
 }
 
@@ -258,13 +289,103 @@ int mp_get_sprites(MPEngine *e, MPSprite *out, int maxCount) {
 void mp_get_history(MPEngine *e, int which, short *out) {
     short *src;
     switch (which) {
-        case 0: src = e->sim.resHist; break;
-        case 1: src = e->sim.comHist; break;
-        case 2: src = e->sim.indHist; break;
+        case MP_HISTORY_RESIDENTIAL: src = e->sim.resHist; break;
+        case MP_HISTORY_COMMERCIAL: src = e->sim.comHist; break;
+        case MP_HISTORY_INDUSTRIAL: src = e->sim.indHist; break;
+        case MP_HISTORY_MONEY: src = e->sim.moneyHist; break;
+        case MP_HISTORY_CRIME: src = e->sim.crimeHist; break;
+        case MP_HISTORY_POLLUTION: src = e->sim.pollutionHist; break;
         default: return;
     }
     for (int i = 0; i < 480; i++) {
         out[i] = src[i];
+    }
+}
+
+void mp_get_overlay(MPEngine *e, int which, short *out) {
+    Micropolis &sim = e->sim;
+    switch (which) {
+        case MP_OVERLAY_POPULATION: copyOverlay(sim.populationDensityMap, out); break;
+        case MP_OVERLAY_GROWTH: copyOverlay(sim.rateOfGrowthMap, out); break;
+        case MP_OVERLAY_TRAFFIC: copyOverlay(sim.trafficDensityMap, out); break;
+        case MP_OVERLAY_POLLUTION: copyOverlay(sim.pollutionDensityMap, out); break;
+        case MP_OVERLAY_CRIME: copyOverlay(sim.crimeRateMap, out); break;
+        case MP_OVERLAY_LAND_VALUE: copyOverlay(sim.landValueMap, out); break;
+        case MP_OVERLAY_POLICE: copyOverlay(sim.policeStationEffectMap, out); break;
+        case MP_OVERLAY_FIRE: copyOverlay(sim.fireStationEffectMap, out); break;
+        case MP_OVERLAY_POWER: copyOverlay(sim.powerGridMap, out); break;
+    }
+}
+
+void mp_get_evaluation(MPEngine *e, MPEvaluation *out) {
+    Micropolis &sim = e->sim;
+    out->yes = sim.cityYes;
+    for (int i = 0; i < 4; i++) {
+        int problem = sim.problemOrder[i];
+        bool valid = problem >= 0 && problem < CVP_NUMPROBLEMS;
+        out->problems[i] = valid ? problem : -1;
+        out->problemVotes[i] = valid ? sim.problemVotes[problem] : 0;
+    }
+    out->population = sim.cityPop;
+    out->populationDelta = sim.cityPopDelta;
+    out->assessedValue = sim.cityAssessedValue;
+    out->cityClass = sim.cityClass;
+    out->gameLevel = sim.gameLevel;
+    out->score = sim.cityScore;
+    out->scoreDelta = sim.cityScoreDelta;
+}
+
+void mp_get_budget(MPEngine *e, MPBudget *out) {
+    out->taxFund = e->sim.taxFund;
+    out->roadFund = e->sim.roadFund;
+    out->policeFund = e->sim.policeFund;
+    out->fireFund = e->sim.fireFund;
+}
+
+int mp_game_level(MPEngine *e) {
+    return (int)e->sim.gameLevel;
+}
+
+void mp_set_game_level(MPEngine *e, int level) {
+    if (level < LEVEL_FIRST || level > LEVEL_LAST) level = LEVEL_EASY;
+    e->sim.setGameLevelFunds((GameLevel)level);
+}
+
+void mp_set_city_name(MPEngine *e, const char *name) {
+    e->sim.setCityName(name);
+}
+
+int mp_load_scenario(MPEngine *e, int scenario, const char *resourceDir) {
+    if (scenario < SC_DULLSVILLE || scenario > SC_RIO) return 0;
+    // loadScenario opens "cities/..." relative to the working directory.
+    char previous[PATH_MAX];
+    if (!getcwd(previous, sizeof previous)) return 0;
+    if (chdir(resourceDir) != 0) return 0;
+    if (access("cities", R_OK) != 0) {
+        chdir(previous);
+        return 0;
+    }
+    e->sim.loadScenario((Scenario)scenario);
+    int ok = chdir(previous) == 0;
+    return ok ? 1 : 0;
+}
+
+void mp_set_tile(MPEngine *e, int x, int y, unsigned short cell) {
+    if (x < 0 || x >= WORLD_W || y < 0 || y >= WORLD_H) return;
+    e->sim.map[x][y] = cell;
+}
+
+void mp_smooth_terrain(MPEngine *e) {
+    Micropolis &sim = e->sim;
+    // smoothWater marks shorelines as REDGE; smoothRiver picks edge tiles.
+    sim.smoothWater();
+    sim.smoothRiver();
+    for (int x = 0; x < WORLD_W; x++) {
+        for (int y = 0; y < WORLD_H; y++) {
+            if (sim.isTree(sim.map[x][y])) {
+                sim.smoothTreesAt(x, y, true);
+            }
+        }
     }
 }
 

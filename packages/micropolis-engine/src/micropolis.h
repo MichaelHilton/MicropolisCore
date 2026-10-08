@@ -1777,17 +1777,23 @@ public:
 
     void generateMap(int seed);
 
+    // Public so the native terrain editor can tidy edges after edits.
+    void smoothRiver();
+
+    void smoothWater();
+
+    void smoothTreesAt(int x, int y, bool preserve);
+
+    bool isTree(MapValue cell);
+
 private:
 
     void makeNakedIsland();
 
     void doTrees();
 
-    bool isTree(MapValue cell);
-
     void smoothTrees();
 
-    void smoothTreesAt(int x, int y, bool preserve);
     void smoothTreesAt(int x, int y, bool preserve, ToolEffects *effects);
 
     void makeLakes();
@@ -1798,10 +1804,6 @@ private:
                         Direction2 riverDir, Direction2 terrainDir);
     Direction2 doSRiver(const Position &riverPos,
                         Direction2 riverDir, Direction2 terrainDir);
-
-    void smoothRiver();
-
-    void smoothWater();
 
     void putOnMap(MapValue mChar, short xLoc, short yLoc);
 

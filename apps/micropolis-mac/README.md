@@ -48,10 +48,14 @@ apps/micropolis-mac/
   scripts/sync-resources.sh
   Sources/MicropolisKit/        Swift wrapper around the C API (Engine, EngineDelegate); no UI
   Sources/MicropolisMac/        SwiftUI app
-    MicropolisApp.swift         Windows and menus (File, Options, Simulation, Disasters)
-    GameModel.swift             Owns the engine, drives the tick loop, publishes city state
-    Rendering/                  Tile atlas, CPU map renderer (redraws only changed tiles), sprites
-    Views/                      Map view, tool palette, budget, zone status popover, theme
+    MicropolisApp.swift         Windows (edit, Maps, Graphs, Evaluation) and the menu bar
+    GameModel.swift             Owns the engine, drives the tick loop, publishes city state,
+                                terrain editing
+    Terrain.swift               Terrain editor brushes
+    Rendering/                  Tile atlas, CPU map renderer (redraws only changed tiles),
+                                sprites, map window overlays
+    Views/                      The DOS windows: edit view, tool and terrain palettes, Maps,
+                                Graphs, Budget, Evaluation, New City, shared menus, theme
     Audio/SoundManager.swift    Engine sound effects
   Tests/
 ```
@@ -67,11 +71,29 @@ in `packages/micropolis-engine/src/` still carry their `__EMSCRIPTEN__` guards
 and stand-ins; keep them so changes stay easy to share with the web build on
 `main`.
 
+Two small edits in `src/` support the DOS windows: `micropolis.h` makes
+`smoothRiver`, `smoothWater`, `smoothTreesAt` and `isTree` public for the
+terrain editor's Smooth button, and `fileio.cpp` stops building `std::string`
+from `NULL` in `loadScenario`, which threw before any scenario could load.
+
 ## Status
 
-Working: map view with pan and zoom, tool palette and click-drag building,
-sprites, city messages, budget window, file/scenario/options/disaster menus,
-graphs, evaluation and demand gauge, sound, and the query tool.
+Working: everything in the DOS game's four menus and six windows, checked
+against SimCity Classic for DOS running in DOSBox:
+
+- Edit window with pan and zoom, tool palette, click-drag building, sprites,
+  city messages, demand gauge and the query tool.
+- Maps window with all nine DOS views (City Form, Power Grid, Transportation,
+  Population density/growth, Traffic, Pollution, Crime, Land Value, Police and
+  Fire coverage), a Max/Min key, and click-to-scroll the edit window.
+- Graphs (six series, 10 or 120 years), Budget (DOS layout), Evaluation.
+- Terrain editor: Dirt, Trees, Water, Channel, Fill, Undo, Smooth.
+- Start New City with name and level, the 8 scenarios with win/lose,
+  Load/Save, Print, and all OPTIONS and DISASTERS items.
+
+The DOS items that have no counterpart here: Load Graphics (only one tile set
+ships) and Music On (there is no music). The DOS window commands Position and
+Resize are ordinary macOS window dragging.
 
 Not done yet: packaging as a double-clickable `Micropolis.app` (Step 20 in
 [PLAN.md](PLAN.md)), a macOS CI job, and the items under "Later" in the plan.

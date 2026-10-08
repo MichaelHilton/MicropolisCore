@@ -86,7 +86,67 @@ int  mp_save_city(MPEngine *e, const char *path);
 void mp_make_disaster(MPEngine *e, int which);
 
 int  mp_get_sprites(MPEngine *e, MPSprite *out, int maxCount);
+
+/* History series for the graphs window. Each is MP_HISTORY_LENGTH shorts;
+ * index 0 is newest. 0..119 is the 10-year series, 120..239 the 120-year one. */
+typedef enum {
+    MP_HISTORY_RESIDENTIAL = 0, MP_HISTORY_COMMERCIAL, MP_HISTORY_INDUSTRIAL,
+    MP_HISTORY_MONEY, MP_HISTORY_CRIME, MP_HISTORY_POLLUTION
+} MPHistory;
 void mp_get_history(MPEngine *e, int which, short *out);
+
+/* Disasters for mp_make_disaster. MP_DISASTER_AIR_CRASH does nothing if no plane is flying. */
+typedef enum {
+    MP_DISASTER_FIRE = 0, MP_DISASTER_FLOOD, MP_DISASTER_EARTHQUAKE,
+    MP_DISASTER_MONSTER, MP_DISASTER_TORNADO, MP_DISASTER_MELTDOWN,
+    MP_DISASTER_AIR_CRASH
+} MPDisaster;
+
+/* Overlay data for the map window. mp_get_overlay fills MP_WORLD_W*MP_WORLD_H
+ * shorts, one per tile, column-major like mp_map. Growth can be negative. */
+typedef enum {
+    MP_OVERLAY_POPULATION = 0, MP_OVERLAY_GROWTH, MP_OVERLAY_TRAFFIC,
+    MP_OVERLAY_POLLUTION, MP_OVERLAY_CRIME, MP_OVERLAY_LAND_VALUE,
+    MP_OVERLAY_POLICE, MP_OVERLAY_FIRE,
+    MP_OVERLAY_POWER    /* 1 where the power scan reached the tile */
+} MPOverlay;
+void mp_get_overlay(MPEngine *e, int which, short *out);
+
+typedef struct {
+    int yes;                /* percent who think the mayor is doing a good job */
+    int problems[4];        /* CVP_* problem ids, worst first; -1 when unused */
+    int problemVotes[4];    /* percent of voters naming each problem */
+    long population;
+    long populationDelta;   /* net migration last year */
+    long assessedValue;
+    int cityClass;          /* 0 village .. 5 megalopolis */
+    int gameLevel;          /* 0 easy, 1 medium, 2 hard */
+    int score;              /* 0..1000 */
+    int scoreDelta;
+} MPEvaluation;
+void mp_get_evaluation(MPEngine *e, MPEvaluation *out);
+
+typedef struct {
+    long taxFund;           /* taxes collected this year */
+    long roadFund, policeFund, fireFund;   /* amount requested */
+} MPBudget;
+void mp_get_budget(MPEngine *e, MPBudget *out);
+
+int  mp_game_level(MPEngine *e);
+/* Sets the level and the starting funds that go with it, as a new game does. */
+void mp_set_game_level(MPEngine *e, int level);
+void mp_set_city_name(MPEngine *e, const char *name);
+
+/* Loads one of the 8 built-in scenarios (1 Dullsville .. 8 Rio). The engine
+ * opens "cities/<file>.cty" relative to resourceDir. Returns 1 on success. */
+int  mp_load_scenario(MPEngine *e, int scenario, const char *resourceDir);
+
+/* Terrain editing: write a raw cell, and tidy river and forest edges. */
+void mp_set_tile(MPEngine *e, int x, int y, unsigned short cell);
+void mp_smooth_terrain(MPEngine *e);
+
+/* Tile animation in mp_tick: off entirely, or every tick vs every other tick. */
+void mp_set_animation(MPEngine *e, int animateAll, int frequent);
 
 void mp_set_callbacks(MPEngine *e, const MPCallbacks *callbacks);
 

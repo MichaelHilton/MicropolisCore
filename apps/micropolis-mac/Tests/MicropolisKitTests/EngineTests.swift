@@ -291,7 +291,7 @@ final class EngineTests: XCTestCase {
         }
 
         if !spriteFound {
-            engine.makeDisaster(3)
+            engine.makeDisaster(.monster)
             for _ in 0..<100 {
                 engine.tick()
                 let sprites = engine.sprites()
@@ -332,5 +332,99 @@ final class EngineTests: XCTestCase {
         if !hasNonZero {
             XCTFail("Residential history should have at least one non-zero entry")
         }
+    }
+
+    // MARK: - Data for the DOS windows
+
+    private func loadedHaight(ticks: Int) -> Engine? {
+        let engine = Engine()
+        guard engine.loadCity(at: repoRoot.appendingPathComponent("content/micropolis/cities/haight.cty")) else {
+            XCTFail("Failed to load haight.cty")
+            return nil
+        }
+        for _ in 0..<ticks { engine.tick() }
+        return engine
+    }
+
+    func testEveryHistorySeriesIsReadable() throws {
+        let engine = try XCTUnwrap(loadedHaight(ticks: 3000))
+        for kind in HistoryKind.allCases {
+            XCTAssertEqual(engine.history(kind).count, 480, "\(kind)")
+        }
+        XCTAssertTrue(engine.history(.commercial).contains { $0 != 0 })
+    }
+
+    func testOverlaysHaveDataForABuiltCity() throws {
+        let engine = try XCTUnwrap(loadedHaight(ticks: 600))
+        for kind: OverlayKind in [.population, .traffic, .landValue, .crime, .police, .fire] {
+            let values = engine.overlay(kind)
+            XCTAssertEqual(values.count, Engine.width * Engine.height)
+            XCTAssertTrue(values.contains { $0 > 0 }, "\(kind) overlay is empty")
+        }
+    }
+
+    func testEvaluationMatchesCityState() throws {
+        let engine = try XCTUnwrap(loadedHaight(ticks: 3000))
+        let eval = engine.evaluation()
+        XCTAssertEqual(eval.population, engine.population)
+        XCTAssertEqual(eval.score, engine.score)
+        XCTAssertEqual(eval.cityClass, engine.cityClass)
+        XCTAssertTrue((0...100).contains(eval.yes))
+        XCTAssertLessThanOrEqual(eval.problems.count, 4)
+        for problem in eval.problems {
+            XCTAssertTrue((0..<7).contains(problem.id))
+            XCTAssertTrue((0...100).contains(problem.votes))
+        }
+    }
+
+    func testBudgetFiguresAreNonNegative() throws {
+        let engine = try XCTUnwrap(loadedHaight(ticks: 3000))
+        let figures = engine.budgetFigures()
+        XCTAssertGreaterThanOrEqual(figures.taxesCollected, 0)
+        XCTAssertGreaterThan(figures.roadRequested + figures.policeRequested + figures.fireRequested, 0)
+    }
+
+    func testGameLevelSetsStartingFunds() {
+        let engine = Engine()
+        engine.generateMap(seed: 42)
+        let expected: [GameLevel: Int] = [.easy: 20000, .medium: 10000, .hard: 5000]
+        for (level, funds) in expected {
+            engine.setGameLevel(level)
+            XCTAssertEqual(engine.gameLevel, level)
+            XCTAssertEqual(engine.funds, funds)
+        }
+    }
+
+    func testEveryScenarioLoads() {
+        let content = repoRoot.appendingPathComponent("content/micropolis")
+        for scenario in Scenario.allCases {
+            let engine = Engine()
+            XCTAssertTrue(engine.loadScenario(scenario, resourceDirectory: content), "\(scenario)")
+            // Population is only counted at the first census, so look for zones.
+            let zones = engine.mapSnapshot().filter { $0 & 0x0400 != 0 }.count
+            XCTAssertGreaterThan(zones, 20, "\(scenario) has no city")
+        }
+        XCTAssertEqual(Engine().loadScenario(.tokyo, resourceDirectory: URL(fileURLWithPath: "/nonexistent")), false)
+    }
+
+    func testSetTileAndSmoothTerrain() {
+        let engine = Engine()
+        engine.generateMap(seed: 7)
+        // A 5x5 lake of plain river tiles; smoothing should give it edge tiles.
+        for x in 50..<55 { for y in 50..<55 { engine.setTile(x: x, y: y, cell: 2) } }
+        for x in 48..<57 { engine.setTile(x: x, y: 49, cell: 0); engine.setTile(x: x, y: 55, cell: 0) }
+        XCTAssertEqual(engine.tile(x: 52, y: 52) & 0x3FF, 2)
+        engine.smoothTerrain()
+        let edge = engine.tile(x: 50, y: 50) & 0x3FF
+        XCTAssertTrue((3...20).contains(edge), "corner should become a river edge, got \(edge)")
+        XCTAssertEqual(engine.tile(x: 52, y: 52) & 0x3FF, 2, "middle of the lake stays open water")
+    }
+
+    func testAirCrashWithoutAPlaneDoesNothing() throws {
+        let engine = Engine()
+        engine.generateMap(seed: 3)
+        let before = engine.mapSnapshot()
+        engine.makeDisaster(.airCrash)
+        XCTAssertEqual(engine.mapSnapshot(), before)
     }
 }

@@ -15,6 +15,9 @@ struct MapView: NSViewRepresentable {
     func updateNSView(_ nsView: NSView, context: Context) {
         if let mapNSView = nsView as? MapNSView {
             mapNSView.updateMap()
+            if let request = gameModel.scrollRequest {
+                mapNSView.handle(request)
+            }
         }
     }
 
@@ -38,6 +41,7 @@ class MapNSView: NSView {
     private var lastMapVersion = -1
     private var lastDragTile: (x: Int, y: Int)? = nil
     private var toolMessageTimer: Timer? = nil
+    private var lastScrollRequestID = 0
 
     private let lineDrawTools: [Tool] = [.road, .railroad, .wire, .bulldozer, .park]
 
@@ -110,6 +114,32 @@ class MapNSView: NSView {
         mapLayer?.frame = bounds
         contentLayer?.frame = CGRect(x: -offset.x, y: -offset.y, width: mapWidth, height: mapHeight)
         contentLayer?.contents = mapLayer?.contents
+        publishVisibleTiles()
+    }
+
+    /// Tells the map window which tiles this view shows, so it can draw the box.
+    private func publishVisibleTiles() {
+        let tilePixels = 16 * zoom
+        let visible = CGRect(x: offset.x / tilePixels, y: offset.y / tilePixels,
+                             width: min(CGFloat(Engine.width), bounds.width / tilePixels),
+                             height: min(CGFloat(Engine.height), bounds.height / tilePixels))
+        if gameModel.visibleTiles != visible {
+            gameModel.visibleTiles = visible
+        }
+    }
+
+    /// Scrolls so a tile is centered, for the map window and Auto-Goto.
+    func handle(_ request: ScrollRequest) {
+        guard request.id != lastScrollRequestID else { return }
+        lastScrollRequestID = request.id
+        center(onTileX: request.x, y: request.y)
+    }
+
+    func center(onTileX x: Int, y: Int) {
+        let tilePixels = 16 * zoom
+        offset = CGPoint(x: (CGFloat(x) + 0.5) * tilePixels - bounds.width / 2,
+                         y: (CGFloat(y) + 0.5) * tilePixels - bounds.height / 2)
+        updateLayout()
     }
 
     override func scrollWheel(with event: NSEvent) {
@@ -149,8 +179,14 @@ class MapNSView: NSView {
     }
 
     override func mouseDown(with event: NSEvent) {
-        let location = event.locationInWindow
+        let location = convert(event.locationInWindow, from: nil)
         guard let tile = tile(at: location) else { return }
+        if gameModel.editMode == .terrain {
+            gameModel.beginTerrainStroke()
+            gameModel.applyTerrain(atX: tile.x, y: tile.y)
+            lastDragTile = tile
+            return
+        }
         applyTool(at: tile)
     }
 
@@ -167,10 +203,18 @@ class MapNSView: NSView {
             offset.y += delta.y * zoom
             updateLayout()
         } else {
-            let location = event.locationInWindow
+            let location = convert(event.locationInWindow, from: nil)
             guard let tile = tile(at: location) else { return }
 
-            if lineDrawTools.contains(gameModel.selectedTool) {
+            if gameModel.editMode == .terrain {
+                // Fill acts once per click; brushes paint along the drag.
+                guard !gameModel.terrainFill else { return }
+                let path = lastDragTile.map { Bresenham.line(from: $0, to: tile) } ?? [tile]
+                for point in path {
+                    gameModel.applyTerrain(atX: point.x, y: point.y)
+                }
+                lastDragTile = tile
+            } else if lineDrawTools.contains(gameModel.selectedTool) {
                 if let lastTile = lastDragTile {
                     let path = Bresenham.line(from: lastTile, to: tile)
                     for point in path {

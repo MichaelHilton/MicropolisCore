@@ -10,131 +10,48 @@ struct MicropolisApp: App {
     }
 
     var body: some Scene {
-        WindowGroup(model.cityName) {
+        // One edit window, like DOS, so Windows › Edit can bring it back.
+        Window(model.cityName, id: "main") {
             ContentView()
                 .sheet(isPresented: $model.showBudgetSheet) {
                     BudgetView()
                         .environment(model)
                 }
+                .sheet(isPresented: $model.showNewCitySheet) {
+                    NewCityView()
+                        .environment(model)
+                }
                 .environment(model)
         }
         .defaultSize(width: 960, height: 700)
+        .commands {
+            CommandGroup(replacing: .appInfo) {
+                Button("About Micropolis") { model.showAbout() }
+            }
+            CommandGroup(replacing: .newItem) {}
+            CommandMenu("System") { SystemMenuItems().environment(model) }
+            CommandMenu("Options") { OptionsMenuItems().environment(model) }
+            CommandMenu("Disasters") { DisastersMenuItems().environment(model) }
+            CommandGroup(before: .windowList) {
+                WindowsMenuItems().environment(model)
+                Divider()
+            }
+        }
+
+        Window("Maps", id: "maps") {
+            MapsView().environment(model)
+        }
+        .windowResizability(.contentSize)
 
         Window("Graphs", id: "graphs") {
-            Text("Residential: \(model.engine.history(.residential))")
-                .padding()
+            GraphsView().environment(model)
         }
-        .keyboardShortcut("g", modifiers: .command)
+        .windowResizability(.contentSize)
 
         Window("Evaluation", id: "evaluation") {
-            VStack(spacing: 12) {
-                Text("City Class: \(model.cityClass)")
-                Text("Population: \(model.population)")
-                Spacer()
-            }
-            .padding()
+            EvaluationView().environment(model)
         }
-        .keyboardShortcut("e", modifiers: .command)
-        .commands {
-            CommandGroup(replacing: .appSettings) {
-                Button("About Micropolis") {
-                    // About dialog
-                }
-
-                Divider()
-
-                Button("Preferences") {
-                    // Will be implemented with AppStorage options
-                }
-                .keyboardShortcut(",", modifiers: .command)
-            }
-
-            CommandGroup(replacing: .newItem) {
-                Menu("File") {
-                    Button("New City") {
-                        let seed = Int.random(in: 1...9999)
-                        model.newCity(seed: seed)
-                    }
-                    .keyboardShortcut("n", modifiers: .command)
-
-                    Divider()
-
-                    Button("Open…") {
-                        model.showOpenPanel()
-                    }
-                    .keyboardShortcut("o", modifiers: .command)
-
-                    Menu("Open Scenario") {
-                        ForEach(Assets.allCities, id: \.self) { url in
-                            Button(url.deletingPathExtension().lastPathComponent) {
-                                model.loadCity(from: url)
-                            }
-                        }
-                    }
-
-                    Divider()
-
-                    Button("Save") {
-                        model.save()
-                    }
-                    .keyboardShortcut("s", modifiers: .command)
-
-                    Button("Save As…") {
-                        model.showSavePanel()
-                    }
-                    .keyboardShortcut("s", modifiers: [.command, .shift])
-                }
-            }
-
-            CommandMenu("Options") {
-                Toggle("Auto-Budget", isOn: .constant(true))
-                Toggle("Auto-Bulldoze", isOn: .constant(true))
-                Toggle("Auto-Goto", isOn: $model.autoGoto)
-                Toggle("Disasters Enabled", isOn: .constant(true))
-                Toggle("Sound", isOn: .constant(true))
-            }
-
-            CommandMenu("Simulation") {
-                Button("Budget") {
-                    model.showBudgetSheet = true
-                }
-                .keyboardShortcut("b", modifiers: .command)
-
-                Divider()
-
-                Button(model.paused ? "Resume" : "Pause") {
-                    if model.paused {
-                        model.resumeSimulation()
-                    } else {
-                        model.pauseSimulation()
-                    }
-                }
-                .keyboardShortcut("p", modifiers: .command)
-
-                Divider()
-
-                Button("Slow") {
-                    model.setSpeed(1)
-                }
-
-                Button("Medium") {
-                    model.setSpeed(2)
-                }
-
-                Button("Fast") {
-                    model.setSpeed(3)
-                }
-            }
-
-            CommandMenu("Disasters") {
-                Button("Fire") { model.engine.makeDisaster(0) }
-                Button("Flood") { model.engine.makeDisaster(1) }
-                Button("Earthquake") { model.engine.makeDisaster(2) }
-                Button("Monster") { model.engine.makeDisaster(3) }
-                Button("Tornado") { model.engine.makeDisaster(4) }
-                Button("Meltdown") { model.engine.makeDisaster(5) }
-            }
-        }
+        .windowResizability(.contentSize)
     }
 }
 
@@ -145,7 +62,11 @@ struct ContentView: View {
         VStack(spacing: 0) {
             HUDView()
             HStack(spacing: 0) {
-                ToolPalette()
+                if model.editMode == .terrain {
+                    TerrainPalette()
+                } else {
+                    ToolPalette()
+                }
                 VStack(spacing: 0) {
                     MapView(gameModel: model)
                     StatusLine()
@@ -154,5 +75,19 @@ struct ContentView: View {
         }
         .background(DOS.lightGray)
         .frame(minWidth: 800, minHeight: 600)
+        .alert(outcomeTitle, isPresented: Binding(
+            get: { model.outcome != nil },
+            set: { if !$0 { model.outcome = nil } }
+        )) {
+            Button("OK") { model.outcome = nil }
+        } message: {
+            Text(model.outcome == .won
+                 ? "You have met the scenario's goal. The citizens are proud of you."
+                 : "You failed to meet the scenario's goal. The citizens have run you out of office.")
+        }
+    }
+
+    private var outcomeTitle: String {
+        model.outcome == .won ? "You Win!" : "Game Over"
     }
 }
