@@ -21,6 +21,20 @@ struct ToolSpec: Identifiable {
         cost > 0 ? "\(name): $\(cost)" : name
     }
 
+    /// Width in tiles of what the tool builds.
+    var size: Int {
+        if case .tiles(_, let size) = icon { return size }
+        return 1
+    }
+
+    /// The tiles a click on `tile` covers. The engine centers buildings of
+    /// size 3 and up on the clicked tile, one tile in from the top-left.
+    static func footprint(for tool: Tool, at tile: (x: Int, y: Int)) -> (x: Int, y: Int, size: Int) {
+        let size = spec(for: tool)?.size ?? 1
+        let inset = size > 1 ? 1 : 0
+        return (tile.x - inset, tile.y - inset, size)
+    }
+
     /// Two columns, in the order of the DOS palette. Tile numbers come from
     /// the engine's Tiles enum (micropolis.h).
     static let all: [ToolSpec] = [

@@ -15,6 +15,7 @@ struct MapView: NSViewRepresentable {
     func updateNSView(_ nsView: NSView, context: Context) {
         if let mapNSView = nsView as? MapNSView {
             mapNSView.updateMap()
+            mapNSView.updateToolOutline()
             if let request = gameModel.scrollRequest {
                 mapNSView.handle(request)
             }
@@ -38,6 +39,11 @@ class MapNSView: NSView {
     private var mapLayer: CALayer?
     private var contentLayer: CALayer?
     private var spriteLayer: CALayer?
+    let toolOutline = CALayer()
+    /// Where the pointer is over the map, in view coordinates; nil when outside.
+    private var hoverPoint: CGPoint?
+    /// DOS hides the pointer over the map and shows only the tool outline.
+    private static let blankCursor = NSCursor(image: NSImage(size: NSSize(width: 1, height: 1)), hotSpot: .zero)
     private var lastMapVersion = -1
     private var lastDragTile: (x: Int, y: Int)? = nil
     private var toolMessageTimer: Timer? = nil
@@ -60,6 +66,10 @@ class MapNSView: NSView {
         layer?.masksToBounds = true
 
         setupLayers()
+        addTrackingArea(NSTrackingArea(
+            rect: .zero,
+            options: [.activeInKeyWindow, .inVisibleRect, .mouseMoved, .mouseEnteredAndExited, .cursorUpdate],
+            owner: self, userInfo: nil))
     }
 
     override var isFlipped: Bool { true }
@@ -81,6 +91,56 @@ class MapNSView: NSView {
         let spriteLayer = CALayer()
         layer?.addSublayer(spriteLayer)
         self.spriteLayer = spriteLayer
+
+        // Like DOS: an unfilled box the size of what the tool builds.
+        toolOutline.borderColor = NSColor(DOS.lightBlue).cgColor
+        toolOutline.borderWidth = 2
+        toolOutline.isHidden = true
+        toolOutline.actions = ["position": NSNull(), "bounds": NSNull(), "hidden": NSNull()]
+        layer?.addSublayer(toolOutline)
+    }
+
+    /// Moves the tool outline to the tiles a click at the pointer would cover.
+    func updateToolOutline() {
+        defer {
+            if hoverPoint != nil { updatePointer() }
+        }
+        guard gameModel.editMode == .city, let point = hoverPoint, let tile = tile(at: point) else {
+            toolOutline.isHidden = true
+            return
+        }
+        let footprint = ToolSpec.footprint(for: gameModel.selectedTool, at: tile)
+        let tilePixels = 16 * zoom
+        toolOutline.frame = CGRect(x: CGFloat(footprint.x) * tilePixels - offset.x,
+                                   y: CGFloat(footprint.y) * tilePixels - offset.y,
+                                   width: CGFloat(footprint.size) * tilePixels,
+                                   height: CGFloat(footprint.size) * tilePixels)
+        toolOutline.isHidden = false
+    }
+
+    /// Records where the pointer is over the map, in view coordinates.
+    func hover(at point: CGPoint?) {
+        hoverPoint = point
+        updateToolOutline()
+    }
+
+    private func trackPointer(_ event: NSEvent?) {
+        hover(at: event.map { convert($0.locationInWindow, from: nil) })
+    }
+
+    override func mouseEntered(with event: NSEvent) { trackPointer(event) }
+    override func mouseExited(with event: NSEvent) {
+        trackPointer(nil)
+        NSCursor.arrow.set()
+    }
+
+    override func cursorUpdate(with event: NSEvent) {
+        updatePointer()
+    }
+
+    /// The outline stands in for the pointer; show the arrow where there is none.
+    private func updatePointer() {
+        (toolOutline.isHidden ? NSCursor.arrow : Self.blankCursor).set()
     }
 
     func updateMap() {
@@ -119,6 +179,7 @@ class MapNSView: NSView {
         mapLayer?.frame = bounds
         contentLayer?.frame = CGRect(x: -offset.x, y: -offset.y, width: mapWidth, height: mapHeight)
         contentLayer?.contents = mapLayer?.contents
+        updateToolOutline()
         publishVisibleTiles()
     }
 
@@ -196,12 +257,11 @@ class MapNSView: NSView {
     }
 
     override func mouseMoved(with event: NSEvent) {
-        if NSEvent.modifierFlags.contains(.option) {
-            // Option-drag handled in mouseDragged
-        }
+        trackPointer(event)
     }
 
     override func mouseDragged(with event: NSEvent) {
+        trackPointer(event)
         if NSEvent.modifierFlags.contains(.option) {
             let delta = CGPoint(x: -event.deltaX, y: -event.deltaY)
             offset.x += delta.x * zoom

@@ -99,3 +99,75 @@ struct MapViewTests {
         #expect(!(pixels[inside] > 200 && pixels[inside + 1] < 50 && pixels[inside + 2] > 200))
     }
 }
+
+/// The outline shown under the pointer, which previews where a click builds.
+@MainActor
+struct ToolOutlineTests {
+    @Test
+    func footprintMatchesWhereTheEngineBuilds() {
+        #expect(ToolSpec.footprint(for: .road, at: (10, 20)) == (10, 20, 1))
+        #expect(ToolSpec.footprint(for: .query, at: (10, 20)) == (10, 20, 1))
+        #expect(ToolSpec.footprint(for: .residential, at: (10, 20)) == (9, 19, 3))
+        #expect(ToolSpec.footprint(for: .coalPower, at: (10, 20)) == (9, 19, 4))
+        #expect(ToolSpec.footprint(for: .airport, at: (10, 20)) == (9, 19, 6))
+    }
+
+    @Test
+    func footprintCoversTheTilesTheEngineChanges() {
+        let model = GameModel()
+        model.newCity(name: "Outline", level: .easy, seed: 1)
+        for x in 0..<Engine.width {
+            for y in 0..<Engine.height { model.engine.setTile(x: x, y: y, cell: 0) }
+        }
+        let before = model.engine.mapSnapshot()
+        #expect(model.engine.apply(.coalPower, x: 30, y: 40) == .ok)
+        let after = model.engine.mapSnapshot()
+
+        let footprint = ToolSpec.footprint(for: .coalPower, at: (30, 40))
+        var changed: [(Int, Int)] = []
+        for x in 0..<Engine.width {
+            for y in 0..<Engine.height where before[x * Engine.height + y] != after[x * Engine.height + y] {
+                changed.append((x, y))
+            }
+        }
+        #expect(changed.count == footprint.size * footprint.size)
+        #expect(changed.allSatisfy { $0.0 >= footprint.x && $0.0 < footprint.x + footprint.size
+                                     && $0.1 >= footprint.y && $0.1 < footprint.y + footprint.size })
+    }
+
+    @Test
+    func outlineFollowsPointerToolZoomAndScroll() {
+        let model = GameModel()
+        let view = MapNSView(gameModel: model)
+        view.frame = NSRect(x: 0, y: 0, width: 400, height: 300)
+        #expect(view.toolOutline.isHidden)
+
+        model.selectedTool = .residential
+        view.hover(at: CGPoint(x: 100, y: 50))      // tile (6, 3)
+        #expect(!view.toolOutline.isHidden)
+        #expect(view.toolOutline.frame == CGRect(x: 80, y: 32, width: 48, height: 48))
+
+        model.selectedTool = .road
+        view.updateToolOutline()
+        #expect(view.toolOutline.frame == CGRect(x: 96, y: 48, width: 16, height: 16))
+
+        // Zoomed in and scrolled, the box still sits on the tile under the pointer.
+        view.zoom = 2
+        view.offset = CGPoint(x: 64, y: 32)
+        view.hover(at: CGPoint(x: 100, y: 50))      // map (164, 82)/2 -> tile (5, 2)
+        #expect(view.toolOutline.frame == CGRect(x: 5 * 32 - 64, y: 2 * 32 - 32, width: 32, height: 32))
+
+        view.hover(at: nil)
+        #expect(view.toolOutline.isHidden)
+    }
+
+    @Test
+    func noOutlineInTerrainEditor() {
+        let model = GameModel()
+        let view = MapNSView(gameModel: model)
+        view.frame = NSRect(x: 0, y: 0, width: 400, height: 300)
+        model.editMode = .terrain
+        view.hover(at: CGPoint(x: 100, y: 50))
+        #expect(view.toolOutline.isHidden)
+    }
+}
