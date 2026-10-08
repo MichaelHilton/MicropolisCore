@@ -884,7 +884,6 @@ static inline void not_reached(int line, const char *fname)
 
 class Micropolis;
 class Callback;
-class ConsoleCallback;
 class ToolEffects;
 class BuildingProperties;
 
