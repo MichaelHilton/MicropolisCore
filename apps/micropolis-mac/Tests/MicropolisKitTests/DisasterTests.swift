@@ -121,9 +121,12 @@ final class DisasterTests: XCTestCase {
         XCTAssertTrue(run(engine) { fires(engine) > 0 })
     }
 
+    /// Judged by the "monster sighted" message (21), which always comes. The
+    /// monster sprite itself is only visible in about a third of the runs;
+    /// in the rest it is gone before it can be seen.
     func testTokyoHasAMonster() {
-        let (engine, _) = scenario(.tokyo)
-        XCTAssertTrue(run(engine) { engine.sprites().contains { $0.type == 5 } })
+        let (engine, recorder) = scenario(.tokyo)
+        XCTAssertTrue(run(engine) { recorder.messages.contains { $0.index == 21 } })
     }
 
     func testBostonHasAMeltdown() {
