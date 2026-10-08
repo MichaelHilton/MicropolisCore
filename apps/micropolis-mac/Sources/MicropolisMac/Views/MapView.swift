@@ -53,6 +53,11 @@ class MapNSView: NSView {
 
         wantsLayer = true
         layer?.backgroundColor = NSColor.black.cgColor
+        // The map layer is far larger than the view and is scrolled by moving
+        // it. Views don't clip by default on macOS 14+, so without this the map
+        // paints over the menu strip and HUD above it.
+        clipsToBounds = true
+        layer?.masksToBounds = true
 
         setupLayers()
     }
