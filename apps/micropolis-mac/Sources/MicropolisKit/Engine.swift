@@ -294,8 +294,17 @@ public final class Engine {
         mp_set_passes(handle, Int32(passes))
     }
 
+    public var passes: Int {
+        Int(mp_passes(handle))
+    }
+
     public func setSpeed(_ speed: Int) {
         mp_set_speed(handle, Int32(speed))
+    }
+
+    /// The speed last set (0...3), even while paused.
+    public var speed: Int {
+        Int(mp_speed(handle))
     }
 
     public func pause() {
@@ -320,6 +329,18 @@ public final class Engine {
 
     public func setEnableDisasters(_ enable: Bool) {
         mp_set_enable_disasters(handle, enable ? 1 : 0)
+    }
+
+    public var autoBudget: Bool {
+        mp_auto_budget(handle) != 0
+    }
+
+    public var autoBulldoze: Bool {
+        mp_auto_bulldoze(handle) != 0
+    }
+
+    public var disastersEnabled: Bool {
+        mp_enable_disasters(handle) != 0
     }
 
     public func generateMap(seed: Int) {
@@ -406,5 +427,13 @@ public final class Engine {
 
     public func setAnimation(animateAll: Bool, frequent: Bool) {
         mp_set_animation(handle, animateAll ? 1 : 0, frequent ? 1 : 0)
+    }
+
+    public var animateAll: Bool {
+        mp_animate_all(handle) != 0
+    }
+
+    public var frequentAnimation: Bool {
+        mp_frequent_animation(handle) != 0
     }
 }

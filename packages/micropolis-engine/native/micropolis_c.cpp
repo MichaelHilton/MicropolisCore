@@ -137,6 +137,14 @@ void mp_set_animation(MPEngine *e, int animateAll, int frequent) {
     e->frequentAnimation = frequent != 0;
 }
 
+int mp_animate_all(MPEngine *e) {
+    return e->animateAll ? 1 : 0;
+}
+
+int mp_frequent_animation(MPEngine *e) {
+    return e->frequentAnimation ? 1 : 0;
+}
+
 long mp_total_funds(MPEngine *e) {
     return e->sim.totalFunds;
 }
@@ -238,6 +246,26 @@ void mp_set_auto_bulldoze(MPEngine *e, int enable) {
 
 void mp_set_enable_disasters(MPEngine *e, int enable) {
     e->sim.setEnableDisasters(enable != 0);
+}
+
+int mp_passes(MPEngine *e) {
+    return e->sim.simPasses;
+}
+
+int mp_speed(MPEngine *e) {
+    return e->sim.simSpeedMeta;
+}
+
+int mp_auto_budget(MPEngine *e) {
+    return e->sim.autoBudget ? 1 : 0;
+}
+
+int mp_auto_bulldoze(MPEngine *e) {
+    return e->sim.autoBulldoze ? 1 : 0;
+}
+
+int mp_enable_disasters(MPEngine *e) {
+    return e->sim.enableDisasters ? 1 : 0;
 }
 
 void mp_generate_map(MPEngine *e, int seed) {

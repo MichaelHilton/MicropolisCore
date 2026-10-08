@@ -80,6 +80,11 @@ int  mp_is_paused(MPEngine *e);
 void mp_set_auto_budget(MPEngine *e, int enable);
 void mp_set_auto_bulldoze(MPEngine *e, int enable);
 void mp_set_enable_disasters(MPEngine *e, int enable);
+int  mp_passes(MPEngine *e);
+int  mp_speed(MPEngine *e);                         /* the speed last set, even while paused */
+int  mp_auto_budget(MPEngine *e);
+int  mp_auto_bulldoze(MPEngine *e);
+int  mp_enable_disasters(MPEngine *e);
 void mp_generate_map(MPEngine *e, int seed);
 int  mp_do_tool(MPEngine *e, int tool, int x, int y);
 int  mp_save_city(MPEngine *e, const char *path);
@@ -147,6 +152,8 @@ void mp_smooth_terrain(MPEngine *e);
 
 /* Tile animation in mp_tick: off entirely, or every tick vs every other tick. */
 void mp_set_animation(MPEngine *e, int animateAll, int frequent);
+int  mp_animate_all(MPEngine *e);
+int  mp_frequent_animation(MPEngine *e);
 
 void mp_set_callbacks(MPEngine *e, const MPCallbacks *callbacks);
 

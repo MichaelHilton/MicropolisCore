@@ -162,13 +162,20 @@ struct DemandGauge: View {
         .overlay(Rectangle().stroke(DOS.darkGray, lineWidth: 2))
     }
 
-    private func bar(_ value: Float, _ color: Color) -> some View {
+    /// Where a bar starts below the top of the gauge, and how tall it is.
+    /// Demand is clamped to -1...1.
+    static func barLayout(_ value: Float, halfHeight: CGFloat) -> (top: CGFloat, height: CGFloat) {
         let clamped = CGFloat(max(-1, min(1, value)))
         let height = abs(clamped) * halfHeight
+        return (clamped > 0 ? halfHeight - height : halfHeight, height)
+    }
+
+    private func bar(_ value: Float, _ color: Color) -> some View {
+        let layout = Self.barLayout(value, halfHeight: halfHeight)
         return VStack(spacing: 0) {
             Spacer(minLength: 0)
-                .frame(height: clamped > 0 ? halfHeight - height : halfHeight)
-            Rectangle().fill(color).frame(width: 14, height: height)
+                .frame(height: layout.top)
+            Rectangle().fill(color).frame(width: 14, height: layout.height)
             Spacer(minLength: 0)
         }
         .frame(width: 14, height: halfHeight * 2)

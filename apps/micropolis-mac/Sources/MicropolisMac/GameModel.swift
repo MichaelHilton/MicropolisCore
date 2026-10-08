@@ -25,6 +25,7 @@ final class GameModel: EngineDelegate {
     let tileAtlas: TileAtlas
     var renderer: MapRenderer!  // Initialized in init after tileAtlas
     let spriteRenderer = SpriteRenderer()
+    let sound: SoundPlaying
 
     var year: Int = 0
     var month: Int = 0
@@ -57,7 +58,7 @@ final class GameModel: EngineDelegate {
     var autoBulldoze: Bool = true { didSet { engine.setAutoBulldoze(autoBulldoze) } }
     var autoBudget: Bool = false { didSet { engine.setAutoBudget(autoBudget) } }
     var autoGoto: Bool = true
-    var soundOn: Bool = true { didSet { SoundManager.shared.soundEnabled = soundOn } }
+    var soundOn: Bool = true { didSet { sound.soundEnabled = soundOn } }
     var animateAll: Bool = true { didSet { pushAnimation() } }
     var frequentAnimation: Bool = true { didSet { pushAnimation() } }
     var disastersEnabled: Bool = true { didSet { engine.setEnableDisasters(disastersEnabled) } }
@@ -74,10 +75,17 @@ final class GameModel: EngineDelegate {
     var terrainFill: Bool = false
     private(set) var terrainUndo: [UInt16]?
 
+    /// Called by Save City when the city has no file yet. Opens the save
+    /// panel; tests replace it so no panel appears.
+    @ObservationIgnored var askForSaveLocation: () -> Void = {}
+
     nonisolated(unsafe) private var timer: Timer?
     private var messageTimer: Timer?
+    private var toolMessageTimer: Timer?
 
-    init() {
+    /// Starts with `city` loaded, or with the engine's empty map when nil.
+    init(city: URL? = Assets.city("haight"), sound: SoundPlaying = SoundManager.shared) {
+        self.sound = sound
         do {
             self.tileAtlas = try TileAtlas(atlasURL: Assets.tileAtlas)
         } catch {
@@ -87,9 +95,11 @@ final class GameModel: EngineDelegate {
         self.renderer = MapRenderer(tileAtlas: tileAtlas)
 
         engine.delegate = self
+        askForSaveLocation = { [weak self] in self?.showSavePanel() }
 
-        let cityPath = Assets.city("haight")
-        _ = engine.loadCity(at: cityPath)
+        if let city {
+            engine.loadCity(at: city)
+        }
         engine.setAutoBulldoze(autoBulldoze)
         engine.setAutoBudget(autoBudget)
         engine.setEnableDisasters(disastersEnabled)
@@ -238,7 +248,7 @@ final class GameModel: EngineDelegate {
         if let url = currentFileURL {
             saveCity(to: url)
         } else {
-            showSavePanel()
+            askForSaveLocation()
         }
     }
 
@@ -265,6 +275,63 @@ final class GameModel: EngineDelegate {
             .applicationName: "Micropolis",
             .credits: NSAttributedString(string: "Based on the SimCity source released by Electronic Arts under the GPL."),
         ])
+    }
+
+    // MARK: - Edit window
+
+    /// Applies the selected tool at a tile. When it fails, the status line
+    /// says why for two seconds.
+    @discardableResult
+    func applyTool(atX x: Int, y: Int) -> ToolResult {
+        let result = engine.apply(selectedTool, x: x, y: y)
+        toolMessage = Self.toolMessage(for: result)
+        toolMessageTimer?.invalidate()
+        if toolMessage != nil {
+            toolMessageTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) { [weak self] _ in
+                Task { @MainActor in
+                    self?.clearToolMessage()
+                }
+            }
+        }
+        return result
+    }
+
+    func clearToolMessage() {
+        toolMessage = nil
+    }
+
+    static func toolMessage(for result: ToolResult) -> String? {
+        switch result {
+        case .noMoney: "Not enough funds"
+        case .needBulldoze: "Bulldoze first"
+        case .failed: "Can't build there"
+        case .ok: nil
+        }
+    }
+
+    // MARK: - Budget window
+
+    /// The budget window's figures as the engine has them now.
+    func makeBudgetSheet() -> BudgetSheet {
+        BudgetSheet(
+            figures: engine.budgetFigures(),
+            funds: funds,
+            taxRate: engine.tax,
+            roadLevel: Int((engine.roadPercent * 100).rounded()),
+            policeLevel: Int((engine.policePercent * 100).rounded()),
+            fireLevel: Int((engine.firePercent * 100).rounded()))
+    }
+
+    /// Puts the budget window's tax rate and funding levels into effect.
+    func applyBudget(_ sheet: BudgetSheet) {
+        engine.setTax(sheet.taxRate)
+        engine.setRoadPercent(Float(sheet.roadLevel) / 100)
+        engine.setPolicePercent(Float(sheet.policeLevel) / 100)
+        engine.setFirePercent(Float(sheet.fireLevel) / 100)
+        // The engine pauses for the year-end budget; carry on afterwards.
+        if speed > 0 && paused {
+            resumeSimulation()
+        }
     }
 
     // MARK: - Map window
@@ -354,7 +421,7 @@ final class GameModel: EngineDelegate {
     func engineDidTool(name: String, x: Int, y: Int) {}
     func engineMakeSound(channel: String, sound: String, x: Int, y: Int) {
         guard soundOn else { return }
-        SoundManager.shared.play(soundName: sound)
+        self.sound.play(soundName: sound)
     }
     func engineSendMessage(index: Int, x: Int, y: Int, picture: Bool, important: Bool) {
         currentMessage = Messages.text(for: index)
@@ -367,10 +434,14 @@ final class GameModel: EngineDelegate {
         messageTimer?.invalidate()
         messageTimer = Timer.scheduledTimer(withTimeInterval: 4.0, repeats: false) { [weak self] _ in
             Task { @MainActor in
-                self?.currentMessage = nil
-                self?.importantMessageGoTo = nil
+                self?.clearMessage()
             }
         }
+    }
+    /// Hides the message line, four seconds after each message.
+    func clearMessage() {
+        currentMessage = nil
+        importantMessageGoTo = nil
     }
     func engineAutoGoto(x: Int, y: Int, message: String) {
         if autoGoto && x >= 0 && y >= 0 {

@@ -20,6 +20,11 @@ struct BudgetSheet: Equatable {
 
     static let taxRange = 0...20
     static let levelRange = 0...100
+
+    /// Dollars as the budget window prints them: "$1,234" or "-$1,234".
+    static func money(_ value: Int) -> String {
+        (value < 0 ? "-$" : "$") + abs(value).formatted()
+    }
 }
 
 struct BudgetView: View {
@@ -40,15 +45,7 @@ struct BudgetView: View {
         .frame(width: 520)
         .background(DOS.white)
         .overlay(Rectangle().stroke(DOS.lightBlue, lineWidth: 4))
-        .onAppear {
-            sheet = BudgetSheet(
-                figures: model.engine.budgetFigures(),
-                funds: model.funds,
-                taxRate: model.engine.tax,
-                roadLevel: Int((model.engine.roadPercent * 100).rounded()),
-                policeLevel: Int((model.engine.policePercent * 100).rounded()),
-                fireLevel: Int((model.engine.firePercent * 100).rounded()))
-        }
+        .onAppear { sheet = model.makeBudgetSheet() }
     }
 
     @ViewBuilder
@@ -64,7 +61,7 @@ struct BudgetView: View {
         }
         HStack(spacing: 16) {
             Text("Taxes collected")
-            Text(money(s.figures.taxesCollected))
+            Text(BudgetSheet.money(s.figures.taxesCollected))
         }
 
         Grid(alignment: .trailing, horizontalSpacing: 16, verticalSpacing: 10) {
@@ -85,10 +82,10 @@ struct BudgetView: View {
         .overlay(Rectangle().stroke(Color(red: 0.67, green: 1, blue: 1), lineWidth: 3))
 
         Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 2) {
-            GridRow { Text("Cash Flow"); Text(money(s.cashFlow)) }
-            GridRow { Text("Previous Fund"); Text(money(s.funds)) }
+            GridRow { Text("Cash Flow"); Text(BudgetSheet.money(s.cashFlow)) }
+            GridRow { Text("Previous Fund"); Text(BudgetSheet.money(s.funds)) }
             Divider().gridCellColumns(2).overlay(DOS.blue)
-            GridRow { Text("Current Funds"); Text(money(s.currentFunds)) }
+            GridRow { Text("Current Funds"); Text(BudgetSheet.money(s.currentFunds)) }
         }
 
         Button(action: apply) {
@@ -105,27 +102,16 @@ struct BudgetView: View {
     private func departmentRow(_ name: String, _ requested: Int, _ allocated: Int, _ level: Binding<Int>) -> some View {
         GridRow {
             Text(name)
-            Text(money(requested))
-            Text(money(allocated))
+            Text(BudgetSheet.money(requested))
+            Text(BudgetSheet.money(allocated))
             Stepper2(value: level, range: BudgetSheet.levelRange, label: "\(level.wrappedValue)%")
         }
     }
 
-    private func money(_ value: Int) -> String {
-        (value < 0 ? "-$" : "$") + abs(value).formatted()
-    }
-
     private func apply() {
-        guard let s = sheet else { return }
-        model.engine.setTax(s.taxRate)
-        model.engine.setRoadPercent(Float(s.roadLevel) / 100)
-        model.engine.setPolicePercent(Float(s.policeLevel) / 100)
-        model.engine.setFirePercent(Float(s.fireLevel) / 100)
+        guard let sheet else { return }
+        model.applyBudget(sheet)
         dismiss()
-        // The engine pauses for the year-end budget; carry on afterwards.
-        if model.speed > 0 && model.paused {
-            model.resumeSimulation()
-        }
     }
 }
 

@@ -46,7 +46,6 @@ class MapNSView: NSView {
     private static let blankCursor = NSCursor(image: NSImage(size: NSSize(width: 1, height: 1)), hotSpot: .zero)
     private var lastMapVersion = -1
     private var lastDragTile: (x: Int, y: Int)? = nil
-    private var toolMessageTimer: Timer? = nil
     private var lastScrollRequestID = 0
 
     private let lineDrawTools: [Tool] = [.road, .railroad, .wire, .bulldozer, .park]
@@ -262,7 +261,7 @@ class MapNSView: NSView {
 
     override func mouseDragged(with event: NSEvent) {
         trackPointer(event)
-        if NSEvent.modifierFlags.contains(.option) {
+        if event.modifierFlags.contains(.option) {
             let delta = CGPoint(x: -event.deltaX, y: -event.deltaY)
             offset.x += delta.x * zoom
             offset.y += delta.y * zoom
@@ -298,33 +297,7 @@ class MapNSView: NSView {
     }
 
     private func applyTool(at tile: (x: Int, y: Int)) {
-        let result = gameModel.engine.apply(gameModel.selectedTool, x: tile.x, y: tile.y)
-
-        let message: String?
-        switch result {
-        case .noMoney:
-            message = "Not enough funds"
-        case .needBulldoze:
-            message = "Bulldoze first"
-        case .failed:
-            message = "Can't build there"
-        case .ok:
-            message = nil
-        default:
-            message = nil
-        }
-
-        if let message = message {
-            gameModel.toolMessage = message
-            toolMessageTimer?.invalidate()
-            toolMessageTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) { [weak self] _ in
-                Task { @MainActor in
-                    self?.gameModel.toolMessage = nil
-                }
-            }
-        } else {
-            gameModel.toolMessage = nil
-        }
+        gameModel.applyTool(atX: tile.x, y: tile.y)
     }
 
     override func magnify(with event: NSEvent) {
@@ -342,7 +315,7 @@ class MapNSView: NSView {
     }
 
     override func keyDown(with event: NSEvent) {
-        let modifiers = NSEvent.modifierFlags
+        let modifiers = event.modifierFlags
         if modifiers.contains(.command) {
             if event.characters == "+" || event.characters == "=" {
                 zoom *= 1.1

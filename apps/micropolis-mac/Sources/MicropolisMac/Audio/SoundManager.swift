@@ -1,6 +1,13 @@
 import AVFoundation
 
-final class SoundManager {
+/// What the game needs from the sound system, so tests can record sounds
+/// instead of playing them.
+protocol SoundPlaying: AnyObject {
+    var soundEnabled: Bool { get set }
+    func play(soundName: String)
+}
+
+final class SoundManager: SoundPlaying {
     static let shared = SoundManager()
 
     private var players: [AVAudioPlayer] = []
