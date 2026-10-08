@@ -138,6 +138,20 @@ struct GameModelTests {
         #expect(status?.x == 7 && status?.y == 8)
     }
 
+    /// The engine sends a 1-based tile-category index (residential is 11) and
+    /// 1-based text indexes, while ZoneStatus names are looked up from 0.
+    @Test
+    func queryingAHouseNamesItResidential() throws {
+        let model = GameModel(sound: RecordingSound())
+        let cells = model.engine.mapSnapshot()
+        let house = try #require(cells.firstIndex { $0 & 0x0400 != 0 && (240..<423).contains(Int($0 & 0x3FF)) })
+        model.engine.apply(.query, x: house / Engine.height, y: house % Engine.height)
+        let info = try #require(model.zoneStatus)
+        withKnownIssue("engine category \(info.category) is not a 0-based ZoneStatus index") {
+            #expect(ZoneStatus.categoryName(info.category) == "Residential")
+        }
+    }
+
     @Test
     func updatesReachTheirProperties() {
         let model = emptyModel()
