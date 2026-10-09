@@ -39,7 +39,11 @@ END = "// coverage: unreachable-end"
 def run_tests(test_filter):
     for old in glob.glob(os.path.join(DEBUG, "codecov", "*.profraw")):
         os.remove(old)
-    command = ["swift", "test", "--enable-code-coverage"]
+    # Swift Testing runs suites on several threads. Plain counters then lose
+    # increments, and llvm-cov derives some line counts by subtraction, so
+    # lines that never ran can show as covered. Atomic counters prevent that.
+    command = ["swift", "test", "--enable-code-coverage",
+               "-Xcc", "-fprofile-update=atomic", "-Xcxx", "-fprofile-update=atomic"]
     if test_filter:
         command += ["--filter", test_filter]
     # A failing test still writes its profile, so the report goes ahead regardless.

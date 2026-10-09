@@ -24,7 +24,7 @@ struct DOSWindowsTests {
 
     @Test
     func newCityUsesNameAndLevel() {
-        let model = GameModel(seed: 1)
+        let model = GameModel(seed: 1, runsTimer: false)
         model.newCity(name: "  Testville ", level: .hard, seed: 11)
         #expect(model.cityName == "Testville")
         #expect(model.funds == 5000)
@@ -34,7 +34,7 @@ struct DOSWindowsTests {
 
     @Test
     func scenarioLoadsFromAppResources() {
-        let model = GameModel(seed: 1)
+        let model = GameModel(seed: 1, runsTimer: false)
         model.loadScenario(.tokyo)
         #expect(model.year == 1957)
         #expect(model.engine.mapSnapshot().filter { $0 & 0x0400 != 0 }.count > 20)
@@ -43,7 +43,7 @@ struct DOSWindowsTests {
     // MARK: Terrain editor
 
     private func flatModel() -> GameModel {
-        let model = GameModel(seed: 1)
+        let model = GameModel(seed: 1, runsTimer: false)
         model.newCity(name: "Flat", level: .easy, seed: 5)
         for x in 0..<Engine.width {
             for y in 0..<Engine.height {
@@ -128,7 +128,7 @@ struct DOSWindowsTests {
 
     @Test
     func everyOverlayRendersForARealCity() {
-        let model = GameModel(seed: 1)
+        let model = GameModel(seed: 1, runsTimer: false)
         for _ in 0..<300 { model.frame() }
         let cells = model.engine.mapSnapshot()
         for overlay in MapOverlay.allCases {
@@ -145,7 +145,7 @@ struct DOSWindowsTests {
 
     @Test
     func graphSeriesShareTheZoneScaleAndRunOldestFirst() {
-        let model = GameModel(seed: 1)
+        let model = GameModel(seed: 1, runsTimer: false)
         for _ in 0..<3000 { model.frame() }
         let series = GraphSeries.series(engine: model.engine, kinds: Set(HistoryKind.allCases), longRange: false)
         #expect(series.count == 6)

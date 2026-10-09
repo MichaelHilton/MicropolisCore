@@ -10,7 +10,7 @@ import MicropolisKit
 @MainActor
 struct ViewRenderTests {
     private func model(city: Bool = false) -> GameModel {
-        GameModel(city: city ? Assets.city("haight") : nil, sound: RecordingSound(), seed: 1)
+        GameModel(city: city ? Assets.city("haight") : nil, sound: RecordingSound(), seed: 1, runsTimer: false)
     }
 
     @discardableResult

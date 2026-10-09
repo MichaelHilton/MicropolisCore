@@ -14,7 +14,7 @@ final class RecordingSound: SoundPlaying {
 struct GameModelTests {
     /// A model on the engine's empty map with a silent sound system.
     private func emptyModel(sound: RecordingSound = RecordingSound()) -> GameModel {
-        GameModel(city: nil, sound: sound, seed: 1)
+        GameModel(city: nil, sound: sound, seed: 1, runsTimer: false)
     }
 
     private func temporaryFile(_ name: String = UUID().uuidString) -> URL {
@@ -23,7 +23,7 @@ struct GameModelTests {
 
     @Test
     func yearAdvances() {
-        let model = GameModel(sound: RecordingSound(), seed: 1)
+        let model = GameModel(sound: RecordingSound(), seed: 1, runsTimer: false)
         let yearBefore = model.year
 
         for _ in 0..<2000 {
@@ -37,7 +37,7 @@ struct GameModelTests {
     @Test
     func theSameSeedPlaysTheSameGame() {
         func play() -> (Int, [UInt16]) {
-            let model = GameModel(sound: RecordingSound(), seed: 42)
+            let model = GameModel(sound: RecordingSound(), seed: 42, runsTimer: false)
             defer { model.setSpeed(0) }
             for _ in 0..<200 {
                 model.frame()
@@ -157,7 +157,7 @@ struct GameModelTests {
     /// 1-based text indexes, while ZoneStatus names are looked up from 0.
     @Test
     func queryingAHouseNamesItResidential() throws {
-        let model = GameModel(sound: RecordingSound(), seed: 1)
+        let model = GameModel(sound: RecordingSound(), seed: 1, runsTimer: false)
         let cells = model.engine.mapSnapshot()
         let house = try #require(cells.firstIndex { $0 & 0x0400 != 0 && (240..<423).contains(Int($0 & 0x3FF)) })
         model.engine.apply(.query, x: house / Engine.height, y: house % Engine.height)
@@ -194,7 +194,7 @@ struct GameModelTests {
 
     @Test
     func evaluationUpdateReadsTheEngine() {
-        let model = GameModel(sound: RecordingSound(), seed: 1)
+        let model = GameModel(sound: RecordingSound(), seed: 1, runsTimer: false)
         model.cityScore = -1
         model.cityClass = -1
         model.evaluation = model.engine.evaluation()
@@ -523,7 +523,7 @@ struct GameModelTests {
 
     @Test
     func budgetSheetMatchesTheEngine() {
-        let model = GameModel(sound: RecordingSound(), seed: 1)
+        let model = GameModel(sound: RecordingSound(), seed: 1, runsTimer: false)
         model.engine.setTax(11)
         model.engine.setRoadPercent(0.5)
         model.engine.setPolicePercent(0.25)
@@ -568,7 +568,7 @@ struct GameModelTests {
     /// city), which must not replace a slower speed the player chose.
     @Test
     func resumingKeepsThePlayersSpeed() {
-        let model = GameModel(sound: RecordingSound(), seed: 1)
+        let model = GameModel(sound: RecordingSound(), seed: 1, runsTimer: false)
         defer { model.setSpeed(0) }
         model.setSpeed(1)
         #expect(model.speed == 1)

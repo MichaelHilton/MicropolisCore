@@ -5,7 +5,7 @@ import Testing
 struct BudgetTests {
     @Test
     func policeFundingRoundTrip() {
-        let model = GameModel(seed: 1)
+        let model = GameModel(seed: 1, runsTimer: false)
 
         // Set police funding to 50%
         model.engine.setPolicePercent(0.5)
@@ -19,7 +19,7 @@ struct BudgetTests {
 
     @Test
     func roadFundingRoundTrip() {
-        let model = GameModel(seed: 1)
+        let model = GameModel(seed: 1, runsTimer: false)
 
         // Set road funding to 75%
         model.engine.setRoadPercent(0.75)
@@ -30,7 +30,7 @@ struct BudgetTests {
 
     @Test
     func fireFundingRoundTrip() {
-        let model = GameModel(seed: 1)
+        let model = GameModel(seed: 1, runsTimer: false)
 
         // Set fire funding to 25%
         model.engine.setFirePercent(0.25)

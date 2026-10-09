@@ -80,13 +80,19 @@ final class GameModel: EngineDelegate {
     @ObservationIgnored var askForSaveLocation: () -> Void = {}
 
     nonisolated(unsafe) private var timer: Timer?
+    /// False keeps the frame timer from running, so the engine only moves
+    /// when a test calls `frame()`.
+    private let runsTimer: Bool
     private var messageTimer: Timer?
     private var toolMessageTimer: Timer?
 
     /// Starts with `city` loaded, or with the engine's empty map when nil.
-    /// `seed` replaces the clock seed so tests run the same every time.
-    init(city: URL? = Assets.city("haight"), sound: SoundPlaying = SoundManager.shared, seed: Int? = nil) {
+    /// `seed` replaces the clock seed and `runsTimer: false` stops the frame
+    /// timer, so tests run the same every time.
+    init(city: URL? = Assets.city("haight"), sound: SoundPlaying = SoundManager.shared,
+         seed: Int? = nil, runsTimer: Bool = true) {
         self.sound = sound
+        self.runsTimer = runsTimer
         do {
             self.tileAtlas = try TileAtlas(atlasURL: Assets.tileAtlas)
         } catch {
@@ -123,7 +129,7 @@ final class GameModel: EngineDelegate {
         }
 
         timer?.invalidate()
-        if speed > 0 {
+        if speed > 0 && runsTimer {
             timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
                 Task { @MainActor in
                     self?.frame()

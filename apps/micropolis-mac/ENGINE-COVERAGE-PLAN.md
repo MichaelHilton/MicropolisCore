@@ -20,7 +20,7 @@ Only line coverage counts. Ignore the function percentage: helpers in headers su
 
 ## Where coverage stands (2026-10-09)
 
-8,119 executable lines, about 1,865 uncovered (77.0%). The number moves by about ±10 lines from run to run until Phase 0 is done.
+8,121 executable lines, 1,884 uncovered (76.8%), after Phase 0. Coverage is now the same on every run.
 
 | File | Lines | Uncovered | Notes |
 |---|---|---|---|
@@ -76,57 +76,22 @@ Add a C function only when a reachable line needs engine state that no existing 
 
 ---
 
-## Phase 0: Make coverage repeatable **[Sonnet]**
+## Phase 0: Make coverage repeatable (done 2026-10-09)
 
-Coverage changes from run to run today, even with every engine seeded. `--check` cannot be trusted until it stops. Two engine bugs cause this; both were found with AddressSanitizer (`swift test --sanitize=address --filter EngineWrapperTests`).
+Coverage used to change from run to run, even with every engine seeded. Phase 0 removed every cause. Three full runs of `scripts/engine_coverage.py --run` now list exactly the same uncovered lines, and `swift test --sanitize=address` reports nothing.
 
-### 0.1 Fix the out-of-bounds vote in `voteProblems`
+- **`voteProblems` went out of bounds** (`evaluate.cpp`). `problem > PROBNUM` is now `>=`. The old loop read one element past a stack array, which is garbage, and wrote one past `problemVotes`. The garbage changed how many random numbers were drawn, so seeded runs diverged.
+- **`newSprite` used a `std::string` in raw `malloc` memory** (`sprite.cpp`). It now uses `new SimSprite()`.
+- **`mp_get_history` read past the history buffers** (`micropolis_c.cpp`). `MP_HISTORY_LENGTH` was 480, but the buffers hold 240 shorts. It is now 240, and a `static_assert` ties it to the engine's `HISTORY_LENGTH`. The app only ever read the first 240.
+- **The coverage counters raced.** Swift Testing runs suites on several threads, and llvm-cov computes some line counts by subtracting one counter from another. A lost increment could therefore make a line that never ran show as covered. `scripts/engine_coverage.py --run` now builds with `-fprofile-update=atomic`. The flag forces a full rebuild whenever you switch between the script and a plain `swift test`, so expect the first run each time to take longer.
+- **Tests no longer run the frame timer.** Loading a city sets the speed to 3, so every `GameModel` with a city used to start a real 30 fps timer. That timer ticked the engine whenever the run loop happened to spin. Tests now pass `runsTimer: false`.
+- **`BehaviorLockTests`** hash fixed-seed runs: Haight with disasters, five generated maps, and every scenario. The hashes may change only when game behavior changes on purpose. Phase 1 must leave them unchanged. Undoing the `voteProblems` fix makes 9 of its assertions fail, so the lock does detect behavior changes.
 
-`src/evaluate.cpp`, in `voteProblems`:
-
-```cpp
-        problem++;
-        if (problem > PROBNUM) {   // reads problemTable[PROBNUM] and writes problemVotes[PROBNUM]
-```
-
-Change `>` to `>=`. Today the loop reads one element past the end of the caller's stack array, which is garbage, and writes one past the end of `problemVotes`. The garbage changes how many votes get counted, so the number of random draws changes too, and from then on every seeded run diverges.
-
-### 0.2 Construct sprites properly in `newSprite`
-
-`src/sprite.cpp`, in `newSprite`, replace
-
-```cpp
-        sprite = (SimSprite *)newPtr(sizeof (SimSprite));
-```
-
-with `sprite = new SimSprite();`. `SimSprite` has a `std::string name` field, and assigning to a string in raw `malloc` memory is undefined behavior. It works today only because fresh memory from `malloc` is usually zeroed, and it crashes under AddressSanitizer. Sprites are never freed (dead ones go to `freeSprites` for reuse), so no matching `delete` is needed.
-
-### 0.3 Check that it is repeatable
-
-1. Run `swift test --sanitize=address --filter MicropolisKitTests`. It must finish with no `AddressSanitizer` report. If the sanitizer finds anything else, fix it the same way: the smallest change that removes the undefined behavior. Explain each fix in the commit message.
-2. Run `scripts/engine_coverage.py --run` three times. After each run, save `scripts/engine_coverage.py --show /` to a file. All three files must be identical.
-3. If they still differ, find the cause:
-   1. `diff` the files to see which lines move.
-   2. Run each test class alone, three times each (`--run --filter <ClassName>`), to find which class varies.
-   3. In a temporary test, copy the steps of the varying test, and after each step print a checksum of `engine.mapSnapshot()` with `engine.population` and `engine.funds`. Run it in three separate processes and compare.
-   4. The first step whose checksum differs points at the cause.
-   Use a hand-written hash such as FNV-1a. Swift's `Hasher` is seeded differently in every process.
-
-### 0.4 Add the behavior-lock test
-
-Add `Tests/MicropolisKitTests/BehaviorLockTests.swift`. Its purpose is to catch any change in game behavior during Phase 1. Write it after 0.1 and 0.2, because those two fixes change behavior.
-
-- **`testHaightRunsTheSameAsBefore`:**
-  - Setup: `Engine(seed: 1234)`, load `haight`, `setEnableDisasters(true)`, `setSpeed(3)`.
-  - Run 3,000 ticks.
-  - Hash (FNV-1a, 64-bit) the map snapshot, funds, population, year, month, every `HistoryKind` from `history(_:)`, the evaluation, and `engine.sprites()` (type, x, y, frame).
-  - `XCTAssertEqual` the hash against a literal recorded from this commit.
-- **`testGeneratedMapsMatchBefore`:** the same idea for `generateMap(seed:)` with seeds 1 to 5. Hash the map only.
-- **`testScenariosRunTheSameAsBefore`:** the same for every `Scenario`. Load it into an `Engine(seed: 1234)`, run 500 ticks, and hash as in the first test.
-
-Add a doc comment explaining that these hashes must change only when game behavior changes on purpose, and that Phase 1 must never change them.
-
-**Done when:** the sanitizer run is clean, three coverage runs match exactly, and the behavior-lock tests pass. Commit 0.1 and 0.2 together with the lock test, or as separate commits if you prefer.
+If coverage ever starts varying again, use the method that found these causes:
+1. Diff `--show /` across runs to see which lines move.
+2. Run each test class alone, several times, to find the one that varies.
+3. Print a hand-rolled hash (FNV-1a) of the map, population and funds after each step of that test. Run it in separate processes.
+4. Run `swift test --sanitize=address` on the suspect.
 
 ---
 
