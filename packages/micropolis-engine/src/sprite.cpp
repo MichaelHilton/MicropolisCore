@@ -86,8 +86,6 @@
 
 #define TRA_GROOVE_X -39
 #define TRA_GROOVE_Y 6
-#define BUS_GROOVE_X -39
-#define BUS_GROOVE_Y 6
 
 
 ////////////////////////////////////////////////////////////////////////
@@ -274,17 +272,6 @@ void Micropolis::initSprite(SimSprite *sprite, int x, int y)
             sprite->xHot = 40;
             sprite->yHot = 16;
             sprite->frame = 1;
-            break;
-
-        case SPRITE_BUS:
-            sprite->width = 32;
-            sprite->height = 32;
-            sprite->xOffset = 30;
-            sprite->yOffset = -18;
-            sprite->xHot = 40;
-            sprite->yHot = -8;
-            sprite->frame = 1;
-            sprite->dir = 1;
             break;
 
     }
@@ -590,10 +577,6 @@ void Micropolis::moveObjects()
 
                 case SPRITE_EXPLOSION:
                     doExplosionSprite(sprite);
-                    break;
-
-                case SPRITE_BUS:
-                    doBusSprite(sprite);
                     break;
 
             }
@@ -1335,318 +1318,6 @@ void Micropolis::doExplosionSprite(SimSprite *sprite)
 
 
 /**
- * Move bus sprite.
- * @param sprite Bus sprite.
- * @todo Remove local magic constants and document the code.
- */
-void Micropolis::doBusSprite(SimSprite *sprite)
-{
-    static const short Dx[5] = {   0,   1,   0,  -1,   0 };
-    static const short Dy[5] = {  -1,   0,   1,   0,   0 };
-    static const short Dir2Frame[4] = { 1, 2, 1, 2 };
-    int dx, dy, tx, ty, otx, oty;
-    int turned = 0;
-    int speed = 0;
-    int z;
-
-#ifdef DEBUGBUS
-    printf("Bus dir %d turn %d frame %d\n",
-           sprite->dir, sprite->turn, sprite->frame);
-#endif
-
-    if (sprite->turn) {
-
-        if (sprite->turn < 0) { /* ccw */
-
-            if (sprite->dir & 1) { /* up or down */
-                sprite->frame = 4;
-            } else { /* left or right */
-                sprite->frame = 3;
-            }
-
-            sprite->turn++;
-            sprite->dir = (sprite->dir - 1) & 3;
-
-        } else { /* cw */
-
-            if (sprite->dir & 1) { /* up or down */
-                sprite->frame = 3;
-            } else { /* left or right */
-                sprite->frame = 4;
-            }
-
-            sprite->turn--;
-            sprite->dir = (sprite->dir + 1) & 3;
-
-        }
-
-        turned = 1;
-
-    } else {
-
-        /* finish turn */
-        if ((sprite->frame == 3) ||
-            (sprite->frame == 4)) {
-            turned = 1;
-            sprite->frame = Dir2Frame[sprite->dir];
-        }
-    }
-
-    if (sprite->speed == 0) {
-
-        /* brake */
-        dx = 0; dy = 0;
-
-    } else { /* cruise at traffic speed */
-
-        tx = (sprite->x + sprite->xHot) >>5;
-        ty = (sprite->y + sprite->yHot) >>5;
-
-        if (tx >= 0 && tx < WORLD_W_2 && ty >= 0 && ty < WORLD_H_2) {
-
-            z = trafficDensityMap.worldGet(tx << 1, ty << 1) >>6;
-
-            if (z > 1) {
-                z--;
-            }
-
-        } else {
-
-            z = 0;
-
-        }
-
-        switch (z) {
-
-            case 0:
-                speed = 8;
-                break;
-
-            case 1:
-                speed = 4;
-                break;
-
-            case 2:
-                speed = 1;
-                break;
-
-        }
-
-        /* govern speed */
-        if (speed > sprite->speed) {
-            speed = sprite->speed;
-        }
-
-        if (turned) {
-
-#ifdef DEBUGBUS
-          printf("turned\n");
-#endif
-
-            if (speed > 1) {
-                speed = 1;
-            }
-
-            dx = Dx[sprite->dir] * speed;
-            dy = Dy[sprite->dir] * speed;
-
-        } else {
-
-            dx = Dx[sprite->dir] * speed;
-            dy = Dy[sprite->dir] * speed;
-
-            tx = (sprite->x + sprite->xHot) >>4;
-            ty = (sprite->y + sprite->yHot) >>4;
-
-            /* drift into the right lane */
-            switch (sprite->dir) {
-
-                  case 0: /* up */
-
-                    z = ((tx <<4) + 4) - (sprite->x + sprite->xHot);
-
-                    if (z < 0) {
-                        dx = -1;
-                    } else if (z > 0) {
-                        dx = 1;
-                    }
-
-#ifdef DEBUGBUS
-                    printf("moving up x %x z %d dx %d\n", sprite->x + sprite->xHot, z, dx);
-#endif
-
-                    break;
-
-                case 1: /* right */
-
-                    z = ((ty <<4) + 4) - (sprite->y + sprite->yHot);
-
-                    if (z < 0) {
-                        dy = -1;
-                    } else if (z > 0) {
-                        dy = 1;
-                    }
-
-#ifdef DEBUGBUS
-                    printf("moving right y %x z %d dy %d\n", sprite->y + sprite->yHot, z, dy);
-#endif
-
-                    break;
-
-                case 2: /* down */
-
-                    z = (tx <<4) - (sprite->x + sprite->xHot);
-
-                    if (z < 0) {
-                        dx = -1;
-                    } else if (z > 0) {
-                        dx = 1;
-                    }
-
-#ifdef DEBUGBUS
-                    printf("moving down x %x z %d dx %d\n", sprite->x + sprite->xHot, z, dx);
-#endif
-
-                    break;
-
-                case 3: /* left */
-
-                    z = (ty <<4) - (sprite->y + sprite->yHot);
-
-                    if (z < 0) {
-                        dy = -1;
-                    } else if (z > 0) {
-                        dy = 1;
-                    }
-
-#ifdef DEBUGBUS
-                    printf("moving left y %x z %d dy %d\n", sprite->y + sprite->yHot, z, dy);
-#endif
-
-                    break;
-            }
-        }
-    }
-
-#ifdef DEBUGBUS
-    printf("speed dx %d dy %d\n", dx, dy);
-#endif
-
-#define AHEAD 8
-
-    otx = (sprite->x + sprite->xHot + (Dx[sprite->dir] * AHEAD)) >>4;
-    oty = (sprite->y + sprite->yHot + (Dy[sprite->dir] * AHEAD)) >>4;
-
-    otx = clamp(otx, 0, WORLD_W - 1);
-    oty = clamp(oty, 0, WORLD_H - 1);
-
-    tx = (sprite->x + sprite->xHot + dx + (Dx[sprite->dir] * AHEAD)) >>4;
-    ty = (sprite->y + sprite->yHot + dy + (Dy[sprite->dir] * AHEAD)) >>4;
-
-    tx = clamp(tx, 0, WORLD_W - 1);
-    ty = clamp(ty, 0, WORLD_H - 1);
-
-    if (tx != otx || ty != oty) {
-
-#ifdef DEBUGBUS
-        printf("drive from tile %d %d to %d %d\n",
-               otx, oty, tx, ty);
-#endif
-
-        z = canDriveOn(tx, ty);
-
-        if (z == 0) {
-
-            /* can't drive forward into a new tile */
-            if (speed == 8) {
-                bulldozerTool(tx, ty);
-            } else {
-            }
-
-        } else {
-
-            /* drive forward into a new tile */
-            if (z > 0) {
-                /* smooth */
-            } else {
-                /* bumpy */
-                dx /= 2;
-                dy /= 2;
-            }
-
-        }
-    }
-
-    tx = (sprite->x + sprite->xHot + dx) >>4;
-    ty = (sprite->y + sprite->yHot + dy) >>4;
-
-    z = canDriveOn(tx, ty);
-
-    if (z > 0) {
-        /* cool, cruise along */
-    } else {
-        if (z < 0) {
-            /* bumpy */
-        } else {
-            /* something in the way */
-        }
-    }
-
-    sprite->x += dx;
-    sprite->y += dy;
-
-    if (enableDisasters) {
-        SimSprite *s;
-        int explode = 0;
-
-        for (s = spriteList; s != NULL; s = s->next) {
-            if (sprite != s && s->frame != 0
-                    && (s->type == SPRITE_BUS
-                        || (s->type == SPRITE_TRAIN && s->frame != 5))
-                    && checkSpriteCollision(sprite, s)) {
-                explodeSprite(s);
-                explode = 1;
-            }
-        }
-
-        if (explode) {
-            explodeSprite(sprite);
-        }
-
-    }
-}
-
-
-/**
- * Can one drive at the specified tile?
- * @param x X coordinate at map.
- * @param y Y coordinate at map.
- * @return 0 if not, 1 if you can, -1 otherwise
- */
-int Micropolis::canDriveOn(int x, int y)
-{
-    int tile;
-
-    if (!testBounds(x, y)) {
-        return 0;
-    }
-
-    tile = map[x][y] & LOMASK;
-
-    if ((tile >= ROADBASE && tile <= LASTROAD && tile != BRWH && tile != BRWV)
-              || tile == HRAILROAD || tile == VRAILROAD) {
-        return 1;
-    }
-
-    if (tile == DIRT || tally(tile)) {
-        return -1;
-    }
-
-    return 0;
-}
-
-
-/**
  * Handle explosion of sprite (mostly due to collision?).
  * @param sprite that should explode.
  * @todo Add a 'bus crashed' message to #MessageNumber.
@@ -1680,10 +1351,6 @@ void Micropolis::explodeSprite(SimSprite *sprite)
 
         case SPRITE_HELICOPTER:
             sendMessage(MESSAGE_HELICOPTER_CRASHED, x, y, true);
-            break;
-
-        case SPRITE_BUS:
-            sendMessage(MESSAGE_TRAIN_CRASHED, x, y, true); /* XXX for now */
             break;
 
     }
@@ -1837,19 +1504,6 @@ void Micropolis::generateTrain(int x, int y)
 {
     if (totalPop > 20 && getSprite(SPRITE_TRAIN) == NULL && getRandom(25) == 0) {
         makeSprite(SPRITE_TRAIN, (x <<4) + TRA_GROOVE_X, (y <<4) + TRA_GROOVE_Y);
-    }
-}
-
-
-/**
- * Try to start a new bus sprite at the given map tile.
- * @param x X coordinate in map coordinate.
- * @param y Y coordinate in map coordinate.
- */
-void Micropolis::generateBus(int x, int y)
-{
-    if (getSprite(SPRITE_BUS) == NULL && getRandom(25) == 0) {
-        makeSprite(SPRITE_BUS, (x <<4) + BUS_GROOVE_X, (y <<4) + BUS_GROOVE_Y);
     }
 }
 

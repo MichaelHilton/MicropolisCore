@@ -1891,36 +1891,9 @@ public:
      */
     std::string cityName;     ///< Name of the city
 
-    /**
-     * Heat steps.
-     */
-    int heatSteps;
-
-    /**
-     * Heat flow.
-     */
-    int heatFlow;
-
-    /**
-     * Heat rule.
-     */
-    int heatRule;
-
-    /**
-     * Heat wrap.
-     */
-    int heatWrap;
-
 private:
 
-    short *cellSrc;
-
-    short *cellDst;
-
-
     void simInit();
-
-    void simHeat();
 
     void simLoop(bool doSim);
 
@@ -2255,10 +2228,6 @@ public:
 
     void doExplosionSprite(SimSprite *sprite);
 
-    void doBusSprite(SimSprite *sprite);
-
-    int canDriveOn(int x, int y);
-
     void explodeSprite(SimSprite *sprite);
 
     bool checkWet(int x);
@@ -2270,8 +2239,6 @@ public:
     void startFire(int x, int y);
 
     void generateTrain(int x, int y);
-
-    void generateBus(int x, int y);
 
     void generateShip();
 

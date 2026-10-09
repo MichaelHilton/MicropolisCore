@@ -402,18 +402,6 @@ void Micropolis::init()
     // int simPausedSpeed;
     simPausedSpeed = 0;
 
-    // int heatSteps;
-    heatSteps = 0;
-
-    // int heatFlow;
-    heatFlow = -7;
-
-    // int heatRule;
-    heatRule = 0;
-
-    // int heatWrap;
-    heatWrap = 3;
-
     // std::string cityFileName;
     cityFileName = "";
 
@@ -425,12 +413,6 @@ void Micropolis::init()
 
     // bool doAnimaton;
     doAnimation = true;
-
-    // short *cellSrc;
-    cellSrc = NULL;
-
-    // short *cellDst;
-    cellDst = NULL;
 
 
     ////////////////////////////////////////////////////////////////////////
@@ -727,7 +709,7 @@ void Micropolis::simUpdate()
 {
     blinkFlag = ((tickCount() % 60) < 30) ? 1 : -1;
 
-    if (simSpeed && !heatSteps) {
+    if (simSpeed) {
       tilesAnimated = false;
     }
 
@@ -738,241 +720,14 @@ void Micropolis::simUpdate()
 }
 
 
-/**
- * ????
- * @todo Why is Micropolis::cellSrc not allocated together with all the other
- *       variables?
- * @todo What is the purpose of this function?
- * @todo KILL the define.
- */
-void Micropolis::simHeat()
-{
-    int x, y;
-    static int a = 0;
-    short *src, *dst;
-    int fl = heatFlow;
-
-    const int SRCCOL = WORLD_H + 2;
-    const int DSTCOL = WORLD_H;
-
-    if (cellSrc == NULL) {
-        cellSrc = (short *)newPtr((WORLD_W + 2) * (WORLD_H + 2) * sizeof (short));
-        cellDst = (short *)&map[0][0];
-    }
-
-    src = cellSrc + SRCCOL + 1;
-    dst = cellDst;
-
-    /*
-     * Copy wrapping edges:
-     *
-     *  0   ff  f0 f1 ... fe ff     f0
-     *
-     *  1   0f  00 01 ... 0e 0f     00
-     *  2   1f  10 11 ... 1e 1f     10
-     *      ..  .. ..     .. ..     ..
-     *      ef  e0 e1 ... ee ef     e0
-     *  h   ff  f0 f1 ... fe ff     f0
-     *
-     *  h+1 0f  00 01 ... 0e 0f     00
-     *
-     * wrap value:  effect:
-     *  0   no effect
-     *  1   copy future=>past, no wrap
-     *  2   no copy, wrap edges
-     *  3   copy future=>past, wrap edges
-     *  4   copy future=>past, same edges
-     */
-
-    switch (heatWrap) {
-        case 0:
-            break;
-        case 1:
-            for (x = 0; x < WORLD_W; x++) {
-                memcpy(src, dst, WORLD_H * sizeof (short));
-                src += SRCCOL;
-                dst += DSTCOL;
-            }
-            break;
-        case 2:
-            for (x = 0; x < WORLD_W; x++) {
-                src[-1] = src[WORLD_H - 1];
-                src[WORLD_H] = src[0];
-                src += SRCCOL;
-                dst += DSTCOL;
-            }
-            memcpy(
-                cellSrc,
-                cellSrc + (SRCCOL * WORLD_W),
-                SRCCOL * sizeof (short));
-            memcpy(
-                cellSrc + SRCCOL * (WORLD_W + 1),
-                cellSrc + SRCCOL,
-                SRCCOL * sizeof (short));
-            break;
-        case 3:
-            for (x = 0; x < WORLD_W; x++) {
-                memcpy(src, dst, WORLD_H * sizeof (short));
-                src[-1] = src[WORLD_H - 1];
-                src[WORLD_H] = src[0];
-                src += SRCCOL;
-                dst += DSTCOL;
-            }
-            memcpy(
-                cellSrc,
-                cellSrc + (SRCCOL * WORLD_W),
-                SRCCOL * sizeof (short));
-            memcpy(
-                cellSrc + SRCCOL * (WORLD_W + 1),
-                cellSrc + SRCCOL,
-                SRCCOL * sizeof (short));
-            break;
-        case 4:
-            src[0] =
-                dst[0];
-            src[1 + WORLD_H] =
-                dst[WORLD_H - 1];
-            src[(1 + WORLD_W) * SRCCOL] =
-                dst[(WORLD_W - 1) * DSTCOL];
-            src[((2 + WORLD_W) * SRCCOL) - 1] =
-                dst[(WORLD_W * WORLD_H) - 1];
-            for (x = 0; x < WORLD_W; x++) {
-                memcpy(src, dst, WORLD_H * sizeof (short));
-                src[-1] = src[0];
-                src[WORLD_H] =  src[WORLD_H - 1];
-                src += SRCCOL;
-                dst += DSTCOL;
-            }
-            memcpy(
-                cellSrc + (SRCCOL * (WORLD_W + 1)),
-                cellSrc + (SRCCOL * WORLD_W),
-                SRCCOL * sizeof (short));
-            memcpy(
-                cellSrc,
-                cellSrc + SRCCOL,
-                SRCCOL * sizeof (short));
-            break;
-        default:
-            NOT_REACHED();
-            break;
-    }
-
-
-#define CLIPPER_LOOP_BODY(CODE) \
-    src = cellSrc; dst = cellDst; \
-    for (x = 0; x < WORLD_W;) { \
-        short nw, n, ne, w, c, e, sw, s, se; \
-        src = cellSrc + (x * SRCCOL); \
-        dst = cellDst + (x * DSTCOL); \
-        w = src[0]; c = src[SRCCOL]; e = src[2 * SRCCOL]; \
-        sw = src[1]; s = src[SRCCOL + 1]; se = src[(2 * SRCCOL) + 1]; \
-        for (y = 0; y < WORLD_H; y++) { \
-            nw = w; w = sw; sw = src[2]; \
-            n = c; c = s; s = src[SRCCOL + 2]; \
-            ne = e; e = se; se = src[(2 * SRCCOL) + 2]; \
-            { CODE } \
-            src++; dst++; \
-        } \
-        x++; \
-        src = cellSrc + ((x + 1) * SRCCOL) - 3; \
-        dst = cellDst + ((x + 1) * DSTCOL) - 1; \
-        nw = src[1]; n = src[SRCCOL + 1]; ne = src[(2 * SRCCOL) + 1]; \
-        w = src[2]; c = src[SRCCOL + 2]; e = src[(2 * SRCCOL) + 2]; \
-        for (y = WORLD_H - 1; y >= 0; y--) { \
-            sw = w; w = nw; nw = src[0]; \
-            s = c; c = n; n = src[SRCCOL]; \
-            se = e; e = ne; ne = src[2 * SRCCOL]; \
-            { CODE } \
-            src--; dst--; \
-        } \
-        x++; \
-    }
-
-
-    switch (heatRule) {
-
-      case 0:
-
-#define HEAT \
-    a += nw + n + ne + w + e + sw + s + se + fl; \
-    dst[0] = ((a >> 3) & LOMASK) | ANIMBIT | BURNBIT | BULLBIT; \
-    a &= 7;
-
-        CLIPPER_LOOP_BODY(HEAT);
-        break;
-
-      case 1:
-
-#define ECOMASK 0x3fc
-#define ECO \
-    { \
-        c -= fl; n -= fl; s -= fl; e -= fl; w -= fl; \
-        ne -= fl; nw -= fl; se -= fl; sw -= fl; \
-        /* anneal */ \
-        int sum = \
-            (c&1) + (n&1) + (s&1) + (e&1) + (w&1) + \
-            (ne&1) + (nw&1) + (se&1) + (sw&1), cell; \
-        if (((sum > 5) || (sum == 4))) { \
-            /* brian's brain */ \
-            cell = \
-                ((c <<1) & (0x3fc)) | \
-                (((((c >>1)&3) == 0) && \
-                  (((n&2) + (s&2) + (e&2) + (w&2) + \
-                    (ne&2) + (nw&2) + (se&2) + (sw&2)) == (2 <<1))      \
-                 ) ? 2 : 0) | \
-                 1; \
-            cell &= 0x00f; \
-        } else { \
-            /* anti-life */ \
-            sum = \
-                ((n&2) + (s&2) + (e&2) + (w&2) + \
-                 (ne&2) + (nw&2) + (se&2) + (sw&2)) >>1; \
-            cell = \
-                (((c ^ 2) <<1) & ECOMASK) | \
-                ((c&2) \
-                   ? ((sum != 5) ? 2 : 0) \
-                   : (((sum != 5) && (sum != 6)) ? 2 : 0)); \
-            cell &= 0x00f; \
-        } \
-        dst[0] = \
-            ((fl + cell) & LOMASK) | ANIMBIT | BURNBIT | BULLBIT; \
-        c += fl; n += fl; s += fl; e += fl; w += fl; \
-        ne += fl; nw += fl; se += fl; sw += fl; \
-    }
-
-        CLIPPER_LOOP_BODY(ECO);
-
-        break;
-
-        default:
-            NOT_REACHED();
-            break;
-    }
-}
-
-
 void Micropolis::simLoop(bool doSim)
 {
-   if (heatSteps) {
-       int j;
-
-       for (j = 0; j < heatSteps; j++) {
-           simHeat();
-       }
-
-       moveObjects();
-       simulateRobots();
-
-       newMap = 1;
-
-   } else {
-       if (doSim) {
-           simFrame();
-       }
-
-       moveObjects();
-       simulateRobots();
+   if (doSim) {
+       simFrame();
    }
+
+   moveObjects();
+   simulateRobots();
 
    simLoops++;
 }

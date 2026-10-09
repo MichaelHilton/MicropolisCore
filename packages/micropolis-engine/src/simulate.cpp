@@ -1079,8 +1079,6 @@ void Micropolis::doRoad(const Position &pos)
     MapValue mapValue = map[pos.posX][pos.posY];
     MapTile tile = mapValue & LOMASK;
 
-    /* generateBus(pos.posX, pos.posY); */
-
     if (roadEffect < (15 * MAX_ROAD_EFFECT / 16)) {
         // roadEffect < 15/16 of max road, enable deteriorating road
         if ((getRandom16() & 511) == 0) {
