@@ -323,8 +323,8 @@ final class EngineTests: XCTestCase {
 
         let resHistory = engine.history(.residential)
 
-        if resHistory.count != 480 {
-            XCTFail("Residential history should have 480 entries, got \(resHistory.count)")
+        if resHistory.count != 240 {
+            XCTFail("Residential history should have 240 entries, got \(resHistory.count)")
             return
         }
 
@@ -349,7 +349,7 @@ final class EngineTests: XCTestCase {
     func testEveryHistorySeriesIsReadable() throws {
         let engine = try XCTUnwrap(loadedHaight(ticks: 3000))
         for kind in HistoryKind.allCases {
-            XCTAssertEqual(engine.history(kind).count, 480, "\(kind)")
+            XCTAssertEqual(engine.history(kind).count, 240, "\(kind)")
         }
         XCTAssertTrue(engine.history(.commercial).contains { $0 != 0 })
     }

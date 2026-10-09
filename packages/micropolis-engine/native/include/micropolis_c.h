@@ -6,7 +6,7 @@ extern "C" {
 
 typedef struct MPEngine MPEngine;   /* opaque */
 
-enum { MP_WORLD_W = 120, MP_WORLD_H = 100, MP_HISTORY_LENGTH = 480 };
+enum { MP_WORLD_W = 120, MP_WORLD_H = 100, MP_HISTORY_LENGTH = 240 };
 
 typedef enum {
     MP_TOOL_RESIDENTIAL = 0, MP_TOOL_COMMERCIAL, MP_TOOL_INDUSTRIAL,

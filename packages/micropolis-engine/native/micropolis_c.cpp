@@ -329,7 +329,9 @@ void mp_get_history(MPEngine *e, int which, short *out) {
         case MP_HISTORY_POLLUTION: src = e->sim.pollutionHist; break;
         default: return;
     }
-    for (int i = 0; i < 480; i++) {
+    static_assert(MP_HISTORY_LENGTH * sizeof(short) == HISTORY_LENGTH,
+                  "the engine's history buffers hold MP_HISTORY_LENGTH shorts");
+    for (int i = 0; i < MP_HISTORY_LENGTH; i++) {
         out[i] = src[i];
     }
 }

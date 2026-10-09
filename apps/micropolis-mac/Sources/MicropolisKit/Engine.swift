@@ -377,7 +377,7 @@ public final class Engine {
     }
 
     public func history(_ kind: HistoryKind) -> [Int] {
-        var buffer = [Int16](repeating: 0, count: 480)
+        var buffer = [Int16](repeating: 0, count: Int(MP_HISTORY_LENGTH))
         mp_get_history(handle, Int32(kind.rawValue), &buffer)
         return buffer.map { Int($0) }
     }

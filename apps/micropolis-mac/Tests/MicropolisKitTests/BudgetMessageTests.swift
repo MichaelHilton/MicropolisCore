@@ -141,7 +141,7 @@ final class BudgetMessageTests: XCTestCase {
         for _ in 0..<5000 { engine.tick() }
         for kind in HistoryKind.allCases {
             let values = engine.history(kind)
-            XCTAssertEqual(values.count, 480, "\(kind)")
+            XCTAssertEqual(values.count, 240, "\(kind)")
             XCTAssertTrue(values.contains { $0 != 0 }, "\(kind) is all zeros")
         }
     }
