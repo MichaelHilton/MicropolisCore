@@ -4,7 +4,7 @@ import XCTest
 /// The Swift wrapper's settings, defaults and callbacks.
 final class EngineWrapperTests: XCTestCase {
     private func haight() -> Engine {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         XCTAssertTrue(engine.loadCity(at: Repo.city("haight")))
         return engine
     }
@@ -12,13 +12,13 @@ final class EngineWrapperTests: XCTestCase {
     // MARK: Setting round trips
 
     func testPassesRoundTrip() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         engine.setPasses(5)
         XCTAssertEqual(engine.passes, 5)
     }
 
     func testSpeedRoundTripAndClamp() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         for speed in 0...3 {
             engine.setSpeed(speed)
             XCTAssertEqual(engine.speed, speed)
@@ -30,7 +30,7 @@ final class EngineWrapperTests: XCTestCase {
     }
 
     func testSpeedSurvivesPause() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         engine.setSpeed(2)
         engine.pause()
         XCTAssertTrue(engine.isPaused)
@@ -41,7 +41,7 @@ final class EngineWrapperTests: XCTestCase {
     }
 
     func testSettingTheSpeedWhilePausedTakesEffectOnResume() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         engine.setSpeed(1)
         engine.pause()
         engine.setSpeed(3)
@@ -51,7 +51,7 @@ final class EngineWrapperTests: XCTestCase {
     }
 
     func testFlagsRoundTrip() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         for value in [true, false] {
             engine.setAutoBudget(value)
             XCTAssertEqual(engine.autoBudget, value)
@@ -63,13 +63,33 @@ final class EngineWrapperTests: XCTestCase {
     }
 
     func testAnimationSettingsAreIndependent() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         engine.setAnimation(animateAll: true, frequent: false)
         XCTAssertTrue(engine.animateAll)
         XCTAssertFalse(engine.frequentAnimation)
         engine.setAnimation(animateAll: false, frequent: true)
         XCTAssertFalse(engine.animateAll)
         XCTAssertTrue(engine.frequentAnimation)
+    }
+
+    // MARK: Seeding
+
+    private func haightAfterTicks(seed: Int) -> [UInt16] {
+        let engine = Engine(seed: seed)
+        XCTAssertTrue(engine.loadCity(at: Repo.city("haight")))
+        engine.setSpeed(3)
+        for _ in 0..<500 {
+            engine.tick()
+        }
+        return engine.mapSnapshot()
+    }
+
+    func testTheSameSeedRunsTheSameCity() {
+        XCTAssertEqual(haightAfterTicks(seed: 42), haightAfterTicks(seed: 42))
+    }
+
+    func testDifferentSeedsRunDifferently() {
+        XCTAssertNotEqual(haightAfterTicks(seed: 1), haightAfterTicks(seed: 2))
     }
 
     // MARK: Demands
@@ -90,7 +110,7 @@ final class EngineWrapperTests: XCTestCase {
     /// A delegate that ignores every event must be safe: this runs each
     /// default implementation in the protocol extension.
     func testEngineWithAnEmptyDelegateKeepsRunning() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         let delegate = MinimalDelegate()
         engine.delegate = delegate
         XCTAssertTrue(engine.loadCity(at: Repo.city("haight")))
@@ -175,7 +195,7 @@ final class EngineWrapperTests: XCTestCase {
     }
 
     func testSettingTheTaxReportsTheRate() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         let recorder = FullRecorder()
         engine.delegate = recorder
         engine.setTax(13)
@@ -183,7 +203,7 @@ final class EngineWrapperTests: XCTestCase {
     }
 
     func testPauseAndSpeedChangesAreReported() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         let recorder = FullRecorder()
         engine.delegate = recorder
         engine.setSpeed(2)
@@ -221,7 +241,7 @@ final class EngineWrapperTests: XCTestCase {
     // MARK: ToolResult
 
     func testApplyReportsEachResult() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         engine.generateMap(seed: 1)
         engine.setAutoBulldoze(false)
         engine.setFunds(100_000)
@@ -253,7 +273,7 @@ final class EngineWrapperTests: XCTestCase {
     }
 
     func testApplyOffTheMapFailsWithoutCrashing() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         engine.generateMap(seed: 1)
         engine.setFunds(100_000)
         let before = engine.mapSnapshot()

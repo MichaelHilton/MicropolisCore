@@ -11,7 +11,7 @@ struct MapRendererTests {
         let tileAtlas = try TileAtlas(atlasURL: atlasURL)
         let renderer = MapRenderer(tileAtlas: tileAtlas)
 
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         let cityPath = Assets.city("haight")
         _ = engine.loadCity(at: cityPath)
 
@@ -49,7 +49,7 @@ struct MapRendererTests {
         let tileAtlas = try TileAtlas(atlasURL: atlasURL)
         let renderer = MapRenderer(tileAtlas: tileAtlas)
 
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         let cityPath = Assets.city("haight")
         _ = engine.loadCity(at: cityPath)
 
@@ -68,7 +68,7 @@ struct MapRendererTests {
         let tileAtlas = try TileAtlas(atlasURL: atlasURL)
         let renderer = MapRenderer(tileAtlas: tileAtlas)
 
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         let cityPath = Assets.city("haight")
         _ = engine.loadCity(at: cityPath)
 
@@ -90,7 +90,7 @@ struct MapRendererTests {
         let tileAtlas = try TileAtlas(atlasURL: atlasURL)
         let renderer = MapRenderer(tileAtlas: tileAtlas)
 
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         let cityPath = Assets.city("haight")
         _ = engine.loadCity(at: cityPath)
 

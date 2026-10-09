@@ -84,9 +84,14 @@ public final class Engine {
     public static let width = 120
     public static let height = 100
 
-    public init() {
+    /// The engine seeds its random numbers from the clock, now and on every
+    /// city load; pass `seed` to use it instead so a run can be repeated.
+    public init(seed: Int? = nil) {
         handle = mp_create()!
         setupCallbacks()
+        if let seed {
+            fixRandomSeed(seed)
+        }
     }
 
     private func setupCallbacks() {
@@ -302,7 +307,7 @@ public final class Engine {
         mp_set_speed(handle, Int32(speed))
     }
 
-    /// The speed last set (0...3), even while paused.
+    /// The speed last set (0...3); 0 while paused.
     public var speed: Int {
         Int(mp_speed(handle))
     }
@@ -345,6 +350,11 @@ public final class Engine {
 
     public func generateMap(seed: Int) {
         mp_generate_map(handle, Int32(seed))
+    }
+
+    /// Uses `seed` now and wherever the engine would reseed from the clock.
+    public func fixRandomSeed(_ seed: Int) {
+        mp_fix_random_seed(handle, Int32(seed))
     }
 
     public func apply(_ tool: Tool, x: Int, y: Int) -> ToolResult {

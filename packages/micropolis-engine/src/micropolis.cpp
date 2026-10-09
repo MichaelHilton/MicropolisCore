@@ -471,6 +471,9 @@ void Micropolis::init()
     // UQuad nextRandom;
     nextRandom = 1;
 
+    hasFixedRandomSeed = false;
+    fixedRandomSeed = 0;
+
 
     ////////////////////////////////////////////////////////////////////////
     // scan.cpp

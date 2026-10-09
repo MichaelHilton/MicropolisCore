@@ -86,6 +86,7 @@ int  mp_auto_budget(MPEngine *e);
 int  mp_auto_bulldoze(MPEngine *e);
 int  mp_enable_disasters(MPEngine *e);
 void mp_generate_map(MPEngine *e, int seed);
+void mp_fix_random_seed(MPEngine *e, int seed);     /* replaces every clock seed */
 int  mp_do_tool(MPEngine *e, int tool, int x, int y);
 int  mp_save_city(MPEngine *e, const char *path);
 void mp_make_disaster(MPEngine *e, int which);

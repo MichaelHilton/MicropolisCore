@@ -9,7 +9,7 @@ final class SpriteTests: XCTestCase {
     }
 
     private func city(_ name: String) -> Engine {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         XCTAssertTrue(engine.loadCity(at: Repo.city(name)), name)
         return engine
     }
@@ -47,7 +47,7 @@ final class SpriteTests: XCTestCase {
     }
 
     func testHelicoptersFlyOverABigCity() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         XCTAssertTrue(engine.loadScenario(.boston, resourceDirectory: Repo.content))
         _ = sprite(Kind.helicopter, in: engine)
     }

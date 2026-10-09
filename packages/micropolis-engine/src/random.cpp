@@ -161,12 +161,31 @@ short Micropolis::getERandom(short limit)
 }
 
 
-/** Initialize the random number generator with a 'random' seed. */
+/**
+ * Initialize the random number generator with a 'random' seed, or with
+ * the seed given to fixRandomSeed().
+ */
 void Micropolis::randomlySeedRandom()
 {
+    if (hasFixedRandomSeed) {
+        seedRandom(fixedRandomSeed);
+        return;
+    }
     struct timeval time;
     gettimeofday(&time, NULL);
     seedRandom(time.tv_usec ^ time.tv_sec);
+}
+
+
+/**
+ * Use \a seed instead of the clock from now on, so runs can be repeated.
+ * @param seed Seed for this and every later randomlySeedRandom().
+ */
+void Micropolis::fixRandomSeed(int seed)
+{
+    hasFixedRandomSeed = true;
+    fixedRandomSeed = seed;
+    seedRandom(seed);
 }
 
 

@@ -15,7 +15,7 @@ struct MapInteractionTests {
     }
 
     private func rig() -> Rig {
-        let model = GameModel(city: nil, sound: RecordingSound())
+        let model = GameModel(city: nil, sound: RecordingSound(), seed: 1)
         for x in 0..<Engine.width { for y in 0..<Engine.height { model.engine.setTile(x: x, y: y, cell: 0) } }
         model.engine.setFunds(100_000)
         let container = NSView(frame: NSRect(x: 0, y: 0, width: 400, height: 300))

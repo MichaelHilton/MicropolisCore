@@ -2054,6 +2054,12 @@ public:
 
     void seedRandom(int seed);
 
+    void fixRandomSeed(int seed);
+
+    /// When set, randomlySeedRandom() uses fixedRandomSeed instead of the clock.
+    bool hasFixedRandomSeed;
+    int fixedRandomSeed;
+
 
     ////////////////////////////////////////////////////////////////////////
     // scan.cpp

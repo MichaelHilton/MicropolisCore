@@ -4,14 +4,16 @@ This branch contains only the native macOS app (`apps/micropolis-mac`) and the C
 
 ## What is tested
 
-246 tests in all (90 XCTest, 156 Swift Testing), about 105 seconds of test time.
+250 tests in all (92 XCTest, 158 Swift Testing), about 105 seconds of test time.
 
 | Target | Framework | Tests | Covers |
 |--------|-----------|-------|--------|
-| `MicropolisKitTests` | XCTest | 90 | The Swift wrapper and, through it, the C++ engine. `EngineTests`: loading, simulation, saving, callbacks, sprites, history, overlays, scenarios. `EngineWrapperTests`: setting round trips, the delegate defaults, query, earthquake and tax callbacks, `ToolResult` mapping. `ToolTests`: every tool, auto-connecting roads, rails and wires, bridges, the bulldozer, prices, placement failures. `SpriteTests`: trains, ships, planes, helicopters, monsters, tornadoes, explosions. `DisasterTests`: fire, flood, earthquake, meltdown, disabled disasters, the five scenario disasters. `BudgetMessageTests`: the year-end budget with auto-budget on and off, running out of money, the power advisor message, losing a scenario, history. `FullRecorder.swift` holds the shared delegate recorders. |
-| `MicropolisMacTests` | Swift Testing (`@Test`) | 156 | `LookupTablesTests` (name tables, `ToolSpec`, terrain kinds, overlay colors, `Assets`, `BudgetSheet` arithmetic, demand bars), `GameModelTests` (delegate callbacks, messages, scrolling, load and save, scenarios, terrain editor, options, sound, tool clicks, budget), `GraphSeriesTests`, `ViewRenderTests` (every view hosted and laid out), `MapInteractionTests` (zoom keys, scroll requests, clicks and drags with synthetic events), `DOSWindowsTests`, `BudgetTests`, `MapViewTests`, `MapRendererTests`, `TileAtlasTests`, `MessagesTests`, `BresenhamTests` |
+| `MicropolisKitTests` | XCTest | 92 | The Swift wrapper and, through it, the C++ engine. `EngineTests`: loading, simulation, saving, callbacks, sprites, history, overlays, scenarios. `EngineWrapperTests`: setting round trips, the delegate defaults, query, earthquake and tax callbacks, `ToolResult` mapping. `ToolTests`: every tool, auto-connecting roads, rails and wires, bridges, the bulldozer, prices, placement failures. `SpriteTests`: trains, ships, planes, helicopters, monsters, tornadoes, explosions. `DisasterTests`: fire, flood, earthquake, meltdown, disabled disasters, the five scenario disasters. `BudgetMessageTests`: the year-end budget with auto-budget on and off, running out of money, the power advisor message, losing a scenario, history. `FullRecorder.swift` holds the shared delegate recorders. |
+| `MicropolisMacTests` | Swift Testing (`@Test`) | 158 | `LookupTablesTests` (name tables, `ToolSpec`, terrain kinds, overlay colors, `Assets`, `BudgetSheet` arithmetic, demand bars), `GameModelTests` (delegate callbacks, messages, scrolling, load and save, scenarios, terrain editor, options, sound, tool clicks, budget), `GraphSeriesTests`, `ViewRenderTests` (every view hosted and laid out), `MapInteractionTests` (zoom keys, scroll requests, clicks and drags with synthetic events), `DOSWindowsTests`, `BudgetTests`, `MapViewTests`, `MapRendererTests`, `TileAtlasTests`, `MessagesTests`, `BresenhamTests` |
 
 Both targets drive the real C++ engine compiled natively, so they also test the engine.
+
+Every test creates its engine with `Engine(seed: 1)` or `GameModel(..., seed: 1)`. Without a seed the engine seeds its random numbers from the clock, including on every city load, so a simulation run would differ from one test run to the next.
 
 ## How to run
 

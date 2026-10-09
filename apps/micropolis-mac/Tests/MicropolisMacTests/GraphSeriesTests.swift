@@ -6,7 +6,7 @@ struct GraphSeriesTests {
     /// Haight after about 8 game years, so both the 10-year and the 120-year
     /// ranges hold data.
     private func ranHaight() -> Engine {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         engine.loadCity(at: Assets.city("haight"))
         for _ in 0..<6000 { engine.tick() }
         return engine

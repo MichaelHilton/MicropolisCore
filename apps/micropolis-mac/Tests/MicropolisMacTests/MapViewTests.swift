@@ -7,7 +7,7 @@ import MicropolisKit
 struct MapViewTests {
     @Test
     func tileAtWithZoomAndOffset() {
-        let model = GameModel()
+        let model = GameModel(seed: 1)
         let view = MapNSView(gameModel: model)
 
         view.zoom = 2.0
@@ -30,7 +30,7 @@ struct MapViewTests {
 
     @Test
     func tileAtOffMap() {
-        let model = GameModel()
+        let model = GameModel(seed: 1)
         let view = MapNSView(gameModel: model)
 
         let result = view.tile(at: NSPoint(x: 2000, y: 2000))
@@ -39,7 +39,7 @@ struct MapViewTests {
 
     @Test
     func tileAtNegativeCoordinates() {
-        let model = GameModel()
+        let model = GameModel(seed: 1)
         let view = MapNSView(gameModel: model)
 
         let result = view.tile(at: NSPoint(x: -100, y: -100))
@@ -51,7 +51,7 @@ struct MapViewTests {
     /// and HUD above it in the edit window.
     @Test
     func scrolledMapStaysInsideItsBounds() throws {
-        let model = GameModel()
+        let model = GameModel(seed: 1)
         model.newCity(name: "Clip", level: .easy, seed: 3)
 
         // A magenta container with the map in a band across the middle,
@@ -114,7 +114,7 @@ struct ToolOutlineTests {
 
     @Test
     func footprintCoversTheTilesTheEngineChanges() {
-        let model = GameModel()
+        let model = GameModel(seed: 1)
         model.newCity(name: "Outline", level: .easy, seed: 1)
         for x in 0..<Engine.width {
             for y in 0..<Engine.height { model.engine.setTile(x: x, y: y, cell: 0) }
@@ -137,7 +137,7 @@ struct ToolOutlineTests {
 
     @Test
     func outlineFollowsPointerToolZoomAndScroll() {
-        let model = GameModel()
+        let model = GameModel(seed: 1)
         let view = MapNSView(gameModel: model)
         view.frame = NSRect(x: 0, y: 0, width: 400, height: 300)
         #expect(view.toolOutline.isHidden)
@@ -163,7 +163,7 @@ struct ToolOutlineTests {
 
     @Test
     func noOutlineInTerrainEditor() {
-        let model = GameModel()
+        let model = GameModel(seed: 1)
         let view = MapNSView(gameModel: model)
         view.frame = NSRect(x: 0, y: 0, width: 400, height: 300)
         model.editMode = .terrain

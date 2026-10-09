@@ -12,7 +12,7 @@ final class DisasterTests: XCTestCase {
     private func rubble(_ engine: Engine) -> Int { tiles(engine).filter { (44...47).contains($0) }.count }
 
     private func city(_ name: String) -> Engine {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         XCTAssertTrue(engine.loadCity(at: Repo.city(name)), name)
         engine.setEnableDisasters(true)
         return engine
@@ -55,7 +55,7 @@ final class DisasterTests: XCTestCase {
     }
 
     func testMeltdownSpreadsRadiationFromANuclearPlant() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         engine.generateMap(seed: 2)
         for x in 40..<70 { for y in 40..<70 { engine.setTile(x: x, y: y, cell: 0) } }
         engine.setFunds(100_000)
@@ -67,7 +67,7 @@ final class DisasterTests: XCTestCase {
     }
 
     func testMeltdownWithoutAPlantChangesNothing() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         engine.generateMap(seed: 2)
         for x in 0..<Engine.width { for y in 0..<Engine.height { engine.setTile(x: x, y: y, cell: 0) } }
         let map = engine.mapSnapshot()
@@ -95,7 +95,7 @@ final class DisasterTests: XCTestCase {
 
     /// Each scenario schedules its disaster early on.
     private func scenario(_ scenario: Scenario) -> (Engine, FullRecorder) {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         XCTAssertTrue(engine.loadScenario(scenario, resourceDirectory: Repo.content))
         let recorder = FullRecorder()
         engine.delegate = recorder

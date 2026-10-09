@@ -14,7 +14,7 @@ final class RecordingSound: SoundPlaying {
 struct GameModelTests {
     /// A model on the engine's empty map with a silent sound system.
     private func emptyModel(sound: RecordingSound = RecordingSound()) -> GameModel {
-        GameModel(city: nil, sound: sound)
+        GameModel(city: nil, sound: sound, seed: 1)
     }
 
     private func temporaryFile(_ name: String = UUID().uuidString) -> URL {
@@ -23,7 +23,7 @@ struct GameModelTests {
 
     @Test
     func yearAdvances() {
-        let model = GameModel(sound: RecordingSound())
+        let model = GameModel(sound: RecordingSound(), seed: 1)
         let yearBefore = model.year
 
         for _ in 0..<2000 {
@@ -32,6 +32,21 @@ struct GameModelTests {
 
         let yearAfter = model.year
         #expect(yearAfter > yearBefore)
+    }
+
+    @Test
+    func theSameSeedPlaysTheSameGame() {
+        func play() -> (Int, [UInt16]) {
+            let model = GameModel(sound: RecordingSound(), seed: 42)
+            defer { model.setSpeed(0) }
+            for _ in 0..<200 {
+                model.frame()
+            }
+            return (model.population, model.engine.mapSnapshot())
+        }
+        let first = play(), second = play()
+        #expect(first.0 == second.0)
+        #expect(first.1 == second.1)
     }
 
     // MARK: Messages
@@ -142,7 +157,7 @@ struct GameModelTests {
     /// 1-based text indexes, while ZoneStatus names are looked up from 0.
     @Test
     func queryingAHouseNamesItResidential() throws {
-        let model = GameModel(sound: RecordingSound())
+        let model = GameModel(sound: RecordingSound(), seed: 1)
         let cells = model.engine.mapSnapshot()
         let house = try #require(cells.firstIndex { $0 & 0x0400 != 0 && (240..<423).contains(Int($0 & 0x3FF)) })
         model.engine.apply(.query, x: house / Engine.height, y: house % Engine.height)
@@ -179,7 +194,7 @@ struct GameModelTests {
 
     @Test
     func evaluationUpdateReadsTheEngine() {
-        let model = GameModel(sound: RecordingSound())
+        let model = GameModel(sound: RecordingSound(), seed: 1)
         model.cityScore = -1
         model.cityClass = -1
         model.evaluation = model.engine.evaluation()
@@ -508,7 +523,7 @@ struct GameModelTests {
 
     @Test
     func budgetSheetMatchesTheEngine() {
-        let model = GameModel(sound: RecordingSound())
+        let model = GameModel(sound: RecordingSound(), seed: 1)
         model.engine.setTax(11)
         model.engine.setRoadPercent(0.5)
         model.engine.setPolicePercent(0.25)
@@ -549,9 +564,22 @@ struct GameModelTests {
         #expect(!model.paused && !model.engine.isPaused)
     }
 
+    /// Resuming makes the engine report its own speed (3 after loading a
+    /// city), which must not replace a slower speed the player chose.
+    @Test
+    func resumingKeepsThePlayersSpeed() {
+        let model = GameModel(sound: RecordingSound(), seed: 1)
+        defer { model.setSpeed(0) }
+        model.setSpeed(1)
+        #expect(model.speed == 1)
+        model.pauseSimulation()
+        model.resumeSimulation()
+        #expect(model.speed == 1)
+    }
+
     /// The engine pauses with setSpeed(0), which reports speed 0 back through
-    /// engineUpdateSpeed. The model then sees speed 0 and applyBudget does
-    /// not resume, so the game stays paused after the year-end budget.
+    /// engineUpdateSpeed. The model keeps the player's speed, so applyBudget
+    /// still resumes after the year-end budget.
     @Test
     func yearEndBudgetPauseEndsWhenTheBudgetIsApplied() {
         let model = emptyModel()
@@ -559,8 +587,7 @@ struct GameModelTests {
         model.setSpeed(2)
         model.engineShowBudgetAndWait()
         model.applyBudget(model.makeBudgetSheet())
-        withKnownIssue("model.speed is reset to 0 by the engine's pause") {
-            #expect(!model.paused && !model.engine.isPaused)
-        }
+        #expect(model.speed == 2)
+        #expect(!model.paused && !model.engine.isPaused)
     }
 }

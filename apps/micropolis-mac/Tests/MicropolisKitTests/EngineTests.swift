@@ -45,14 +45,14 @@ final class EngineTests: XCTestCase {
     }
 
     func testLoadHaight() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         let cityPath = repoRoot.appendingPathComponent("content/micropolis/cities/haight.cty")
         let result = engine.loadCity(at: cityPath)
         XCTAssertTrue(result, "Failed to load haight.cty")
     }
 
     func testSimulationAdvances() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         let cityPath = repoRoot.appendingPathComponent("content/micropolis/cities/haight.cty")
         let loaded = engine.loadCity(at: cityPath)
         XCTAssertTrue(loaded, "Failed to load city")
@@ -76,13 +76,13 @@ final class EngineTests: XCTestCase {
     }
 
     func testLoadMissingFails() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         let result = engine.loadCity(at: URL(fileURLWithPath: "/nonexistent.cty"))
         XCTAssertFalse(result, "Loading nonexistent file should fail")
     }
 
     func testGenerateMapChangesTiles() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         engine.generateMap(seed: 1)
         let snapshot1 = engine.mapSnapshot()
 
@@ -102,7 +102,7 @@ final class EngineTests: XCTestCase {
     }
 
     func testBulldozeThenRoad() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         engine.generateMap(seed: 1)
         engine.setFunds(100000)
 
@@ -130,7 +130,7 @@ final class EngineTests: XCTestCase {
     }
 
     func testNoMoney() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         engine.generateMap(seed: 1)
         engine.setFunds(0)
 
@@ -141,7 +141,7 @@ final class EngineTests: XCTestCase {
     }
 
     func testTaxRoundTrip() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         engine.setTax(12)
         let tax = engine.tax
         if tax != 12 {
@@ -150,7 +150,7 @@ final class EngineTests: XCTestCase {
     }
 
     func testSaveAndReload() {
-        let engine1 = Engine()
+        let engine1 = Engine(seed: 1)
         let cityPath = repoRoot.appendingPathComponent("content/micropolis/cities/haight.cty")
         let loaded = engine1.loadCity(at: cityPath)
 
@@ -167,7 +167,7 @@ final class EngineTests: XCTestCase {
             return
         }
 
-        let engine2 = Engine()
+        let engine2 = Engine(seed: 1)
         let reloaded = engine2.loadCity(at: tempFile)
 
         if !reloaded {
@@ -187,7 +187,7 @@ final class EngineTests: XCTestCase {
     }
 
     func testDidLoadCityFires() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         let delegate = RecordingDelegate()
         engine.delegate = delegate
 
@@ -202,7 +202,7 @@ final class EngineTests: XCTestCase {
     }
 
     func testUpdateDateFires() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         let delegate = RecordingDelegate()
         engine.delegate = delegate
 
@@ -219,7 +219,7 @@ final class EngineTests: XCTestCase {
     }
 
     func testDidToolFires() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         let delegate = RecordingDelegate()
         engine.delegate = delegate
 
@@ -259,7 +259,7 @@ final class EngineTests: XCTestCase {
     }
 
     func testNoDelegateNoCrash() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         engine.delegate = nil
 
         let cityPath = repoRoot.appendingPathComponent("content/micropolis/cities/haight.cty")
@@ -271,7 +271,7 @@ final class EngineTests: XCTestCase {
     }
 
     func testSpritesAppear() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         let cityPath = repoRoot.appendingPathComponent("content/micropolis/cities/scenario_tokyo.cty")
         let loaded = engine.loadCity(at: cityPath)
 
@@ -308,7 +308,7 @@ final class EngineTests: XCTestCase {
     }
 
     func testHistoryData() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         let cityPath = repoRoot.appendingPathComponent("content/micropolis/cities/haight.cty")
         let loaded = engine.loadCity(at: cityPath)
 
@@ -337,7 +337,7 @@ final class EngineTests: XCTestCase {
     // MARK: - Data for the DOS windows
 
     private func loadedHaight(ticks: Int) -> Engine? {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         guard engine.loadCity(at: repoRoot.appendingPathComponent("content/micropolis/cities/haight.cty")) else {
             XCTFail("Failed to load haight.cty")
             return nil
@@ -385,7 +385,7 @@ final class EngineTests: XCTestCase {
     }
 
     func testGameLevelSetsStartingFunds() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         engine.generateMap(seed: 42)
         let expected: [GameLevel: Int] = [.easy: 20000, .medium: 10000, .hard: 5000]
         for (level, funds) in expected {
@@ -398,17 +398,17 @@ final class EngineTests: XCTestCase {
     func testEveryScenarioLoads() {
         let content = repoRoot.appendingPathComponent("content/micropolis")
         for scenario in Scenario.allCases {
-            let engine = Engine()
+            let engine = Engine(seed: 1)
             XCTAssertTrue(engine.loadScenario(scenario, resourceDirectory: content), "\(scenario)")
             // Population is only counted at the first census, so look for zones.
             let zones = engine.mapSnapshot().filter { $0 & 0x0400 != 0 }.count
             XCTAssertGreaterThan(zones, 20, "\(scenario) has no city")
         }
-        XCTAssertEqual(Engine().loadScenario(.tokyo, resourceDirectory: URL(fileURLWithPath: "/nonexistent")), false)
+        XCTAssertEqual(Engine(seed: 1).loadScenario(.tokyo, resourceDirectory: URL(fileURLWithPath: "/nonexistent")), false)
     }
 
     func testSetTileAndSmoothTerrain() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         engine.generateMap(seed: 7)
         // A 5x5 lake of plain river tiles; smoothing should give it edge tiles.
         for x in 50..<55 { for y in 50..<55 { engine.setTile(x: x, y: y, cell: 2) } }
@@ -421,7 +421,7 @@ final class EngineTests: XCTestCase {
     }
 
     func testAirCrashWithoutAPlaneDoesNothing() throws {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         engine.generateMap(seed: 3)
         let before = engine.mapSnapshot()
         engine.makeDisaster(.airCrash)

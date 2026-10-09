@@ -272,6 +272,10 @@ void mp_generate_map(MPEngine *e, int seed) {
     e->sim.generateMap(seed);
 }
 
+void mp_fix_random_seed(MPEngine *e, int seed) {
+    e->sim.fixRandomSeed(seed);
+}
+
 int mp_do_tool(MPEngine *e, int tool, int x, int y) {
     return e->sim.doTool((EditingTool)tool, x, y);
 }

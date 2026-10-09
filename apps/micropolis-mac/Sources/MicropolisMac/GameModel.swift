@@ -84,7 +84,8 @@ final class GameModel: EngineDelegate {
     private var toolMessageTimer: Timer?
 
     /// Starts with `city` loaded, or with the engine's empty map when nil.
-    init(city: URL? = Assets.city("haight"), sound: SoundPlaying = SoundManager.shared) {
+    /// `seed` replaces the clock seed so tests run the same every time.
+    init(city: URL? = Assets.city("haight"), sound: SoundPlaying = SoundManager.shared, seed: Int? = nil) {
         self.sound = sound
         do {
             self.tileAtlas = try TileAtlas(atlasURL: Assets.tileAtlas)
@@ -97,6 +98,9 @@ final class GameModel: EngineDelegate {
         engine.delegate = self
         askForSaveLocation = { [weak self] in self?.showSavePanel() }
 
+        if let seed {
+            engine.fixRandomSeed(seed)
+        }
         if let city {
             engine.loadCity(at: city)
         }
@@ -137,13 +141,23 @@ final class GameModel: EngineDelegate {
     }
 
     func pauseSimulation() {
-        engine.pause()
+        ignoringSpeedReports { engine.pause() }
         paused = true
     }
 
     func resumeSimulation() {
-        engine.resume()
+        ignoringSpeedReports { engine.resume() }
         paused = false
+    }
+
+    /// Pausing reports speed 0 and resuming reports the engine's own speed;
+    /// neither is the player's choice, so `speed` keeps its value.
+    @ObservationIgnored private var changingPause = false
+
+    private func ignoringSpeedReports(_ body: () -> Void) {
+        changingPause = true
+        defer { changingPause = false }
+        body()
     }
 
     internal func frame() {
@@ -484,7 +498,9 @@ final class GameModel: EngineDelegate {
         self.paused = paused
     }
     func engineUpdateSpeed(speed: Int) {
-        self.speed = speed
+        if !changingPause {
+            self.speed = speed
+        }
     }
     func engineUpdateTaxRate(tax: Int) {}
     func engineStartEarthquake(strength: Int) {}

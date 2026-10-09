@@ -5,7 +5,7 @@ import XCTest
 /// end of a scenario and the history graphs (graph.cpp).
 final class BudgetMessageTests: XCTestCase {
     private func haight() -> Engine {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         XCTAssertTrue(engine.loadCity(at: Repo.city("haight")))
         return engine
     }
@@ -120,7 +120,7 @@ final class BudgetMessageTests: XCTestCase {
     /// San Francisco gives the player until 1913; a city that has not met
     /// the goal by then has lost, and the engine says so.
     func testLettingAScenarioRunOutIsALoss() {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         XCTAssertTrue(engine.loadScenario(.sanFrancisco, resourceDirectory: Repo.content))
         let recorder = FullRecorder()
         engine.delegate = recorder

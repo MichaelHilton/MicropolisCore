@@ -5,7 +5,7 @@ import XCTest
 /// driven through the Swift wrapper on a map cleared to dirt.
 final class ToolTests: XCTestCase {
     private func clearEngine(autoBulldoze: Bool = false) -> Engine {
-        let engine = Engine()
+        let engine = Engine(seed: 1)
         engine.generateMap(seed: 1)
         for x in 0..<Engine.width { for y in 0..<Engine.height { engine.setTile(x: x, y: y, cell: 0) } }
         engine.setFunds(1_000_000)
