@@ -684,31 +684,6 @@ void Micropolis::destroy()
 }
 
 
-/**
- * Check whether \a dir points to a directory.
- * If not, report an error.
- * @param dir    Directory to search.
- * @param envVar Environment variable controlling searchpath of the directory.
- * @return Directory has been found.
- */
-static bool testDirectory(const std::string& dir, const std::string &envVar)
-{
-    struct stat statbuf;
-
-    if (stat(dir.c_str(), &statbuf) == 0 && S_ISDIR(statbuf.st_mode)) {
-
-        return true;
-    }
-
-    fprintf(stderr, "Can't find the directory \"%s\"!\n", dir.c_str());
-    fprintf(stderr,
-            "The environment variable \"%s\" should name a directory.\n",
-            envVar.c_str());
-
-    return false;
-}
-
-
 /** Initialize for a simulation */
 void Micropolis::simInit()
 {

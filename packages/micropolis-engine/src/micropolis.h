@@ -1688,16 +1688,6 @@ public:
 
     void didntLoadCity(const std::string &msg);
 
-    void saveCity();
-
-    void doSaveCityAs(const std::string &filename);
-
-    void didSaveCity(const std::string &filename);
-
-    void didntSaveCity(const std::string &msg);
-
-    void saveCityAs(const std::string &filename);
-
 
     ////////////////////////////////////////////////////////////////////////
     // generate.cpp
