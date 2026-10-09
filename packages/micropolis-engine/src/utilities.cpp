@@ -86,60 +86,7 @@
 
 /* comefrom: drawTaxesCollected incBoxValue decBoxValue drawCurrentFunds
              drawActualBox updateFunds updateCurrentCost */
-std::string Micropolis::makeDollarDecimalStr(const std::string &numStr)
-{
-    short leftMostSet;
-    short numOfDigits;
-    short numOfChars;
-    short numOfCommas;
-    short dollarIndex = 0;
-    short numIndex = 0;
-    short x;
 
-    numOfDigits = numStr.length();
-
-    std::string dollarStr;
-    
-    dollarStr += '$';
-    if (numOfDigits == 1) {
-        dollarStr += numStr[0];
-        return dollarStr;
-    } else if (numOfDigits == 2) {
-        dollarStr += numStr[0];
-        dollarStr += numStr[1];
-        return dollarStr;
-    } else if (numOfDigits == 3) {
-        dollarStr += numStr[0];
-        dollarStr += numStr[1];
-        dollarStr += numStr[2];
-        return dollarStr;
-    } else {
-        leftMostSet = numOfDigits % 3;
-
-        if (leftMostSet == 0) {
-            leftMostSet = 3;
-        }
-
-        numOfCommas = (numOfDigits - 1) / 3;
-
-        /* add 1 for the dollar sign */
-        numOfChars = numOfDigits + numOfCommas + 1;
-
-        for (x = 1; x <= leftMostSet; x++) {
-            dollarStr += numStr[numIndex++];
-        }
-
-        for (x = 1; x <= numOfCommas; x++) {
-            dollarStr += ',';
-            dollarStr += numStr[numIndex++];
-            dollarStr += numStr[numIndex++];
-            dollarStr += numStr[numIndex++];
-        }
-
-    }
-
-    return dollarStr;
-}
 
 /**
  * Pause a simulation
@@ -291,16 +238,6 @@ void Micropolis::setYear(int year)
 
 
 /**
- * Get the current year.
- * @return The current game year.
- */
-int Micropolis::currentYear()
-{
-    return (cityTime / 48) + startingYear;
-}
-
-
-/**
  * Notify the user interface to start a new game.
  */
 void Micropolis::doNewGame()
@@ -370,48 +307,6 @@ void Micropolis::setAutoGoto(bool value)
 void Micropolis::setEnableSound(bool value)
 {
     enableSound = value;
-    mustUpdateOptions = true;
-}
-
-
-/**
- * Set the doAnimation flag to the given value,
- * and set the mustUpdateOptions flag to update
- * the user interface.
- *
- * @param value The value to set doAnimation to.
- */
-void Micropolis::setDoAnimation(bool value)
-{
-    doAnimation = value;
-    mustUpdateOptions = true;
-}
-
-
-/**
- * Set the doMessages flag to the given value,
- * and set the mustUpdateOptions flag to update
- * the user interface.
- *
- * @param value The value to set doMessages to.
- */
-void Micropolis::setDoMessages(bool value)
-{
-    doMessages = value;
-    mustUpdateOptions = true;
-}
-
-
-/**
- * Set the doNotices flag to the given value,
- * and set the mustUpdateOptions flag to update
- * the user interface.
- *
- * @param value The value to set doNotices to.
- */
-void Micropolis::setDoNotices(bool value)
-{
-    doNotices = value;
     mustUpdateOptions = true;
 }
 

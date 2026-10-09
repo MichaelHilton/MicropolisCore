@@ -94,32 +94,9 @@ void Micropolis::doUpdateHeads()
 }
 
 
-void Micropolis::updateMaps()
-{
-    invalidateMaps();
-    doUpdateHeads();
-}
-
-
-void Micropolis::updateGraphs()
-{
-    changeCensus();
-}
-
-
 void Micropolis::updateEvaluation()
 {
     changeEval();
-}
-
-
-void Micropolis::updateHeads()
-{
-    mustUpdateFunds = true;
-    valveFlag = true;
-    cityTimeLast = cityYearLast = cityMonthLast = totalFundsLast =
-      resLast = comLast = indLast = -999999;
-    doUpdateHeads();
 }
 
 
@@ -251,30 +228,6 @@ void Micropolis::updateOptions()
         mustUpdateOptions = false;
         callback->updateOptions(this, callbackVal);
     }
-}
-
-
-/** @todo Keeping track of pending updates should be moved to the interface
- *        (the simulator generates events, the interface forwards them to
- *        the GUI when possible/allowed.
- */
-void Micropolis::updateUserInterface()
-{
-    /// @todo Send all pending update messages to the user interface.
-
-    // city: after load file, load scenario, or generate city
-    // map: when small overall map changes
-    // editor: when large close-up map changes
-    // graph: when graph changes
-    // evaluation: when evaluation changes
-    // budget: when budget changes
-    // date: when date changes
-    // funds: when funds change
-    // demand: when demand changes
-    // level: when level changes
-    // speed: when speed changes
-    // delay: when delay changes
-    // option: when options change
 }
 
 

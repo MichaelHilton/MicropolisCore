@@ -222,21 +222,6 @@ static const short gCostOf[] = {
        0,
 };
 
-/**
- * Size of each tool.
- * @note Actually it is the size of the building rather than the tool.
- * @todo This information is duplicated in the #BuildingProperties at least.
- */
-static const short gToolSize[] = {
-    3, 3, 3, 3,
-    3, 1, 1, 1,
-    1, 1, 4, 1,
-    4, 4, 4, 6,
-    1, 1, 1, 1,
-    0,
-};
-
-
 ////////////////////////////////////////////////////////////////////////
 // Utilities
 
@@ -1503,114 +1488,6 @@ ToolResult Micropolis::doTool(EditingTool tool, short tileX, short tileY)
     }
 
     return result;
-}
-
-
-void Micropolis::toolDown(EditingTool tool, short tileX, short tileY)
-{
-    ToolResult result = doTool(tool, tileX, tileY);
-
-    if (result == TOOLRESULT_NEED_BULLDOZE) {
-        sendMessage(MESSAGE_BULLDOZE_AREA_FIRST, NOWHERE, NOWHERE, false, true);
-        /// @todo: Multi player: This sound should only be heard by the user
-        ///        who called this function.
-        makeSound("interface", "UhUh", tileX <<4, tileY <<4);
-
-    } else if (result == TOOLRESULT_NO_MONEY) {
-        sendMessage(MESSAGE_NOT_ENOUGH_FUNDS, NOWHERE, NOWHERE, false, true);
-        /// @todo: Multi player: This sound should only be heard by the user
-        ///        who called this function.
-        makeSound("interface", "Sorry", tileX <<4, tileY <<4);
-    }
-
-    simPass = 0;
-    invalidateMaps();
-}
-
-/**
- * Drag a tool from (\a fromX, \a fromY) to (\a toX, \a toY).
- * @param tool Tool being dragged.
- * @param fromX Horizontal coordinate of the starting position.
- * @param fromY Vertical coordinate of the starting position.
- * @param toX Horizontal coordinate of the ending position.
- * @param toY Vertical coordinate of the ending position.
- */
-void Micropolis::toolDrag(EditingTool tool,
-                            short fromX, short fromY, short toX, short toY)
-{
-    // Do not drag big tools.
-    int toolSize = gToolSize[tool];
-    if (toolSize > 1) {
-        doTool(tool, toX, toY);
-
-        simPass = 0; // update editors overlapping this one
-        invalidateMaps();
-        return;
-    }
-
-    short dirX = (toX > fromX) ? 1 : -1; // Horizontal step direction.
-    short dirY = (toY > fromY) ? 1 : -1; // Vertical step direction.
-
-
-    if (fromX == toX && fromY == toY) {
-        return;
-    }
-
-    doTool(tool, fromX, fromY); // Ensure the start position is done.
-
-    // Vertical line up or down
-    if (fromX == toX && fromY != toY) {
-
-        while (fromY != toY) {
-            fromY += dirY;
-            doTool(tool, fromX, fromY);
-        }
-
-        simPass = 0; // update editors overlapping this one
-        invalidateMaps();
-        return;
-    }
-
-    // Horizontal line left/right
-    if (fromX != toX && fromY == toY) {
-
-        while (fromX != toX) {
-            fromX += dirX;
-            doTool(tool, fromX, fromY);
-        }
-
-        simPass = 0; // update editors overlapping this one
-        invalidateMaps();
-        return;
-    }
-
-    // General case: both X and Y change.
-
-    short dx = absoluteValue(fromX - toX); // number of horizontal steps.
-    short dy = absoluteValue(fromY - toY); // number of vertical steps.
-
-    short subX = 0; // Each X step is dy sub-steps.
-    short subY = 0; // Each Y step is dx sub-steps.
-    short numSubsteps = min(dx, dy); // Number of sub-steps we can do.
-
-    while (fromX != toX || fromY != toY) {
-        subX += numSubsteps;
-        if (subX >= dy) {
-            subX -= dy;
-            fromX += dirX;
-            doTool(tool, fromX, fromY);
-        }
-
-        subY += numSubsteps;
-        if (subY >= dx) {
-            subY -= dx;
-            fromY += dirY;
-            doTool(tool, fromX, fromY);
-        }
-    }
-
-    simPass = 0;
-    invalidateMaps();
 }
 
 

@@ -101,10 +101,6 @@ void Micropolis::doBudget()
 
 
 /** User queried the budget window */
-void Micropolis::doBudgetFromMenu()
-{
-    doBudgetNow(true);
-}
 
 
 /**

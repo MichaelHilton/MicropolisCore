@@ -185,18 +185,7 @@ void Micropolis::clearMap()
 
 
 /** Clear everything from all land */
-void Micropolis::clearUnnatural()
-{
-    short x, y;
 
-    for (x = 0; x < WORLD_W; x++) {
-        for (y = 0; y < WORLD_H; y++) {
-            if (map[x][y] > WOODS) {
-                map[x][y] = DIRT;
-            }
-        }
-    }
-}
 
 /**
  * Construct a plain island as world, surrounded by 5 tiles of river.

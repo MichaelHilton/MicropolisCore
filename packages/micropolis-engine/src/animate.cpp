@@ -231,14 +231,4 @@ void Micropolis::animateTiles()
 }
 
 
-int Micropolis::getNextAnimatedTile(int index)
-{
-    if ((index < 0) || (index >= TILE_COUNT)) {
-        return -1;
-    }
-
-    return animatedTiles[index];
-}
-
-
 ////////////////////////////////////////////////////////////////////////

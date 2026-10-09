@@ -394,61 +394,6 @@ void Micropolis::sendMessage(short messageIndex, short x, short y, bool picture,
 
 
 /**
- * Make a sound for message \a mesgNum if appropriate.
- * @param mesgNum Message number displayed.
- * @param x       Horizontal coordinate in the city of the sound.
- * @param y       Vertical coordinate in the city of the sound.
- */
-void Micropolis::doMakeSound(int mesgNum, int x, int y)
-{
-    assert(mesgNum >= 0);
-
-    switch (mesgNum) {
-
-        case MESSAGE_TRAFFIC_JAMS:
-            if (getRandom(5) == 1) {
-                makeSound("city", "HonkHonkMed", x, y);
-            } else if (getRandom(5) == 1) {
-                makeSound("city", "HonkHonkLow", x, y);
-            } else if (getRandom(5) == 1) {
-                makeSound("city", "HonkHonkHigh", x, y);
-            }
-            break;
-
-        case MESSAGE_HIGH_CRIME:
-        case MESSAGE_FIRE_REPORTED:
-        case MESSAGE_TORNADO_SIGHTED:
-        case MESSAGE_EARTHQUAKE:
-        case MESSAGE_PLANE_CRASHED:
-        case MESSAGE_SHIP_CRASHED:
-        case MESSAGE_TRAIN_CRASHED:
-        case MESSAGE_HELICOPTER_CRASHED:
-            makeSound("city", "Siren", x, y);
-            break;
-
-        case  MESSAGE_MONSTER_SIGHTED:
-            makeSound("city", "Monster", x, y);
-            break;
-
-        case MESSAGE_FIREBOMBING:
-            makeSound("city", "ExplosionLow", x, y);
-            makeSound("city", "Siren", x, y);
-            break;
-
-        case MESSAGE_NUCLEAR_MELTDOWN:
-            makeSound("city", "ExplosionHigh", x, y);
-            makeSound("city", "ExplosionLow", x, y);
-            makeSound("city", "Siren", x, y);
-            break;
-
-        case MESSAGE_RIOTS_REPORTED:
-            makeSound("city", "Siren", x, y);
-            break;
-
-    }
-}
-
-/**
  * Tell the front-end that it should perform an auto-goto
  * @param x         X position at the map
  * @param y         Y position at the map

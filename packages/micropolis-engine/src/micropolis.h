@@ -1427,8 +1427,6 @@ public:
 
     void animateTiles();
 
-    static int getNextAnimatedTile(int index);
-
 
     ////////////////////////////////////////////////////////////////////////
     // budget.cpp
@@ -1484,8 +1482,6 @@ public:
     void initFundingLevel();
 
     void doBudget();
-
-    void doBudgetFromMenu();
 
     void doBudgetNow(bool fromMenu);
 
@@ -1646,12 +1642,6 @@ public:
 
     void scoreDoer();
 
-    int countProblems();
-
-    int getProblemNumber(int i);
-
-    int getProblemVotes(int i);
-
 
 private:
 
@@ -1757,11 +1747,7 @@ public:
      */
     int generatedCitySeed;
 
-    void generateSomeRandomCity();
-
     void clearMap();
-
-    void clearUnnatural();
 
     void makeIsland();
 
@@ -1771,6 +1757,8 @@ public:
 
     void plopBRiver(const Position &pos);
     void plopSRiver(const Position &pos);
+
+    void generateSomeRandomCity();
 
     void generateSomeCity(int seed);
 
@@ -1830,8 +1818,6 @@ public:
     short graph120Max;
 
 
-    void drawMonth(short *hist, unsigned char *s, float scale);
-
     void changeCensus();
 
     void graphDoer();
@@ -1846,15 +1832,6 @@ public:
 %apply short *OUTPUT { short *minValResult };
 %apply short *OUTPUT { short *maxValResult };
 #endif
-
-    void getHistoryRange(int historyType, int historyScale,
-                         short *minValResult, short *maxValResult);
-
-    short getHistory(int historyType, int historyScale,
-                     int historyIndex);
-
-    void setHistory(int historyType, int historyScale,
-                    int historyIndex, short historyValue);
 
 
     ////////////////////////////////////////////////////////////////////////
@@ -1904,10 +1881,6 @@ public:
      */
     bool doAnimation;
 
-    bool doMessages; ///< @todo Not currently used, should hook it up.
-
-    bool doNotices; ///< @todo Not currently used, should hook it up.
-
 
     std::string getMicropolisVersion();
 
@@ -1918,12 +1891,6 @@ public:
     void simulateRobots();
 
     long getMapAddress();
-
-    long getMapSize();
-
-    long getMopAddress();
-
-    long getMopSize();
 
 public:
 
@@ -1997,13 +1964,11 @@ public:
         short x=NOWHERE, short y=NOWHERE,
         bool picture=false, bool important=false);
 
-    void doMakeSound(int mesgNum, int x, int y);
-
     void doAutoGoto(short x, short y, const std::string &message);
 
-    void doLoseGame();
     void doWinGame(); ///< @todo This may not be called. Call it when appropriate.
 
+    void doLoseGame();
 
     ////////////////////////////////////////////////////////////////////////
     // power.cpp
@@ -2437,106 +2402,12 @@ public:
       int x=-1,
       int y=-1);
 
-    // Map
-
-    int getTile(int x, int y);
-
-    void setTile(int x, int y, int tile);
-
-    void *getMapBuffer();
-
-    // Residential.
-
-    // Commercial.
-
-    // Industrial.
-
-    // Power.
-
-    int getPowerGrid(int x, int y);
-
-    void setPowerGrid(int x, int y, int power);
-
-    void *getPowerGridMapBuffer();
-
-    // Roads.
-
-    // Population density.
-
-    int getPopulationDensity(int x, int y);
-
-    void setPopulationDensity(int x, int y, int density);
-
-    void *getPopulationDensityMapBuffer();
-
-    // Rate of growth.
-
-    int getRateOfGrowth(int x, int y);
-
-    void setRateOfGrowth(int x, int y, int rate);
-
-    void *getRateOfGrowthMapBuffer();
-
-    // Traffic density.
-
-    int getTrafficDensity(int x, int y);
-
-    void setTrafficDensity(int x, int y, int density);
-
-    void *getTrafficDensityMapBuffer();
-
-    // Pollution density.
-
-    int getPollutionDensity(int x, int y);
-
-    void setPollutionDensity(int x, int y, int density);
-
-    void *getPollutionDensityMapBuffer();
-
-    // Crime rate.
-
-    int getCrimeRate(int x, int y);
-
-    void setCrimeRate(int x, int y, int rate);
-
-    void *getCrimeRateMapBuffer();
-
-    // Land value.
-
-    int getLandValue(int x, int y);
-
-    void setLandValue(int x, int y, int value);
-
-    void *getLandValueMapBuffer();
-
-    // Fire coverage.
-
-    int getFireCoverage(int x, int y);
-
-    void setFireCoverage(int x, int y, int coverage);
-
-    void *getFireCoverageMapBuffer();
-
-    // Police coverage.
-
-    int getPoliceCoverage(int x, int y);
-
-    void setPoliceCoverage(int x, int y, int coverage);
-
-    void *getPoliceCoverageMapBuffer();
-
-
     ////////////////////////////////////////////////////////////////////////
     // tool.cpp
 
 public:
 
     ToolResult doTool(EditingTool tool, short tileX, short tileY);
-
-    void toolDown(EditingTool tool, short tileX, short tileY);
-
-    void toolDrag(EditingTool tool, short fromX, short fromY,
-                                    short toX, short toY);
 
     void didTool(std::string name, short x, short y);
 
@@ -2618,8 +2489,6 @@ private:
 
 public:
 
-    short makeTrafficAt(int x, int y, ZoneType dest);
-
     short makeTraffic(int x, int y, ZoneType dest);
 
 
@@ -2685,13 +2554,7 @@ public:
 
     void doUpdateHeads();
 
-    void updateMaps();
-
-    void updateGraphs();
-
     void updateEvaluation();
-
-    void updateHeads();
 
     void updateFunds();
 
@@ -2708,8 +2571,6 @@ public:
     void setDemand(float r, float c, float i);
 
     void updateOptions();
-
-    void updateUserInterface();
 
 
     ////////////////////////////////////////////////////////////////////////
@@ -2737,8 +2598,6 @@ public:
 
     void setYear(int year);
 
-    int currentYear();
-
     void doNewGame();
 
     void setEnableDisasters(bool value);
@@ -2750,12 +2609,6 @@ public:
     void setAutoGoto(bool value);
 
     void setEnableSound(bool value);
-
-    void setDoAnimation(bool value);
-
-    void setDoMessages(bool value);
-
-    void setDoNotices(bool value);
 
 #ifdef SWIG
 // This tells SWIG that resDemandResult, comDemandResult and indDemandResult
@@ -2772,8 +2625,6 @@ public:
 
 
 private:
-
-    std::string makeDollarDecimalStr(const std::string &numStr);
 
 
     ////////////////////////////////////////////////////////////////////////
