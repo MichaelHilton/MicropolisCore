@@ -446,4 +446,11 @@ public final class Engine {
     public var frequentAnimation: Bool {
         mp_frequent_animation(handle) != 0
     }
+
+    // MARK: Test hooks
+
+    public func setScoreWait(_ ticks: Int) { mp_set_score_wait(handle, Int32(ticks)) }
+    public func setCityScore(_ score: Int) { mp_set_city_score(handle, Int32(score)) }
+    public func setTrafficAverage(_ value: Int) { mp_set_traffic_average(handle, Int32(value)) }
+    public func setCrimeAverage(_ value: Int) { mp_set_crime_average(handle, Int32(value)) }
 }

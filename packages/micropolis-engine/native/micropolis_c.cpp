@@ -409,6 +409,11 @@ void mp_set_tile(MPEngine *e, int x, int y, unsigned short cell) {
     e->sim.map[x][y] = cell;
 }
 
+void mp_set_score_wait(MPEngine *e, int ticks) { e->sim.scoreWait = (short)ticks; }
+void mp_set_city_score(MPEngine *e, int score) { e->sim.cityScore = (short)score; }
+void mp_set_traffic_average(MPEngine *e, int value) { e->sim.trafficAverage = (short)value; }
+void mp_set_crime_average(MPEngine *e, int value) { e->sim.crimeAverage = (short)value; }
+
 void mp_smooth_terrain(MPEngine *e) {
     Micropolis &sim = e->sim;
     // smoothWater marks shorelines as REDGE; smoothRiver picks edge tiles.

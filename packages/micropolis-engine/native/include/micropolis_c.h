@@ -158,6 +158,12 @@ int  mp_frequent_animation(MPEngine *e);
 
 void mp_set_callbacks(MPEngine *e, const MPCallbacks *callbacks);
 
+/* Test hooks: set engine state directly. Not used by the app. */
+void mp_set_score_wait(MPEngine *e, int ticks);      /* sendMessages calls left before the scenario is scored */
+void mp_set_city_score(MPEngine *e, int score);
+void mp_set_traffic_average(MPEngine *e, int value);
+void mp_set_crime_average(MPEngine *e, int value);
+
 #ifdef __cplusplus
 }
 #endif

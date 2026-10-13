@@ -97,6 +97,89 @@ final class BudgetMessageTests: XCTestCase {
         XCTAssertEqual(engine.policePercent, 0)
     }
 
+    // MARK: Shortfall order
+
+    /// The department money haight asks for at its first year-end, read from
+    /// an identical engine so the shortfall tests can pick exact amounts.
+    private func haightRequests() -> (road: Int, fire: Int, police: Int) {
+        let engine = haight()
+        engine.setAutoBudget(false)
+        engine.setTax(0)
+        _ = tickThroughYearEnd(engine)
+        let figures = engine.budgetFigures()
+        XCTAssertEqual(figures.taxesCollected, 0)
+        return (figures.roadRequested, figures.fireRequested, figures.policeRequested)
+    }
+
+    /// Runs haight's first year-end with `funds` in the bank and no tax income.
+    private func yearEnd(funds: Int, autoBudget: Bool) -> (Engine, FullRecorder) {
+        let engine = haight()
+        engine.setAutoBudget(autoBudget)
+        engine.setTax(0)
+        engine.setFunds(funds)
+        let recorder = FullRecorder()
+        engine.delegate = recorder
+        _ = tickThroughYearEnd(engine)
+        return (engine, recorder)
+    }
+
+    func testMoneyForRoadsAndPartOfFireLeavesPoliceUnfunded() {
+        let asked = haightRequests()
+        XCTAssertGreaterThan(asked.fire, 0)
+        for autoBudget in [false, true] {
+            let (engine, recorder) = yearEnd(funds: asked.road + asked.fire / 2, autoBudget: autoBudget)
+            XCTAssertEqual(engine.roadPercent, 1, "autoBudget \(autoBudget)")
+            XCTAssertEqual(engine.firePercent, 0.5, accuracy: 0.01)
+            XCTAssertEqual(engine.policePercent, 0)
+            // Auto-budget cannot cover the bill, so the engine hands it to the player.
+            XCTAssertEqual(recorder.messages.contains { $0.index == 29 }, autoBudget)
+            XCTAssertEqual(recorder.budgetRequests, 1)
+        }
+    }
+
+    func testMoneyForRoadsAndFireAndPartOfPoliceScalesBackPoliceOnly() {
+        let asked = haightRequests()
+        XCTAssertGreaterThan(asked.police, 0)
+        for autoBudget in [false, true] {
+            let (engine, recorder) = yearEnd(funds: asked.road + asked.fire + asked.police / 2, autoBudget: autoBudget)
+            XCTAssertEqual(engine.roadPercent, 1, "autoBudget \(autoBudget)")
+            XCTAssertEqual(engine.firePercent, 1)
+            XCTAssertEqual(engine.policePercent, 0.5, accuracy: 0.01)
+            XCTAssertEqual(recorder.messages.contains { $0.index == 29 }, autoBudget)
+        }
+    }
+
+    func testFundsCoveringTheWholeBillKeepEveryDepartmentWhole() {
+        let asked = haightRequests()
+        let (engine, recorder) = yearEnd(funds: asked.road + asked.fire + asked.police + 1000, autoBudget: true)
+        XCTAssertEqual(engine.roadPercent, 1)
+        XCTAssertEqual(engine.firePercent, 1)
+        XCTAssertEqual(engine.policePercent, 1)
+        XCTAssertTrue(engine.autoBudget)
+        XCTAssertFalse(recorder.messages.contains { $0.index == 29 })
+    }
+
+    /// A city with residents but no roads, stations or rails asks for
+    /// nothing, so with an empty treasury the percentages stay at 100%.
+    func testACityThatAsksForNothingKeepsFullPercentages() {
+        let engine = Engine.blankTown()
+        var town = Town(engine)
+        town.add(.residential, 60, roads: false)
+        engine.setFunds(0)
+        engine.setTax(0)
+        engine.setRoadPercent(0.3)
+        engine.setFirePercent(0.3)
+        engine.setPolicePercent(0.3)
+        let recorder = FullRecorder()
+        engine.delegate = recorder
+        for _ in 0..<800 { engine.tick() }
+        let figures = engine.budgetFigures()
+        XCTAssertEqual(figures.roadRequested + figures.fireRequested + figures.policeRequested, 0)
+        XCTAssertEqual(engine.roadPercent, 1)
+        XCTAssertEqual(engine.firePercent, 1)
+        XCTAssertEqual(engine.policePercent, 1)
+    }
+
     // MARK: Messages
 
     func testACityWithoutPowerPlantsAsksForOne() {
