@@ -414,6 +414,11 @@ void mp_set_city_score(MPEngine *e, int score) { e->sim.cityScore = (short)score
 void mp_set_traffic_average(MPEngine *e, int value) { e->sim.trafficAverage = (short)value; }
 void mp_set_crime_average(MPEngine *e, int value) { e->sim.crimeAverage = (short)value; }
 void mp_set_don_dither(MPEngine *e, int flags) { e->sim.donDither = flags; }
+void mp_set_city_time(MPEngine *e, long time) { e->sim.cityTime = time; }
+void mp_set_terrain_curve(MPEngine *e, int level) { e->sim.terrainCurveLevel = level; }
+void mp_set_terrain_lake(MPEngine *e, int level) { e->sim.terrainLakeLevel = level; }
+void mp_set_terrain_tree(MPEngine *e, int level) { e->sim.terrainTreeLevel = level; }
+void mp_set_terrain_island(MPEngine *e, int island) { e->sim.terrainCreateIsland = island; }
 
 void mp_smooth_terrain(MPEngine *e) {
     Micropolis &sim = e->sim;

@@ -164,6 +164,11 @@ void mp_set_city_score(MPEngine *e, int score);
 void mp_set_traffic_average(MPEngine *e, int value);
 void mp_set_crime_average(MPEngine *e, int value);
 void mp_set_don_dither(MPEngine *e, int flags);       /* bit 0: dither the terrain smoothing, bits 1 and 2: the two pollution passes */
+void mp_set_city_time(MPEngine *e, long time);        /* cityTime: 48 units per year, year = time / 48 + 1900 */
+void mp_set_terrain_curve(MPEngine *e, int level);    /* terrainCurveLevel: -1 random, 0 no rivers */
+void mp_set_terrain_lake(MPEngine *e, int level);     /* terrainLakeLevel: -1 random, 0 no lakes */
+void mp_set_terrain_tree(MPEngine *e, int level);     /* terrainTreeLevel: -1 random, 0 no trees */
+void mp_set_terrain_island(MPEngine *e, int island);  /* terrainCreateIsland: -1 random, 1 naked island, else plain */
 
 #ifdef __cplusplus
 }

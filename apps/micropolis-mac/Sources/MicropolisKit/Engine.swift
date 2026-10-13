@@ -454,4 +454,9 @@ public final class Engine {
     public func setTrafficAverage(_ value: Int) { mp_set_traffic_average(handle, Int32(value)) }
     public func setCrimeAverage(_ value: Int) { mp_set_crime_average(handle, Int32(value)) }
     public func setDonDither(_ flags: Int) { mp_set_don_dither(handle, Int32(flags)) }
+    public func setCityTime(_ time: Int) { mp_set_city_time(handle, time) }
+    public func setTerrainCurve(_ level: Int) { mp_set_terrain_curve(handle, Int32(level)) }
+    public func setTerrainLake(_ level: Int) { mp_set_terrain_lake(handle, Int32(level)) }
+    public func setTerrainTree(_ level: Int) { mp_set_terrain_tree(handle, Int32(level)) }
+    public func setTerrainIsland(_ island: Int) { mp_set_terrain_island(handle, Int32(island)) }
 }
