@@ -413,6 +413,7 @@ void mp_set_score_wait(MPEngine *e, int ticks) { e->sim.scoreWait = (short)ticks
 void mp_set_city_score(MPEngine *e, int score) { e->sim.cityScore = (short)score; }
 void mp_set_traffic_average(MPEngine *e, int value) { e->sim.trafficAverage = (short)value; }
 void mp_set_crime_average(MPEngine *e, int value) { e->sim.crimeAverage = (short)value; }
+void mp_set_don_dither(MPEngine *e, int flags) { e->sim.donDither = flags; }
 
 void mp_smooth_terrain(MPEngine *e) {
     Micropolis &sim = e->sim;

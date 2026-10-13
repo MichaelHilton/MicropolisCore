@@ -163,6 +163,7 @@ void mp_set_score_wait(MPEngine *e, int ticks);      /* sendMessages calls left 
 void mp_set_city_score(MPEngine *e, int score);
 void mp_set_traffic_average(MPEngine *e, int value);
 void mp_set_crime_average(MPEngine *e, int value);
+void mp_set_don_dither(MPEngine *e, int flags);       /* bit 0: dither the terrain smoothing, bits 1 and 2: the two pollution passes */
 
 #ifdef __cplusplus
 }

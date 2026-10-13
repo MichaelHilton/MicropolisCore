@@ -453,4 +453,5 @@ public final class Engine {
     public func setCityScore(_ score: Int) { mp_set_city_score(handle, Int32(score)) }
     public func setTrafficAverage(_ value: Int) { mp_set_traffic_average(handle, Int32(value)) }
     public func setCrimeAverage(_ value: Int) { mp_set_crime_average(handle, Int32(value)) }
+    public func setDonDither(_ flags: Int) { mp_set_don_dither(handle, Int32(flags)) }
 }
