@@ -109,8 +109,10 @@ void Micropolis::simFrame()
 {
 
     if (simSpeed == 0) {
+        // coverage: unreachable-begin (simFrame is only called by simLoop from simTick, which runs it only while simSpeed is not 0)
         return;
     }
+        // coverage: unreachable-end
 
     if (++speedCycle > 1023) {
         speedCycle = 0;
@@ -150,11 +152,7 @@ void Micropolis::simulate()
     // according to phaseCycle, which is incremented and wrapped at
     // the end of this switch.
 
-    if (initSimLoad) {
-        phaseCycle = 0;
-    } else {
-        phaseCycle &= 15;
-    }
+    phaseCycle &= 15;
 
     switch (phaseCycle)  {
 
@@ -480,8 +478,10 @@ void Micropolis::simLoadInit()
     gameLevel = (GameLevel)miscHist[15];
 
     if (cityTime < 0) {
+        // coverage: unreachable-begin (loadFile clamps cityTime to >= 0, and loadScenario sets a positive start time, before doSimInit calls simLoadInit)
         cityTime = 0;
     }
+        // coverage: unreachable-end
 
     if (!externalMarket) {
         externalMarket = 4.0;
@@ -524,8 +524,10 @@ void Micropolis::simLoadInit()
     initSimLoad = 0;
 
     if (scenario >= SC_COUNT) {
+        // coverage: unreachable-begin (scenario is SC_NONE after loadFile, or SC_DULLSVILLE..SC_RIO after loadScenario, which range-checks it)
         scenario = SC_NONE;
     }
+        // coverage: unreachable-end
 
     if (scenario != SC_NONE) {
         assert(LENGTH_OF(disasterWaitTable) == SC_COUNT);

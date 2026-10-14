@@ -459,4 +459,6 @@ public final class Engine {
     public func setTerrainLake(_ level: Int) { mp_set_terrain_lake(handle, Int32(level)) }
     public func setTerrainTree(_ level: Int) { mp_set_terrain_tree(handle, Int32(level)) }
     public func setTerrainIsland(_ island: Int) { mp_set_terrain_island(handle, Int32(island)) }
+    public func setPollution(x: Int, y: Int, _ value: Int) { mp_set_pollution(handle, Int32(x), Int32(y), Int32(value)) }
+    public func setLandValue(x: Int, y: Int, _ value: Int) { mp_set_land_value(handle, Int32(x), Int32(y), Int32(value)) }
 }

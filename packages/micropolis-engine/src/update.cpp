@@ -94,10 +94,6 @@ void Micropolis::doUpdateHeads()
 }
 
 
-void Micropolis::updateEvaluation()
-{
-    changeEval();
-}
 
 
 /** Set a flag that the funds display is out of date. */
@@ -186,22 +182,30 @@ void Micropolis::drawValve()
     c = comValve;
 
     if (c < -1500) {
+        // coverage: unreachable-begin (setValves clamps this valve to +-COM_VALVE_RANGE = 1500 before drawValve runs)
         c = -1500;
     }
+        // coverage: unreachable-end
 
     if (c > 1500) {
+        // coverage: unreachable-begin (setValves clamps this valve to +-COM_VALVE_RANGE = 1500 before drawValve runs)
         c = 1500;
     }
+        // coverage: unreachable-end
 
     i = indValve;
 
     if (i < -1500) {
+        // coverage: unreachable-begin (setValves clamps this valve to +-IND_VALVE_RANGE = 1500 before drawValve runs)
         i = -1500;
     }
+        // coverage: unreachable-end
 
     if (i > 1500) {
+        // coverage: unreachable-begin (setValves clamps this valve to +-IND_VALVE_RANGE = 1500 before drawValve runs)
         i = 1500;
     }
+        // coverage: unreachable-end
 
     if ((r != resLast) ||
         (c != comLast) ||

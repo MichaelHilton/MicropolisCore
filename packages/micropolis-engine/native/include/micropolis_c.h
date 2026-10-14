@@ -169,6 +169,8 @@ void mp_set_terrain_curve(MPEngine *e, int level);    /* terrainCurveLevel: -1 r
 void mp_set_terrain_lake(MPEngine *e, int level);     /* terrainLakeLevel: -1 random, 0 no lakes */
 void mp_set_terrain_tree(MPEngine *e, int level);     /* terrainTreeLevel: -1 random, 0 no trees */
 void mp_set_terrain_island(MPEngine *e, int island);  /* terrainCreateIsland: -1 random, 1 naked island, else plain */
+void mp_set_pollution(MPEngine *e, int x, int y, int value);   /* pollution density at tile (x, y), 0...255; the next pollution scan overwrites it */
+void mp_set_land_value(MPEngine *e, int x, int y, int value);  /* land value at tile (x, y), 0...255; the next land value scan overwrites it */
 
 #ifdef __cplusplus
 }

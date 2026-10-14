@@ -158,7 +158,6 @@ public:
     Position();
     Position(int x, int y);
     Position(const Position &pos);
-    Position(const Position &pos, Direction2 dir);
     Position(const Position &pos, int dx, int dy);
     Position &operator=(const Position &pos);
 

@@ -1,6 +1,7 @@
 import Darwin
 import Foundation
 import XCTest
+import MicropolisEngine
 @testable import MicropolisKit
 
 /// Records the demand gauge and the advisor messages, which FullRecorder does not keep.
@@ -202,6 +203,15 @@ final class SmallFilesTests: XCTestCase {
             engine.generateMap(seed: seed)
             XCTAssertGreaterThan(count(engine, tiles: 21...39), 0, "seed \(seed) should have trees")
         }
+    }
+
+    /// The C API ignores a history kind it does not know, leaving the buffer alone.
+    func testUnknownHistoryKindLeavesTheBufferUntouched() {
+        let handle = mp_create()!
+        defer { mp_destroy(handle) }
+        var buffer = [Int16](repeating: 77, count: Int(MP_HISTORY_LENGTH))
+        mp_get_history(handle, 99, &buffer)
+        XCTAssertEqual(buffer, [Int16](repeating: 77, count: Int(MP_HISTORY_LENGTH)))
     }
 
     func testNakedIslandIsRingedByWaterWithLandInside() {

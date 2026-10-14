@@ -265,8 +265,10 @@ template <typename DATA, int BLKSIZE>
 inline DATA Map<DATA, BLKSIZE>::get(int x, int y) const
 {
     if(!this->onMap(x, y)) {
+        // coverage: unreachable-begin (every caller loops within the map or checks the bounds first)
         return this->_MAP_DEFAULT_VALUE;
     }
+        // coverage: unreachable-end
 
     return this->_mapData[x * MAP_H + y];
 }
@@ -316,8 +318,10 @@ template <typename DATA, int BLKSIZE>
 inline DATA Map<DATA, BLKSIZE>::worldGet(int x, int y) const
 {
     if(!this->worldOnMap(x, y)) {
+        // coverage: unreachable-begin (every caller loops within the map or checks the bounds first)
         return this->_MAP_DEFAULT_VALUE;
     }
+        // coverage: unreachable-end
 
     x /= BLKSIZE;
     y /= BLKSIZE;

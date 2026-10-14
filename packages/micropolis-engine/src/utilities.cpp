@@ -156,7 +156,7 @@ void Micropolis::setGameLevelFunds(GameLevel level)
 {
     switch (level) {
 
-        default:
+        default: // coverage: unreachable (mp_set_game_level, the only caller, replaces an out-of-range level with LEVEL_EASY)
         case LEVEL_EASY:
             setFunds(20000);
             setGameLevel(LEVEL_EASY);
@@ -228,8 +228,10 @@ void Micropolis::setYear(int year)
 {
     // Must prevent year from going negative, since it screws up the non-floored modulo arithmetic.
     if (year < startingYear) {
+        // coverage: unreachable-begin (the only caller, updateDate, passes startingYear itself)
         year = startingYear;
     }
+        // coverage: unreachable-end
 
     year = (year - startingYear) - (cityTime / 48);
     cityTime += year * 48;

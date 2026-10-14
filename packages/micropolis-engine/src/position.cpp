@@ -114,19 +114,6 @@ Position::Position(const Position &pos)
 
 
 /**
- * Copy constructor with a single tile movement.
- * @param pos Position to copy.
- * @param dir Direction to move into.
- */
-Position::Position(const Position &pos, Direction2 dir)
-{
-    this->posX = pos.posX;
-    this->posY = pos.posY;
-    this->move(dir);
-}
-
-
-/**
  * Copy constructor with arbitrary movement.
  * @param pos Position to copy.
  * @param dx  Horizontal offset.
@@ -161,8 +148,8 @@ Position &Position::operator=(const Position &pos)
 bool Position::move(Direction2 dir)
 {
     switch (dir) {
-        case DIR2_INVALID:
-            return true;
+        case DIR2_INVALID: // coverage: unreachable (no caller passes DIR2_INVALID: tryDrive checks it, and the others use directions from increment90, rotate45 or DIR2_NORTH + 0..7)
+            return true; // coverage: unreachable (see the case label)
 
         case DIR2_NORTH:
             if (this->posY > 0) {
@@ -199,13 +186,12 @@ bool Position::move(Direction2 dir)
             }
             break;
 
-        case DIR2_SOUTH_WEST: this->posX--; this->posY++; break;
-            if (this->posX > 0 && this->posY < WORLD_H - 1) {
-                this->posX--;
-                this->posY++;
-                return true;
-            }
-            break;
+        case DIR2_SOUTH_WEST:
+            // Moves without a bounds check; the clamp at the end of the
+            // function then pulls the position back and the call returns false.
+            // This is deliberate: adding the check would change generated
+            // maps. The lost check was a stray "break".
+            this->posX--; this->posY++; break;
 
         case DIR2_WEST:
             if (this->posX > 0) {

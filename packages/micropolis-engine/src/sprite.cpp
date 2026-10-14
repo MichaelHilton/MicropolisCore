@@ -185,8 +185,10 @@ void Micropolis::initSprite(SimSprite *sprite, int x, int y)
             } else if (y >= ((WORLD_H - 4) <<4)) {
                 sprite->frame = 1;
             } else {
+                // coverage: unreachable-begin (ships start only on a map edge via makeShipHere, so one of the edge tests above always holds)
                 sprite->frame = 3;
             }
+                // coverage: unreachable-end
 
             sprite->newDir = sprite->frame;
             sprite->dir = 10;
@@ -490,12 +492,16 @@ short Micropolis::getDir(int orgX, int orgY, int desX, int desY)
     if (dispX * 2 < dispY) {
         z++;
     } else if (dispY * 2 < dispY) {  // XXX This never holds!!
+        // coverage: unreachable-begin (dispY was made non-negative above, so dispY * 2 < dispY cannot hold)
         z--;
     }
+        // coverage: unreachable-end
 
     if (z < 0 || z > 12) {
+        // coverage: unreachable-begin (z starts at 2, 5, 8 or 11 and is raised by at most 1)
         z = 0;
     }
+        // coverage: unreachable-end
 
     return Gdtab[z];
 }
@@ -590,8 +596,10 @@ void Micropolis::moveObjects()
                 sprite = sprite->next;
                 destroySprite(s);
             } else {
+                // coverage: unreachable-begin (newSprite's only callers pass the name "", so no sprite has a name)
                 sprite = sprite->next;
             }
+                // coverage: unreachable-end
 
         }
     }
@@ -723,16 +731,6 @@ void Micropolis::doCopterSprite(
                 return;
             }
 
-        }
-
-    } else {
-
-        getDir(sprite->x, sprite->y, sprite->destX, sprite->destY);
-
-        if (absDist < 16) {
-            sprite->destX = sprite->origX;
-            sprite->destY = sprite->origY;
-            sprite->control = -1;
         }
 
     }
@@ -1004,9 +1002,11 @@ void Micropolis::doMonsterSprite(SimSprite *sprite)
     if (sprite->control < 0) {
         /* business as usual */
 
-        if (sprite->control == -2) {
 
-            d = (sprite->frame - 1) / 3;
+        d = (sprite->frame - 1) / 3;
+
+        if (d < 4) { /* turn n s e w */
+
             z = (sprite->frame - 1) % 3;
 
             if (z == 2) {
@@ -1023,165 +1023,78 @@ void Micropolis::doMonsterSprite(SimSprite *sprite)
                 z--;
             }
 
-            c = getDir(sprite->x, sprite->y, sprite->destX, sprite->destY);
+            getDir(sprite->x, sprite->y, sprite->destX, sprite->destY);
 
-            if (absDist < 18) {
+            if (absDist < 60) {
 
-                sprite->control = -1;
-                sprite->count = 1000;
-                sprite->flag = 1;
-                sprite->destX = sprite->origX;
-                sprite->destY = sprite->origY;
+                if (sprite->flag == 0) {
 
-            } else {
+                    sprite->flag = 1;
+                    sprite->destX = sprite->origX;
+                    sprite->destY = sprite->origY;
 
-                c = (c - 1) / 2;
-
-                if ((c != d && getRandom(5) == 0) || getRandom(20) == 0) {
-
-                    int diff = (c - d) & 3;
-
-                    if (diff == 1 || diff == 3) {
-                        d = c;
-                    } else {
-
-                        if (getRandom16() & 1) {
-                            d++;
-                        } else {
-                            d--;
-                        }
-
-                        d &= 3;
-                    }
                 } else {
 
-                    if (getRandom(20) == 0) {
+                    sprite->frame = 0;
+                    return;
 
-                        if (getRandom16() & 1) {
-                            d++;
-                        } else {
-                            d--;
-                        }
-
-                        d &= 3;
-                    }
                 }
+
             }
-        } else {
 
-            d = (sprite->frame - 1) / 3;
+            c = getDir(sprite->x, sprite->y, sprite->destX, sprite->destY);
+            c = (c - 1) / 2;
 
-            if (d < 4) { /* turn n s e w */
+            if ((c != d) && (!getRandom(10))) {
 
-                z = (sprite->frame - 1) % 3;
-
-                if (z == 2) {
-                    sprite->step = 0;
-                }
-
-                if (z == 0) {
-                    sprite->step = 1;
-                }
-
-                if (sprite->step) {
-                    z++;
+                if (getRandom16() & 1) {
+                    z = ND1[d];
                 } else {
-                    z--;
+                    z = ND2[d];
                 }
-
-                getDir(sprite->x, sprite->y, sprite->destX, sprite->destY);
-
-                if (absDist < 60) {
-
-                    if (sprite->flag == 0) {
-
-                        sprite->flag = 1;
-                        sprite->destX = sprite->origX;
-                        sprite->destY = sprite->origY;
-
-                    } else {
-
-                        sprite->frame = 0;
-                        return;
-
-                    }
-
-                }
-
-                c = getDir(sprite->x, sprite->y, sprite->destX, sprite->destY);
-                c = (c - 1) / 2;
-
-                if ((c != d) && (!getRandom(10))) {
-
-                    if (getRandom16() & 1) {
-                        z = ND1[d];
-                    } else {
-                        z = ND2[d];
-                    }
-
-                    d = 4;
-
-                    if (!sprite->soundCount) {
-                        // Convert sprite coordinates to tile coordinates.
-                        int monsterX = sprite->x >>4;
-                        int monsterY = sprite->y >>4;
-                        makeSound("city", "Monster", monsterX, monsterY); /* monster */
-                        sprite->soundCount = 50 + getRandom(100);
-                    }
-
-                }
-
-            } else {
 
                 d = 4;
-                c = sprite->frame;
-                z = (c - 13) & 3;
 
-                if (!(getRandom16() & 3)) {
-
-                    if (getRandom16() & 1) {
-                        z = nn1[z];
-                    } else {
-                        z = nn2[z];
-                    }
-
-                    d = (z - 1) / 3;
-                    z = (z - 1) % 3;
-
+                if (!sprite->soundCount) {
+                    // Convert sprite coordinates to tile coordinates.
+                    int monsterX = sprite->x >>4;
+                    int monsterY = sprite->y >>4;
+                    makeSound("city", "Monster", monsterX, monsterY); /* monster */
+                    sprite->soundCount = 50 + getRandom(100);
                 }
+
+            }
+
+        } else {
+
+            d = 4;
+            c = sprite->frame;
+            z = (c - 13) & 3;
+
+            if (!(getRandom16() & 3)) {
+
+                if (getRandom16() & 1) {
+                    z = nn1[z];
+                } else {
+                    z = nn2[z];
+                }
+
+                d = (z - 1) / 3;
+                z = (z - 1) % 3;
 
             }
 
         }
-
-    } else {
-
-          /* somebody's taken control of the monster */
-
-          d = sprite->control;
-          z = (sprite->frame - 1) % 3;
-
-          if (z == 2) {
-              sprite->step = 0;
-          }
-
-          if (z == 0) {
-              sprite->step = 1;
-          }
-
-          if (sprite->step) {
-              z++;
-          } else {
-              z--;
-          }
 
     }
 
     z = d * 3 + z + 1;
 
     if (z > 16) {
+        // coverage: unreachable-begin (d is at most 4 and z at most 3 when d is 4, so z is at most 4 * 3 + 3 + 1 = 16)
         z = 16;
     }
+        // coverage: unreachable-end
 
     sprite->frame = z;
 

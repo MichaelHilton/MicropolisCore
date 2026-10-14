@@ -861,7 +861,7 @@ static inline T absoluteValue(const T val)
 /**
  * Give a fatal error and exit.
  */
-#define NOT_REACHED() not_reached(__LINE__, __FILE__)
+#define NOT_REACHED() not_reached(__LINE__, __FILE__) // coverage: unreachable (every use sits in a branch marked unreachable; see the markers at each NOT_REACHED)
 
 
 /**
@@ -871,11 +871,13 @@ static inline T absoluteValue(const T val)
  * @return Does not return to the caller.
  * @todo Generalize error handling/exiting of the simulator.
  */
+// coverage: unreachable-begin (only NOT_REACHED calls this, and each of those branches is itself unreachable)
 static inline void not_reached(int line, const char *fname)
 {
     fprintf(stderr, "Code unexpectedly executed at line %d, at file %s\n", line, fname);
     exit(1);
 }
+// coverage: unreachable-end
 
 
 ////////////////////////////////////////////////////////////////////////
@@ -2372,7 +2374,6 @@ private:
 
     ToolResult queryTool(short x, short y);
 
-    ToolResult bulldozerTool(short x, short y);
     ToolResult bulldozerTool(short x, short y, ToolEffects *effects);
 
     ToolResult roadTool(short x, short y, ToolEffects *effects);
@@ -2444,11 +2445,6 @@ private:
     ////////////////////////////////////////////////////////////////////////
     // traffic.cpp
 
-public:
-
-    short makeTraffic(int x, int y, ZoneType dest);
-
-
 private:
 
     short makeTraffic(const Position &startPos, ZoneType dest);
@@ -2469,8 +2465,6 @@ private:
     Position pullPos();
 
     bool findPerimeterRoad(Position *pos);
-
-    bool findPerimeterTelecom(const Position &pos);
 
     bool tryDrive(const Position &startPos, ZoneType destZone);
 
@@ -2510,8 +2504,6 @@ public:
 
 
     void doUpdateHeads();
-
-    void updateEvaluation();
 
     void updateFunds();
 

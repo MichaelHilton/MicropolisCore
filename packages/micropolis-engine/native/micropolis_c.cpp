@@ -9,12 +9,14 @@ public:
     MPCallbacks cbs = {};
 
     virtual ~CCallback() {}
+    // coverage: unreachable-begin (public callbacks the engine never fires: doAutoGoto, generateSomeCity, doWinGame, saveCityAs and the save-result hooks have no caller)
     virtual void autoGoto(Micropolis *micropolis, emscripten::val callbackVal, int x, int y, std::string message) override {
         if (cbs.autoGoto) cbs.autoGoto(cbs.context, x, y, message.c_str());
     }
     virtual void didGenerateMap(Micropolis *micropolis, emscripten::val callbackVal, int seed) override {
         if (cbs.didGenerateMap) cbs.didGenerateMap(cbs.context, seed);
     }
+    // coverage: unreachable-end
     virtual void didLoadCity(Micropolis *micropolis, emscripten::val callbackVal, std::string filename) override {
         if (cbs.didLoadCity) cbs.didLoadCity(cbs.context, filename.c_str());
     }
@@ -22,20 +24,22 @@ public:
     virtual void didLoseGame(Micropolis *micropolis, emscripten::val callbackVal) override {
         if (cbs.didLoseGame) cbs.didLoseGame(cbs.context);
     }
-    virtual void didSaveCity(Micropolis *micropolis, emscripten::val callbackVal, std::string filename) override {}
+    virtual void didSaveCity(Micropolis *micropolis, emscripten::val callbackVal, std::string filename) override {} // coverage: unreachable (the engine never calls this callback: saveCity has no caller)
     virtual void didTool(Micropolis *micropolis, emscripten::val callbackVal, std::string name, int x, int y) override {
         if (cbs.didTool) cbs.didTool(cbs.context, name.c_str(), x, y);
     }
+    // coverage: unreachable-begin (doWinGame, the only caller, is never called)
     virtual void didWinGame(Micropolis *micropolis, emscripten::val callbackVal) override {
         if (cbs.didWinGame) cbs.didWinGame(cbs.context);
     }
+    // coverage: unreachable-end
     virtual void didntLoadCity(Micropolis *micropolis, emscripten::val callbackVal, std::string filename) override {}
-    virtual void didntSaveCity(Micropolis *micropolis, emscripten::val callbackVal, std::string filename) override {}
+    virtual void didntSaveCity(Micropolis *micropolis, emscripten::val callbackVal, std::string filename) override {} // coverage: unreachable (the engine never calls this callback: saveCity has no caller)
     virtual void makeSound(Micropolis *micropolis, emscripten::val callbackVal, std::string channel, std::string sound, int x, int y) override {
         if (cbs.makeSound) cbs.makeSound(cbs.context, channel.c_str(), sound.c_str(), x, y);
     }
     virtual void newGame(Micropolis *micropolis, emscripten::val callbackVal) override {}
-    virtual void saveCityAs(Micropolis *micropolis, emscripten::val callbackVal, std::string filename) override {}
+    virtual void saveCityAs(Micropolis *micropolis, emscripten::val callbackVal, std::string filename) override {} // coverage: unreachable (the engine never calls this callback: doSaveCityAs has no caller)
     virtual void sendMessage(Micropolis *micropolis, emscripten::val callbackVal, int messageIndex, int x, int y, bool picture, bool important) override {
         if (cbs.sendMessage) cbs.sendMessage(cbs.context, messageIndex, x, y, picture ? 1 : 0, important ? 1 : 0);
     }
@@ -298,7 +302,7 @@ void mp_make_disaster(MPEngine *e, int which) {
             SimSprite *plane = e->sim.getSprite(SPRITE_AIRPLANE);
             if (plane) e->sim.explodeSprite(plane);
             break;
-        }
+        } // coverage: unreachable (closing brace after break: coverage counts it as a separate region that nothing can enter)
     }
 }
 
@@ -419,6 +423,8 @@ void mp_set_terrain_curve(MPEngine *e, int level) { e->sim.terrainCurveLevel = l
 void mp_set_terrain_lake(MPEngine *e, int level) { e->sim.terrainLakeLevel = level; }
 void mp_set_terrain_tree(MPEngine *e, int level) { e->sim.terrainTreeLevel = level; }
 void mp_set_terrain_island(MPEngine *e, int island) { e->sim.terrainCreateIsland = island; }
+void mp_set_pollution(MPEngine *e, int x, int y, int value) { e->sim.pollutionDensityMap.worldSet(x, y, value); }
+void mp_set_land_value(MPEngine *e, int x, int y, int value) { e->sim.landValueMap.worldSet(x, y, value); }
 
 void mp_smooth_terrain(MPEngine *e) {
     Micropolis &sim = e->sim;

@@ -186,8 +186,10 @@ void Micropolis::doPopNum()
     cityPop = getPopulation();
 
     if (oldCityPop == -1) {
+        // coverage: unreachable-begin (initWillStuff sets cityPop to -1 only just before doSimInit, whose setCommonInits calls evalInit and resets it to 0 before any evaluation)
         oldCityPop = cityPop;
     }
+        // coverage: unreachable-end
 
     cityPopDelta = cityPop - oldCityPop;
     cityClass = getCityClass(cityPop);

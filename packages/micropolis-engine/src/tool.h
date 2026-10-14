@@ -212,9 +212,7 @@ public:
 
     MapValue getMapValue(const Position& pos) const;
     inline MapValue getMapValue(int x, int y) const;
-    inline MapTile getMapTile(const Position& pos) const;
     inline MapTile getMapTile(int x, int y) const;
-    inline int getCost() const;
 
     inline void addCost(int amount);
     void setMapValue(const Position& pos, MapValue mapVal);
@@ -234,19 +232,6 @@ private:
 
 /**
  * Get the tile of a map position.
- * @param pos Position being queried.
- * @return Tile at the specified position.
- *
- * @pre Position must be within map limits
- */
-inline MapTile ToolEffects::getMapTile(const Position& pos) const
-{
-    return this->getMapValue(pos) & LOMASK;
-}
-
-
-/**
- * Get the tile of a map position.
  * @param x Horizontal coordinate of position being queried.
  * @param y Vertical coordinate of position being queried.
  * @return Tile at the specified position.
@@ -256,16 +241,6 @@ inline MapTile ToolEffects::getMapTile(const Position& pos) const
 inline MapValue ToolEffects::getMapTile(int x, int y) const
 {
     return this->getMapValue(Position(x, y)) & LOMASK;
-}
-
-
-/**
- * Get the total cost collected so far.
- * @return Total cost.
- */
-inline int ToolEffects::getCost() const
-{
-    return this->cost;
 }
 
 

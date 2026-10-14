@@ -287,11 +287,13 @@ void Micropolis::checkGrowth()
                         category = MESSAGE_REACHED_MEGALOPOLIS;
                         break;
 
+                    // coverage: unreachable-begin (getCityClass returns one of the six CityClass values, all handled above)
                     default:
                         NOT_REACHED();
                         break;
 
                 }
+                    // coverage: unreachable-end
             }
         }
 
@@ -364,11 +366,13 @@ void Micropolis::doScenarioScore(Scenario type)
         }
         break;
 
+    // coverage: unreachable-begin (scoreType is a scenario in SC_DULLSVILLE..SC_RIO: sendMessages tests scoreType > SC_NONE, and simLoadInit takes it from a clamped scenario)
     default:
         NOT_REACHED();
         break;
 
     }
+    // coverage: unreachable-end
 
     sendMessage(z, NOWHERE, NOWHERE, true, true);
 
@@ -399,10 +403,12 @@ void Micropolis::sendMessage(short messageIndex, short x, short y, bool picture,
  * @param y         Y position at the map
  * @param message   Message
  */
+// coverage: unreachable-begin (nothing calls doAutoGoto; kept as the only way the autoGoto callback can fire)
 void Micropolis::doAutoGoto(short x, short y, const std::string &message)
 {
     callback->autoGoto(this, callbackVal, x, y, message);
 }
+// coverage: unreachable-end
 
 
 /** Tell the front-end that the player has lost the game */
@@ -413,10 +419,12 @@ void Micropolis::doLoseGame()
 
 
 /** Tell the front-end that the player has won the game */
+// coverage: unreachable-begin (nothing calls doWinGame; kept as the only way the didWinGame callback can fire)
 void Micropolis::doWinGame()
 {
     callback->didWinGame(this, callbackVal);
 }
+// coverage: unreachable-end
 
 
 ////////////////////////////////////////////////////////////////////////

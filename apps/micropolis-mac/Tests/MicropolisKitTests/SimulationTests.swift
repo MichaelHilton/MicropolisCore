@@ -165,6 +165,31 @@ final class SimulationTests: XCTestCase {
         XCTAssertGreaterThan(engine.overlay(.pollution)[dirty * Engine.height + 50], 128)
     }
 
+    /// Pollution above 128 stops new homes even where the land value is high.
+    /// The land value scan already subtracts pollution, so play never makes
+    /// both high at once; the hooks pin both for the zone's centre tile before
+    /// every tick. The control zone has the same land value and a clean sky.
+    func testPollutionOverTheLimitStopsHomesEvenOnValuableLand() {
+        let engine = Engine.blankTown()
+        jobTown(engine)
+        let clean = 30, dirty = 58
+        XCTAssertEqual(engine.apply(.residential, x: clean, y: 50), .ok)
+        XCTAssertEqual(engine.apply(.residential, x: dirty, y: 50), .ok)
+        for _ in 0..<1500 {
+            for (x, pollution) in [(clean, 100), (dirty, 129)] {
+                engine.setLandValue(x: x, y: 50, 250)
+                engine.setPollution(x: x, y: 50, pollution)
+            }
+            engine.tick()
+        }
+        func houses(_ cx: Int) -> Int {
+            (-1...1).flatMap { dy in (-1...1).map { dx in ToolFixture.number(engine, cx + dx, 50 + dy) } }
+                .filter { $0 >= 249 && $0 < 261 }.count
+        }
+        XCTAssertGreaterThan(houses(clean), 0, "homes should be built on valuable, clean land")
+        XCTAssertEqual(houses(dirty), 0, "nobody moves into the polluted zone, however valuable the land")
+    }
+
     // MARK: Fire and flood on a zone at the edge of the map
 
     /// Fire next to an airport at the east edge: the airport is a 6x6 zone, so

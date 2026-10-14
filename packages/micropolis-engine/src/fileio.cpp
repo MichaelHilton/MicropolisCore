@@ -200,8 +200,10 @@ static bool load_short(short *buf, int len, FILE *f)
     size_t result = fread(buf, sizeof(short), len, f);
 
     if ((int)result != len) {
+         // coverage: unreachable-begin (loadFileData checks the file size before every load_short, so fread cannot come up short)
          return false;
     }
+         // coverage: unreachable-end
 
     SWAP_SHORTS(buf, len);        /* file big-endian -> host order */
 
@@ -375,8 +377,10 @@ bool Micropolis::loadFile(const std::string &filename)
 
     // If the speed is nonsensical, set it to a reasonable value.
     if (simSpeed < 0 || simSpeed > 3) {
+        // coverage: unreachable-begin (setSpeed(3) a few lines above already put simSpeed in 0..3)
         simSpeed = 3;
     }
+        // coverage: unreachable-end
 
     setSpeed(simSpeed);
     setPasses(1);
@@ -479,8 +483,10 @@ void Micropolis::loadScenario(Scenario s)
     setGameLevel(LEVEL_EASY);
 
     if (s < SC_DULLSVILLE || s > SC_RIO) {
+        // coverage: unreachable-begin (the only caller, mp_load_scenario, rejects scenarios outside SC_DULLSVILLE..SC_RIO)
         s = SC_DULLSVILLE;
     }
+        // coverage: unreachable-end
 
     switch (s) {
         case SC_DULLSVILLE:
@@ -539,10 +545,12 @@ void Micropolis::loadScenario(Scenario s)
             cityTime = ((2047 - 1900) * 48) + 2;
             setFunds(20000);
             break;
+        // coverage: unreachable-begin (s was clamped to SC_DULLSVILLE..SC_RIO above, and every value in that range has a case)
         default:
             NOT_REACHED();
             break;
     }
+        // coverage: unreachable-end
 
     setCleanCityName(name);
     setSpeed(3);

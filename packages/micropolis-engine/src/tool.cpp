@@ -202,9 +202,11 @@ BuildingProperties::BuildingProperties(int xs, int ys, MapTile base,
 {
 }
 
+// coverage: unreachable-begin (the only BuildingProperties objects are static, destroyed at process exit after the coverage profile is written)
 BuildingProperties::~BuildingProperties()
 {
 }
+// coverage: unreachable-end
 
 
 ////////////////////////////////////////////////////////////////////////
@@ -966,19 +968,6 @@ ToolResult Micropolis::queryTool(short x, short y)
     return TOOLRESULT_OK;
 }
 
-ToolResult Micropolis::bulldozerTool(short x, short y)
-{
-    ToolEffects effects(this);
-
-    ToolResult result = bulldozerTool(x, y, &effects);
-
-    if (result == TOOLRESULT_OK) {
-        effects.modifyWorld();
-    }
-
-    return result;
-}
-
 /**
  * Apply bulldozer tool.
  * @param x X coordinate of the position of the query.
@@ -1054,11 +1043,13 @@ ToolResult Micropolis::bulldozerTool(short x, short y, ToolEffects *effects)
             putRubble(centerX - 1, centerY - 1, 6, effects);
             break;
 
+        // coverage: unreachable-begin (zoneSize comes from checkSize or checkBigZone, which return only 0, 3, 4 or 6, and 0 was excluded above)
         default:
             NOT_REACHED();
             break;
 
         }
+        // coverage: unreachable-end
 
 
         if (result == TOOLRESULT_OK) {

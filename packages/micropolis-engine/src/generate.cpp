@@ -89,6 +89,7 @@
  * @bug We use a random number generator to draw a seed for initializing the
  *      random number generator?
  */
+// coverage: unreachable-begin (nothing calls generateSomeRandomCity or generateSomeCity; kept because generateSomeCity is the only code that fires the didGenerateMap callback)
 void Micropolis::generateSomeRandomCity()
 {
     generateSomeCity(getRandom16());
@@ -120,6 +121,7 @@ void Micropolis::generateSomeCity(int seed)
 
     callback->didGenerateMap(this, callbackVal, seed);
 }
+// coverage: unreachable-end
 
 
 /**
@@ -313,8 +315,10 @@ void Micropolis::treeSplash(short xloc, short yloc)
         treePos.move(dir);
 
         if (!treePos.testBounds()) {
+            // coverage: unreachable-begin (doTrees starts every splash on the map and Position::move clamps the position back onto it, even for the unchecked south-west step)
             return;
         }
+            // coverage: unreachable-end
 
         if ((map[treePos.posX][treePos.posY] & LOMASK) == DIRT) {
             map[treePos.posX][treePos.posY] = WOODS | BLBNBIT;
@@ -737,9 +741,11 @@ void Micropolis::smoothWater()
                     tile = getTileFromMap(pos, dir, TILE_INVALID);
 
                     if (tile == RIVER || tile == CHANNEL) {
+                        // coverage: unreachable-begin (the first pass of smoothWater turned every water tile that touches a non-water tile into REDGE, so no RIVER or CHANNEL is left next to woods)
                         map[x][y] = REDGE; /* make it water's edge */
                         break;
                     }
+                        // coverage: unreachable-end
                 }
             }
         }

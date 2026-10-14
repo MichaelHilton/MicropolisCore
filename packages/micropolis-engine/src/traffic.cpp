@@ -92,13 +92,6 @@
  * @return \c 1 if connection found, \c 0 if not found,
  *         \c -1 if no connection to road found.
  */
-short Micropolis::makeTraffic(int x, int y, ZoneType dest)
-{
-    Position startPos;
-    startPos.posX = x;
-    startPos.posY = y;
-    return makeTraffic(startPos, dest);
-}
 
 
 /**
@@ -241,36 +234,6 @@ bool Micropolis::findPerimeterRoad(Position *pos)
 }
 
 
-/**
- * Find a telecom connection at the perimeter.
- * @param pos Position to start searching.
- * @return A telecom connection has been found.
- *
- * @todo Decide whether we want telecomm code.
- */
-bool Micropolis::findPerimeterTelecom(const Position &pos)
-{
-    /* look for telecom on edges of zone */
-    static const short PerimX[12] = {-1, 0, 1, 2, 2, 2, 1, 0,-1,-2,-2,-2};
-    static const short PerimY[12] = {-2,-2,-2,-1, 0, 1, 2, 2, 2, 1, 0,-1};
-    short tx, ty, tile;
-
-    for (short z = 0; z < 12; z++) {
-
-        tx = pos.posX + PerimX[z];
-        ty = pos.posX + PerimY[z];
-
-        if (testBounds(tx, ty)) {
-
-            tile = map[tx][ty] & LOMASK;
-            if (tile >= TELEBASE && tile <= TELELAST) {
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
 
 
 /**
@@ -414,8 +377,8 @@ MapTile Micropolis::getTileFromMap(const Position &pos,
 
             return defaultTile;
 
-        default:
-            return defaultTile;
+        default: // coverage: unreachable (every caller passes a direction from increment90 or tryGo's N, E, S, W loop)
+            return defaultTile; // coverage: unreachable (see the default label)
 
     }
 }

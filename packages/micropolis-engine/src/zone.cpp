@@ -218,10 +218,12 @@ void Micropolis::doHospitalChurch(const Position &pos)
                 case CHURCH7:
                 churchNumber = 7;
                 break;
+                    // coverage: unreachable-begin (the enclosing test only accepts CHURCH0..CHURCH7, and each has a case)
                     default:
                 assert(0); // Unexpected church tile
                 break;
             }
+                    // coverage: unreachable-end
 
             callback->simulateChurch(this, callbackVal, pos.posX, pos.posY, churchNumber);
         }
@@ -738,8 +740,10 @@ short Micropolis::evalRes(const Position &pos, int traf)
     short value;
 
     if (traf < 0) {
+        // coverage: unreachable-begin (doResidential returns early when makeTraffic gives -1, so traf is never negative)
         return -3000;
     }
+        // coverage: unreachable-end
 
     value =  landValueMap.worldGet(pos.posX, pos.posY);
     value -= pollutionDensityMap.worldGet(pos.posX, pos.posY);
@@ -899,8 +903,10 @@ short Micropolis::evalCom(const Position &pos, int traf)
     short Value;
 
     if (traf < 0) {
+        // coverage: unreachable-begin (doCommercial returns early when makeTraffic gives -1, so traf is never negative)
         return -3000;
     }
+        // coverage: unreachable-end
 
     Value = comRateMap.worldGet(pos.posX, pos.posY);
 
@@ -1029,8 +1035,10 @@ void Micropolis::indPlop(const Position &pos, int den, int value)
 short Micropolis::evalInd(int traf)
 {
     if (traf < 0) {
+        // coverage: unreachable-begin (doIndustrial returns early when makeTraffic gives -1, so traf is never negative)
         return -1000;
     }
+        // coverage: unreachable-end
 
     return 0;
 }

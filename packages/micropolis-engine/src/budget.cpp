@@ -159,8 +159,10 @@ void Micropolis::doBudgetNow(bool fromMenu)
                     // (where total = fireInt + policeInt + roadInt),
                     // so this should never happen.
 
+                    // coverage: unreachable-begin (yumDuckets <= total was checked above, and roads and fire have been subtracted, so yumDuckets <= policeInt here)
                     policeValue = policeInt;
                     yumDuckets -= policeInt;
+                    // coverage: unreachable-end
 
                 } else {
 
@@ -179,11 +181,13 @@ void Micropolis::doBudgetNow(bool fromMenu)
 
                         // Exactly nothing left, so scale back police percentage to zero.
 
+                        // coverage: unreachable-begin (yumDuckets > fireInt held before the subtraction, so more than zero is left)
                         policePercent = 0.0;
 
                     }
 
                 }
+                        // coverage: unreachable-end
 
             } else {
 
@@ -207,11 +211,13 @@ void Micropolis::doBudgetNow(bool fromMenu)
 
                   // Exactly nothing left, so scale back fire percentage to zero.
 
+                  // coverage: unreachable-begin (yumDuckets > roadInt held before the subtraction, so more than zero is left)
                   firePercent = 0.0;
 
                 }
 
             }
+                  // coverage: unreachable-end
 
         } else {
 

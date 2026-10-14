@@ -202,11 +202,13 @@ ToolResult Micropolis::connectTile(short x, short y,
         fixZone(x, y, effects);
         break;
 
+    // coverage: unreachable-begin (connectTile's callers in tool.cpp only pass the five ConnectTileCommand values handled above)
     default:
         NOT_REACHED();
         break;
 
     }
+    // coverage: unreachable-end
 
     return result;
 }

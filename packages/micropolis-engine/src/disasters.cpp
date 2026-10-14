@@ -113,8 +113,10 @@ void Micropolis::doDisasters()
 
     int x = gameLevel;
     if (x > LEVEL_LAST) {
+        // coverage: unreachable-begin (gameLevel is always within LEVEL_FIRST..LEVEL_LAST: setGameLevel asserts it, mp_set_game_level and simLoadInit clamp it)
         x = LEVEL_EASY;
     }
+        // coverage: unreachable-end
 
     if (!getRandom(DisChance[x])) {
         switch (getRandom(8)) {
@@ -197,10 +199,12 @@ void Micropolis::scenarioDisaster()
             }
             break;
 
+        // coverage: unreachable-begin (scenarioDisaster runs only for disasterEvent != SC_NONE, which simLoadInit takes from a scenario clamped to SC_DULLSVILLE..SC_RIO, all handled above)
         default:
             NOT_REACHED();
             break; // Never used
     }
+        // coverage: unreachable-end
 
     if (disasterWait > 0) {
         disasterWait--;
