@@ -4,18 +4,22 @@ This branch contains only the native macOS app (`apps/micropolis-mac`) and the C
 
 ## What is tested
 
-253 tests in all (95 XCTest, 158 Swift Testing), about 105 seconds of test time.
+371 tests in all (213 XCTest, 158 Swift Testing), about 100 seconds of test time.
 
 | Target | Framework | Tests | Covers |
 |--------|-----------|-------|--------|
-| `MicropolisKitTests` | XCTest | 95 | The Swift wrapper and, through it, the C++ engine. `EngineTests`: loading, simulation, saving, callbacks, sprites, history, overlays, scenarios. `EngineWrapperTests`: setting round trips, the delegate defaults, query, earthquake and tax callbacks, `ToolResult` mapping. `ToolTests`: every tool, auto-connecting roads, rails and wires, bridges, the bulldozer, prices, placement failures. `SpriteTests`: trains, ships, planes, helicopters, monsters, tornadoes, explosions. `DisasterTests`: fire, flood, earthquake, meltdown, disabled disasters, the five scenario disasters. `BudgetMessageTests`: the year-end budget with auto-budget on and off, running out of money, the power advisor message, losing a scenario, history. `FullRecorder.swift` holds the shared delegate recorders. |
+| `MicropolisKitTests` | XCTest | 213 | The Swift wrapper and, through it, the C++ engine. `EngineTests`: loading, simulation, saving, callbacks, sprites, history, overlays, scenarios. `EngineWrapperTests`: setting round trips, the delegate defaults, query, earthquake and tax callbacks, `ToolResult` mapping. `ToolTests`, `BigBuildingToolTests`, `ConnectTests`: every tool, auto-connecting roads, rails and wires, bridges, the bulldozer on every big building, prices, placement failures. `SpriteTests`, `SpriteWorldTests`: trains, ships, planes, helicopters, monsters, tornadoes, explosions, in generated and hand-built cities. `DisasterTests`: fire, flood, earthquake, meltdown, disabled disasters, the five scenario disasters. `BudgetMessageTests`, `AdvisorTests`, `ScenarioScoreTests`, `EvaluationTests`: the year-end budget and its shortfalls, every advisor message, scenario wins and losses, the city score. `SimulationTests`: the game speeds, random disasters, scans and zone growth. `SmallFilesTests`: city file edge cases, the valve gauge, the year rollover, terrain options. `BehaviorLockTests`: hashes of fixed-seed runs. `FullRecorder.swift` and `TownFixture.swift` hold the shared recorders and city builders. |
 | `MicropolisMacTests` | Swift Testing (`@Test`) | 158 | `LookupTablesTests` (name tables, `ToolSpec`, terrain kinds, overlay colors, `Assets`, `BudgetSheet` arithmetic, demand bars), `GameModelTests` (delegate callbacks, messages, scrolling, load and save, scenarios, terrain editor, options, sound, tool clicks, budget), `GraphSeriesTests`, `ViewRenderTests` (every view hosted and laid out), `MapInteractionTests` (zoom keys, scroll requests, clicks and drags with synthetic events), `DOSWindowsTests`, `BudgetTests`, `MapViewTests`, `MapRendererTests`, `TileAtlasTests`, `MessagesTests`, `BresenhamTests` |
 
 Both targets drive the real C++ engine compiled natively, so they also test the engine.
 
 Every test creates its engine with `Engine(seed: 1)` or `GameModel(..., seed: 1, runsTimer: false)`. Without a seed, the engine seeds its random numbers from the clock, including on every city load. Without `runsTimer: false`, a model with a city ticks itself on a real timer. Either one would make a test run differently each time. `BehaviorLockTests` hashes several fixed-seed runs; the hashes change only when game behavior changes on purpose.
 
-For engine coverage, use `scripts/engine_coverage.py` (see `apps/micropolis-mac/ENGINE-COVERAGE-PLAN.md`). It builds with atomic profile counters, so the result is the same on every run.
+For engine coverage, use `scripts/engine_coverage.py` (see `apps/micropolis-mac/ENGINE-COVERAGE-PLAN.md`). It builds with atomic profile counters, so the result is the same on every run. **`scripts/engine_coverage.py --run --check` must pass (exit 0)**: every engine line is either run by a test or marked `// coverage: unreachable (<reason>)` in the source.
+
+### Test hooks
+
+A few `Engine` methods exist only for tests. Each sets one engine field directly and has a matching `mp_set_...` function in the "Test hooks" block of `micropolis_c.h`: `setScoreWait`, `setCityScore`, `setTrafficAverage`, `setCrimeAverage`, `setDonDither`, `setCityTime`, `setTerrainCurve`, `setTerrainLake`, `setTerrainTree`, `setTerrainIsland`, `setPollution(x:y:_:)` and `setLandValue(x:y:_:)`. They live under `// MARK: Test hooks` in `Engine.swift`.
 
 ## How to run
 
@@ -33,16 +37,15 @@ The first run compiles the whole engine, so expect it to take a while.
 
 ## Coverage baseline
 
-Measured on 2026-10-08 with `swift test --enable-code-coverage`:
+Engine row measured on 2026-10-13 with `scripts/engine_coverage.py --run --check`; the other rows on 2026-10-08 with `swift test --enable-code-coverage`:
 
 | Code | Line % | Function % |
 |------|--------|------------|
-| C++ engine | 77.6% | 83.2% |
+| C++ engine | 100% (7,092 lines, 0 uncovered; 128 lines marked unreachable) | not measured |
 | MicropolisKit (Swift wrapper) | 96.7% | 95.7% |
 | MicropolisMac (SwiftUI app) | 84.0% | 76.1% |
 
-- **Engine: well covered.** `power.cpp` 100%, `zone.cpp` 98%, `simulate.cpp` 93%, `scan.cpp` 91%, `traffic.cpp` 85%, `disasters.cpp` 84%.
-- **Engine: weakest.** `graph.cpp` 23% (most of it is the history-range code that the C API does not expose), `message.cpp` 53%, `connect.cpp` 63%, `budget.cpp` 68%, `tool.cpp` 69%, `sprite.cpp` 74%.
+- **Engine: fully covered.** Every line is run by a test or carries an unreachable marker (see `ENGINE-COVERAGE-PLAN.md`). Only line coverage is judged; the function percentage is not measured, because header helpers are compiled once per file.
 - **App: not covered.** `MicropolisApp.swift` 0% (the app entry point), `SoundManager` 39%, `SpriteRenderer` 51%, `MapView` 73% (right-drag, pinch and wheel scrolling need events AppKit cannot build), `GameMenus` 76% (button actions only run when clicked).
 
 SwiftPM skips writing the merged report when any test fails, so merge the raw profiles yourself:

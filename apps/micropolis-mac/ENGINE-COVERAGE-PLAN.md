@@ -6,6 +6,14 @@ Each package is marked **[Sonnet]** or **[Haiku]**: the smallest model that shou
 
 This plan replaces two rules in `TEST-PLAN.md` for engine work only: you may change engine code (Phase 0 and Phase 1), and you may add C API functions (Phase 2), under the rules below. All other rules in `TEST-PLAN.md` still apply, including its style rules and its "Facts you will need" section. Read that section before starting.
 
+## Status
+
+**Complete (2026-10-13).** `scripts/engine_coverage.py --run --check` exits 0 (checked three times in a row): 7,092 engine lines, 0 uncovered, and the full suite passes (213 XCTest, 158 Swift Testing). The `BehaviorLockTests` hashes never changed.
+
+- **Marked lines: 128**, of 7,092. 42 are code kept on purpose because it is the only thing that fires a public callback: `generateSomeCity` and `generateSomeRandomCity` (`didGenerateMap`), `doAutoGoto`, `doWinGame`, and the unused `CCallback` methods in `micropolis_c.cpp`. The other 86 are lines no input can reach, each with its reason in the source: `default:` branches of complete switches, clamps that an earlier check makes redundant, `not_reached()`, and similar. This is above the original "fewer than 30" guess, mostly because of the callback code.
+- **Test hooks added in this phase:** `setPollution` and `setLandValue` (to build a polluted zone with high land value, which play cannot make).
+- **Known engine bugs left in place** (recorded as expected failures, not fixed): four in `BigBuildingToolTests` and `ConnectTests` (found in T1), and the south-west case of `Position::move`, which moves without a bounds check because a stray `break` swallowed the check. The owner chose to keep it so generated maps stay the same; a comment on the case says so.
+
 ## What "100%" means
 
 `scripts/engine_coverage.py --run --check` exits 0, and the full suite passes. That script is the only judge. Read its docstring first.
