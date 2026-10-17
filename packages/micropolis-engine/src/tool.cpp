@@ -402,6 +402,7 @@ static short checkBigZone(MapTile id, short *deltaHPtr, short *deltaVPtr)
     case COALSMOKE3:      /* check coal plant, smoke */
     case COALSMOKE3 + 1:  /* check coal plant, smoke */
     case COALSMOKE3 + 2:  /* check coal plant, smoke */
+    case COALSMOKE3 + 3:  /* check coal plant, smoke */
     case PORT + 1:        /* check sea port */
     case NUCLEAR + 1:     /* check nuc plant */
     case STADIUM + 1:     /* check stadium */
@@ -545,6 +546,10 @@ short Micropolis::checkSize(short tileValue)
         (tileValue >= COALBASE    && tileValue <= LASTPOWERPLANT) ||
         (tileValue >= STADIUMBASE && tileValue <= LASTZONE)) {
         return 4;
+    }
+
+    if (tileValue >= AIRPORTBASE && tileValue < COALBASE) {
+        return 6;
     }
 
     return 0;

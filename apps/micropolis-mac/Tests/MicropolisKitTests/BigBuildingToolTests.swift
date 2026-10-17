@@ -89,26 +89,38 @@ final class BigBuildingToolTests: XCTestCase {
 
     /// The smoke animation cycles 924, 925, 926, 927, so a click that lands on
     /// the fourth frame is a click on the plant too.
-    func testBulldozingTheLastSmokeFrameShouldLevelTheCoalPlant() {
+    /// The chimney smoke cycles through four frames, 924 to 927; any of them
+    /// levels the plant.
+    func testBulldozingTheLastSmokeFrameLevelsTheCoalPlant() {
         let engine = F.engine()
         XCTAssertEqual(engine.apply(.coalPower, x: 50, y: 50), .ok)
         F.put(engine, 51, 50, 927, flags: F.bulldozable | F.animated)
         XCTAssertEqual(engine.apply(.bulldozer, x: 51, y: 50), .ok)
-        XCTExpectFailure("smoke frame 927 is missing from checkBigZone, so the bulldozer removes only that one tile and leaves the plant standing") {
-            for x in 49...52 { for y in 49...52 {
-                XCTAssertTrue(isExplosion(engine, x, y), "left (\(x), \(y)) as \(F.number(engine, x, y))")
-            } }
-        }
+        for x in 49...52 { for y in 49...52 {
+            XCTAssertTrue(isExplosion(engine, x, y), "left (\(x), \(y)) as \(F.number(engine, x, y))")
+        } }
     }
 
-    func testBulldozingTheAirportCenterShouldLevelTheAirport() {
+    func testBulldozingTheAirportCenterLevelsTheAirport() {
         let engine = F.engine()
         XCTAssertEqual(engine.apply(.airport, x: 50, y: 50), .ok)
         let funds = engine.funds
-        XCTExpectFailure("the airport center tile is not recognized as a 6x6 building (checkSize has no airport range), so the bulldozer refuses it") {
-            XCTAssertEqual(engine.apply(.bulldozer, x: 50, y: 50), .ok)
-            XCTAssertEqual(funds - engine.funds, 1)
-        }
+        XCTAssertEqual(engine.apply(.bulldozer, x: 50, y: 50), .ok)
+        XCTAssertEqual(funds - engine.funds, 1)
+        for x in 49...54 { for y in 49...54 {
+            XCTAssertTrue(isExplosion(engine, x, y), "left (\(x), \(y)) as \(F.number(engine, x, y))")
+        } }
+    }
+
+    /// A zone-center flag on a tile that belongs to no building (here a
+    /// football-game frame) gives the bulldozer no size to clear.
+    func testBulldozingAZoneCenterOfNoKnownBuildingChangesNothing() {
+        let engine = F.engine()
+        F.put(engine, 50, 50, 932, flags: F.bulldozable | F.zoneCenter)
+        let (funds, map) = (engine.funds, engine.mapSnapshot())
+        XCTAssertEqual(engine.apply(.bulldozer, x: 50, y: 50), .failed)
+        XCTAssertEqual(engine.funds, funds)
+        XCTAssertEqual(engine.mapSnapshot(), map)
     }
 
     func testBulldozingTheEdgeOfABuildingShouldLevelIt() {
