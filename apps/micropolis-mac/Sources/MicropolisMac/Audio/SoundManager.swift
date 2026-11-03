@@ -1,5 +1,12 @@
 import AVFoundation
 
+protocol SoundPlayer: AnyObject {
+    var isPlaying: Bool { get }
+    @discardableResult func play() -> Bool
+}
+
+extension AVAudioPlayer: SoundPlayer {}
+
 /// What the game needs from the sound system, so tests can record sounds
 /// instead of playing them.
 protocol SoundPlaying: AnyObject {
@@ -10,21 +17,47 @@ protocol SoundPlaying: AnyObject {
 final class SoundManager: SoundPlaying {
     static let shared = SoundManager()
 
-    private var players: [AVAudioPlayer] = []
+    typealias DirectoryContents = (URL) -> [URL]?
+    typealias PlayerFactory = (URL) throws -> any SoundPlayer
+    typealias Logger = (String) -> Void
+
+    private var players: [any SoundPlayer] = []
     private var soundMapping: [String: URL] = [:]
     private var loggedSounds: Set<String> = []
+    private let makePlayer: PlayerFactory
+    private let log: Logger
 
     var soundEnabled = true
 
     init() {
-        buildSoundMapping()
+        self.makePlayer = Self.makeAVAudioPlayer
+        self.log = { print($0) }
+        buildSoundMapping(
+            in: Assets.root.appendingPathComponent("sounds"),
+            directoryContents: { directory in
+                try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
+            }
+        )
     }
 
-    private func buildSoundMapping() {
-        let soundsDir = Assets.root.appendingPathComponent("sounds")
-        let fileManager = FileManager.default
+    init(
+        soundDirectory: URL,
+        directoryContents: @escaping DirectoryContents,
+        makePlayer: @escaping PlayerFactory,
+        log: @escaping Logger
+    ) {
+        self.makePlayer = makePlayer
+        self.log = log
+        buildSoundMapping(in: soundDirectory, directoryContents: directoryContents)
+    }
 
-        guard let files = try? fileManager.contentsOfDirectory(at: soundsDir, includingPropertiesForKeys: nil) else {
+    static func makeAVAudioPlayer(url: URL) throws -> any SoundPlayer {
+        let player = try AVAudioPlayer(contentsOf: url)
+        return player
+    }
+
+    private func buildSoundMapping(in soundDirectory: URL, directoryContents: DirectoryContents) {
+        guard let files = directoryContents(soundDirectory) else {
             return
         }
 
@@ -40,7 +73,7 @@ final class SoundManager: SoundPlaying {
         guard soundEnabled else { return }
 
         if !loggedSounds.contains(soundName) {
-            print("Sound: \(soundName)")
+            log("Sound: \(soundName)")
             loggedSounds.insert(soundName)
         }
 
@@ -59,14 +92,14 @@ final class SoundManager: SoundPlaying {
 
     private func playSound(_ url: URL) {
         do {
-            let player = try AVAudioPlayer(contentsOf: url)
+            let player = try makePlayer(url)
             player.play()
             players.append(player)
 
             // Clean up finished players to avoid memory leak
             players.removeAll { $0.isPlaying == false }
         } catch {
-            print("Failed to play sound: \(error)")
+            log("Failed to play sound: \(error)")
         }
     }
 }
