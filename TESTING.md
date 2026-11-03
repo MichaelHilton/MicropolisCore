@@ -42,27 +42,28 @@ job, not in the default correctness suite.
 
 ## Coverage baseline
 
-Engine row measured on 2026-10-13 with `scripts/engine_coverage.py --run --check`; the other rows on 2026-10-08 with `swift test --enable-code-coverage`:
+Engine row measured on 2026-10-13 with `scripts/engine_coverage.py --run --check`; the Swift rows on 2026-11-03 with `scripts/swift_coverage.py --run`:
 
 | Code | Line % | Function % |
 |------|--------|------------|
 | C++ engine | 100% (7,092 lines, 0 uncovered; 128 lines marked unreachable) | not measured |
-| MicropolisKit (Swift wrapper) | 96.7% | 95.7% |
-| MicropolisMac (SwiftUI app) | 84.0% | 76.1% |
+| MicropolisKit (Swift wrapper) | 96.9% | 96.2% |
+| MicropolisMac (SwiftUI app) | 85.3% | 77.8% |
 
 - **Engine: fully covered.** Every line is run by a test or carries an unreachable marker (see `ENGINE-COVERAGE-PLAN.md`). Only line coverage is judged; the function percentage is not measured, because header helpers are compiled once per file.
-- **App: not covered.** `MicropolisApp.swift` 0% (the app entry point), `SoundManager` 39%, `SpriteRenderer` 51%, `MapView` 73% (right-drag, pinch and wheel scrolling need events AppKit cannot build), `GameMenus` 76% (button actions only run when clicked).
+- **App entry point: not covered.** `MicropolisApp.swift` 0% (the app entry point), `SoundManager` 39%, `SpriteRenderer` 51%, `MapView` 73% (right-drag, pinch and wheel scrolling need events AppKit cannot build), `GameMenus` 76% (button actions only run when clicked).
 
-SwiftPM skips writing the merged report when any test fails, so merge the raw profiles yourself:
+Use SwiftPM's merged profile for Swift coverage:
 
 ```bash
-swift test --enable-code-coverage
-D=.build/out/Products/Debug
-xcrun llvm-profdata merge -sparse $D/codecov/*.profraw -o /tmp/mm.profdata
-xcrun llvm-cov report $D/MicropolisMacTests.xctest/Contents/MacOS/MicropolisMacTests \
-  -object $D/MicropolisKitTests.xctest/Contents/MacOS/MicropolisKitTests \
-  -instr-profile /tmp/mm.profdata
+scripts/swift_coverage.py --run
 ```
+
+The script uses `.build/out/Products/Debug/codecov/default.profdata`, which
+SwiftPM writes after a successful coverage-enabled run. Do not merge the raw
+profiles manually: doing so can omit Swift Testing counters and produce a
+false 0% app report. The script refuses to report if its known-covered
+`GameModel.swift` check has no executed lines.
 
 ## Expected failures
 
