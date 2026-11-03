@@ -64,6 +64,20 @@ xcrun llvm-cov report $D/MicropolisMacTests.xctest/Contents/MacOS/MicropolisMacT
   -instr-profile /tmp/mm.profdata
 ```
 
+## Expected failures
+
+Expected failures document known user-visible defects. They must include a
+stable `TEST-DEBT-*` identifier in the test and remain in this table until the
+test passes without its expected-failure wrapper. There is no configured issue
+tracker on this branch, so these identifiers are the local tracking reference.
+
+| ID | Tests | Current behavior | Remove the expected failure when |
+|----|-------|------------------|---------------------------------|
+| `TEST-DEBT-001` | `BigBuildingToolTests.testBulldozingTheEdgeOfABuildingShouldLevelIt` | Only inner tiles of 4×4/6×6 buildings and the center of 3×3 zones can be bulldozed. | A click on any building-footprint tile levels the complete building with the correct cost and effects. |
+| `TEST-DEBT-002` | `BigBuildingToolTests.testLandToolShouldClearARoadAndChargeTheBulldozer` | The land tool fails on a road, leaves it in place, and charges nothing. | The land tool applies the bulldozer result, changes the road to dirt, and charges the bulldozer cost. |
+| `TEST-DEBT-003` | `GameModelTests.queryingAHouseNamesItResidential` | Engine zone categories do not index the app's zero-based `ZoneStatus` names. | The bridge explicitly maps engine categories to the displayed zone-status category. |
+| `TEST-DEBT-004` | `GameModelTests.newCityNamesAreUnnamedCityAndKeepTheirSpaces`; `GameModelTests.blankNameFallsBackToUnnamedCity` | Engine callbacks replace spaces in city names with underscores, overwriting the app display name. | The display-name boundary preserves spaces while file/engine naming remains intentional and tested. |
+
 ## Known issues and gaps
 
 1. **No CI.** Nothing runs `swift test` automatically on this branch.

@@ -116,7 +116,7 @@ final class BigBuildingToolTests: XCTestCase {
         let engine = F.engine()
         XCTAssertEqual(engine.apply(.stadium, x: 50, y: 50), .ok)
         XCTAssertEqual(engine.apply(.residential, x: 70, y: 50), .ok)
-        XCTExpectFailure("only the inner tiles of a 4x4 or 6x6 building, and only the center of a 3x3 zone, can be bulldozed (the @bug note in bulldozerTool)") {
+        XCTExpectFailure("[TEST-DEBT-001] only the inner tiles of a 4x4 or 6x6 building, and only the center of a 3x3 zone, can be bulldozed (the @bug note in bulldozerTool)") {
             XCTAssertEqual(engine.apply(.bulldozer, x: 49, y: 49), .ok, "stadium corner")
             XCTAssertEqual(engine.apply(.bulldozer, x: 69, y: 50), .ok, "house edge")
         }
@@ -278,7 +278,7 @@ final class BigBuildingToolTests: XCTestCase {
         let engine = F.engine()
         XCTAssertEqual(engine.apply(.road, x: 50, y: 50), .ok)
         let funds = engine.funds
-        XCTExpectFailure("landTool ignores the bulldozer's result and then finds the tile already dirt, so it reports failure and leaves the road (the @todo in landTool)") {
+        XCTExpectFailure("[TEST-DEBT-002] landTool ignores the bulldozer's result and then finds the tile already dirt, so it reports failure and leaves the road (the @todo in landTool)") {
             XCTAssertEqual(engine.apply(.land, x: 50, y: 50), .ok)
             XCTAssertEqual(F.number(engine, 50, 50), 0)
             XCTAssertEqual(funds - engine.funds, 1)

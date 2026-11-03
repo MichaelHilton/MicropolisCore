@@ -162,7 +162,7 @@ struct GameModelTests {
         let house = try #require(cells.firstIndex { $0 & 0x0400 != 0 && (240..<423).contains(Int($0 & 0x3FF)) })
         model.engine.apply(.query, x: house / Engine.height, y: house % Engine.height)
         let info = try #require(model.zoneStatus)
-        withKnownIssue("engine category \(info.category) is not a 0-based ZoneStatus index") {
+        withKnownIssue("[TEST-DEBT-003] engine category \(info.category) is not a 0-based ZoneStatus index") {
             #expect(ZoneStatus.categoryName(info.category) == "Residential")
         }
     }
@@ -251,11 +251,11 @@ struct GameModelTests {
     @Test
     func newCityNamesAreUnnamedCityAndKeepTheirSpaces() {
         let model = emptyModel()
-        withKnownIssue("engine reports \"Unnamed_City\" back to the model") {
+        withKnownIssue("[TEST-DEBT-004] engine reports \"Unnamed_City\" back to the model") {
             model.newCity(seed: 7)
             #expect(model.cityName == "Unnamed City")
         }
-        withKnownIssue("a typed name loses its spaces too") {
+        withKnownIssue("[TEST-DEBT-004] a typed name loses its spaces too") {
             model.newCity(name: "My Town", level: .easy, seed: 7)
             #expect(model.cityName == "My Town")
         }
@@ -265,7 +265,7 @@ struct GameModelTests {
     func blankNameFallsBackToUnnamedCity() {
         let model = emptyModel()
         model.newCity(name: "   ", level: .medium, seed: 7)
-        withKnownIssue("engine reports \"Unnamed_City\" back to the model") {
+        withKnownIssue("[TEST-DEBT-004] engine reports \"Unnamed_City\" back to the model") {
             #expect(model.cityName == "Unnamed City")
         }
         #expect(model.funds == 10_000)
