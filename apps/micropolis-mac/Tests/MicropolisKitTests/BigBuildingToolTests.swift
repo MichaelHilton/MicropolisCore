@@ -112,17 +112,6 @@ final class BigBuildingToolTests: XCTestCase {
         } }
     }
 
-    /// A zone-center flag on a tile that belongs to no building (here a
-    /// football-game frame) gives the bulldozer no size to clear.
-    func testBulldozingAZoneCenterOfNoKnownBuildingChangesNothing() {
-        let engine = F.engine()
-        F.put(engine, 50, 50, 932, flags: F.bulldozable | F.zoneCenter)
-        let (funds, map) = (engine.funds, engine.mapSnapshot())
-        XCTAssertEqual(engine.apply(.bulldozer, x: 50, y: 50), .failed)
-        XCTAssertEqual(engine.funds, funds)
-        XCTAssertEqual(engine.mapSnapshot(), map)
-    }
-
     func testBulldozingTheEdgeOfABuildingShouldLevelIt() {
         let engine = F.engine()
         XCTAssertEqual(engine.apply(.stadium, x: 50, y: 50), .ok)

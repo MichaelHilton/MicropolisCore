@@ -31,9 +31,14 @@ scripts/sync-resources.sh                  # once: copies cities, sounds, tiles,
 swift test                                 # both targets
 swift test --filter MicropolisKitTests     # engine wrapper only
 swift test --filter MapViewTests           # one suite
+MICROPOLIS_RUN_BENCHMARKS=1 swift test --filter MapRendererTests/benchmarkFirstUpdate
 ```
 
 The first run compiles the whole engine, so expect it to take a while.
+The opt-in renderer benchmark runs seven fresh first-render measurements and
+prints their median in milliseconds. It has no pass/fail time limit: compare
+the reported metric only on a controlled machine or in a dedicated benchmark
+job, not in the default correctness suite.
 
 ## Coverage baseline
 
@@ -61,7 +66,6 @@ xcrun llvm-cov report $D/MicropolisMacTests.xctest/Contents/MacOS/MicropolisMacT
 
 ## Known issues and gaps
 
-1. **`MapRendererTests.performanceFirstUpdate` is flaky.** It requires a full map render to finish in under 50 ms of wall-clock time and often fails on a busy machine (about 110–215 ms in recent runs). Loosen the limit, switch to an XCTest `measure` block, or exclude it from default runs.
-2. **No CI.** Nothing runs `swift test` automatically on this branch.
-3. **No UI tests** that click through the SwiftUI views. `ViewRenderTests` only checks that each view lays out without crashing.
-4. **The engine has no C++ unit tests of its own.** It is tested only through the Swift wrapper.
+1. **No CI.** Nothing runs `swift test` automatically on this branch.
+2. **No UI tests** that click through the SwiftUI views. `ViewRenderTests` only checks that each view lays out without crashing.
+3. **The engine has no C++ unit tests of its own.** It is tested only through the Swift wrapper.

@@ -20,9 +20,7 @@ struct MapRendererTests {
 
         let atlasBytes = tileAtlas.bytes
 
-        for _ in 0..<5 {
-            let x = Int.random(in: 0..<120)
-            let y = Int.random(in: 0..<100)
+        for x in 0..<120 { for y in 0..<100 {
             let cellIndex = x * 100 + y
             let tileIndex = Int(cells[cellIndex] & 0x3FF)
 
@@ -40,7 +38,7 @@ struct MapRendererTests {
             for i in 0..<4 {
                 #expect(renderer.pixelBuffer[bufferOffset + i] == atlasBytes[atlasOffset + i])
             }
-        }
+        } }
     }
 
     @Test
@@ -84,28 +82,25 @@ struct MapRendererTests {
         #expect(renderer.lastRedrawCount > 0)
     }
 
-    @Test
-    func performanceFirstUpdate() throws {
-        let atlasURL = Assets.tileAtlas
-        let tileAtlas = try TileAtlas(atlasURL: atlasURL)
-        let renderer = MapRenderer(tileAtlas: tileAtlas)
-
+    @Test(.enabled(
+        if: ProcessInfo.processInfo.environment["MICROPOLIS_RUN_BENCHMARKS"] == "1",
+        "Set MICROPOLIS_RUN_BENCHMARKS=1 to run benchmarks."
+    ))
+    func benchmarkFirstUpdate() throws {
         let engine = Engine(seed: 1)
-        let cityPath = Assets.city("haight")
-        _ = engine.loadCity(at: cityPath)
-
+        _ = engine.loadCity(at: Assets.city("haight"))
         let cells = engine.mapSnapshot()
 
-        let startTime = Date()
-        renderer.update(cells: cells)
-        let elapsed = Date().timeIntervalSince(startTime)
+        let measurements = try (0..<7).map { _ -> Double in
+            let tileAtlas = try TileAtlas(atlasURL: Assets.tileAtlas)
+            let renderer = MapRenderer(tileAtlas: tileAtlas)
+            let startTime = Date()
+            renderer.update(cells: cells)
+            #expect(renderer.lastRedrawCount == Engine.width * Engine.height)
+            return Date().timeIntervalSince(startTime) * 1_000
+        }.sorted()
 
-        // The 50 ms budget is for optimized builds. Debug builds run about 5x slower.
-        #if DEBUG
-        #expect(elapsed < 0.500)
-        #else
-        #expect(elapsed < 0.050)
-        #endif
+        print("METRIC map_renderer.first_update_ms.median \(measurements[measurements.count / 2])")
     }
 }
 
