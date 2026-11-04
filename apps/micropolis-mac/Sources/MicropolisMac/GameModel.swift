@@ -18,6 +18,9 @@ enum GameOutcome: Equatable {
     case won, lost
 }
 
+typealias OpenCityChooser = @MainActor (@escaping (URL?) -> Void) -> Void
+typealias SaveCityChooser = @MainActor (String, @escaping (URL?) -> Void) -> Void
+
 @MainActor
 @Observable
 final class GameModel: EngineDelegate {
@@ -78,6 +81,8 @@ final class GameModel: EngineDelegate {
     /// Called by Save City when the city has no file yet. Opens the save
     /// panel; tests replace it so no panel appears.
     @ObservationIgnored var askForSaveLocation: () -> Void = {}
+    @ObservationIgnored private let chooseCityToOpen: OpenCityChooser
+    @ObservationIgnored private let chooseCityToSave: SaveCityChooser
 
     nonisolated(unsafe) private var timer: Timer?
     /// False keeps the frame timer from running, so the engine only moves
@@ -90,9 +95,13 @@ final class GameModel: EngineDelegate {
     /// `seed` replaces the clock seed and `runsTimer: false` stops the frame
     /// timer, so tests run the same every time.
     init(city: URL? = Assets.city("haight"), sound: SoundPlaying = SoundManager.shared,
-         seed: Int? = nil, runsTimer: Bool = true) {
+         seed: Int? = nil, runsTimer: Bool = true,
+         chooseCityToOpen: @escaping OpenCityChooser = GameModel.presentOpenPanel,
+         chooseCityToSave: @escaping SaveCityChooser = GameModel.presentSavePanel) {
         self.sound = sound
         self.runsTimer = runsTimer
+        self.chooseCityToOpen = chooseCityToOpen
+        self.chooseCityToSave = chooseCityToSave
         do {
             self.tileAtlas = try TileAtlas(atlasURL: Assets.tileAtlas)
         } catch {
@@ -240,27 +249,39 @@ final class GameModel: EngineDelegate {
     }
 
     func showOpenPanel() {
+        chooseCityToOpen { [weak self] url in
+            if let url {
+                self?.loadCity(from: url)
+            }
+        }
+    }
+
+    private static func presentOpenPanel(completion: @escaping (URL?) -> Void) {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.init(filenameExtension: "cty")!]
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
 
         panel.begin { response in
-            if response == .OK, let url = panel.url {
-                self.loadCity(from: url)
-            }
+            completion(response == .OK ? panel.url : nil)
         }
     }
 
     func showSavePanel() {
+        chooseCityToSave(cityName) { [weak self] url in
+            if let url {
+                self?.saveCity(to: url)
+            }
+        }
+    }
+
+    private static func presentSavePanel(cityName: String, completion: @escaping (URL?) -> Void) {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.init(filenameExtension: "cty")!]
         panel.nameFieldStringValue = cityName + ".cty"
 
         panel.begin { response in
-            if response == .OK, let url = panel.url {
-                self.saveCity(to: url)
-            }
+            completion(response == .OK ? panel.url : nil)
         }
     }
 

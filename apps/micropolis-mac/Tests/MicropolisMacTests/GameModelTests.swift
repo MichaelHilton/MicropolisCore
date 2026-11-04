@@ -340,6 +340,54 @@ struct GameModelTests {
         #expect(model.currentFileURL == nil)
     }
 
+    @Test
+    func openPanelLoadsTheSelectedCityAndDoesNothingWhenCancelled() {
+        let source = temporaryFile("Open Source")
+        defer { try? FileManager.default.removeItem(at: source) }
+        let writer = emptyModel()
+        writer.newCity(name: "Opened City", level: .easy, seed: 3)
+        writer.saveCity(to: source)
+
+        var selectedURL: URL? = source
+        let model = GameModel(city: nil, sound: RecordingSound(), seed: 1, runsTimer: false,
+                              chooseCityToOpen: { completion in completion(selectedURL) })
+        model.showOpenPanel()
+        #expect(model.currentFileURL == source)
+        #expect(model.cityName == "Open Source")
+
+        selectedURL = nil
+        model.newCity(name: "Keep This", level: .easy, seed: 4)
+        let cityBeforeCancel = model.cityName
+        model.showOpenPanel()
+        #expect(model.cityName == cityBeforeCancel)
+        #expect(model.currentFileURL == nil)
+    }
+
+    @Test
+    func savePanelWritesToTheSelectedLocationAndDoesNothingWhenCancelled() throws {
+        let destination = temporaryFile("Saved Through Panel")
+        defer { try? FileManager.default.removeItem(at: destination) }
+        var selectedURL: URL? = destination
+        var proposedName = ""
+        let model = GameModel(city: nil, sound: RecordingSound(), seed: 1, runsTimer: false,
+                              chooseCityToSave: { name, completion in
+                                  proposedName = name
+                                  completion(selectedURL)
+                              })
+        model.newCity(name: "Panel City", level: .easy, seed: 3)
+        model.showSavePanel()
+        #expect(proposedName == model.cityName)
+        #expect(model.currentFileURL == destination)
+        #expect(FileManager.default.fileExists(atPath: destination.path))
+
+        selectedURL = nil
+        let past = Date(timeIntervalSince1970: 1_000_000)
+        try FileManager.default.setAttributes([.modificationDate: past], ofItemAtPath: destination.path)
+        model.showSavePanel()
+        let modified = try #require(try FileManager.default.attributesOfItem(atPath: destination.path)[.modificationDate] as? Date)
+        #expect(modified == past)
+    }
+
     // MARK: Scenarios
 
     @Test
