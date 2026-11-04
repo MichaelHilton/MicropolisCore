@@ -126,6 +126,7 @@ struct ToolButton: View {
         }
         .buttonStyle(.plain)
         .help("\(spec.statusText)  (\(spec.shortcut))")
+        .accessibilityIdentifier(UIIdentifier.tool(spec.shortcut))
     }
 }
 

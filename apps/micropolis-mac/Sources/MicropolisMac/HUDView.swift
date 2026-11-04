@@ -13,6 +13,7 @@ struct HUDView: View {
 
             ZStack {
                 Text(model.cityName)
+                    .accessibilityIdentifier(UIIdentifier.cityName)
                     .foregroundColor(DOS.black)
                 HStack {
                     Rectangle()
@@ -22,6 +23,7 @@ struct HUDView: View {
                     Spacer()
                     Text("\(monthName) \(String(model.year))")
                         .foregroundColor(DOS.black)
+                        .accessibilityIdentifier(UIIdentifier.date)
                 }
             }
             .padding(.horizontal, 8)
@@ -31,12 +33,14 @@ struct HUDView: View {
             HStack(spacing: 16) {
                 // DOS blanks the funds line while the terrain editor is up.
                 Text(model.editMode == .terrain ? " " : "Funds: $\(model.funds.formatted())")
+                    .accessibilityIdentifier(UIIdentifier.funds)
                 Spacer()
                 if let message = model.currentMessage {
                     Text(message)
                         .foregroundColor(DOS.yellow)
                         .lineLimit(1)
                         .truncationMode(.tail)
+                        .accessibilityIdentifier(UIIdentifier.currentMessage)
                 }
             }
             .foregroundColor(DOS.white)
@@ -81,6 +85,7 @@ struct DOSMenuStrip: View {
         .menuIndicator(.hidden)
         .fixedSize()
         .frame(maxWidth: .infinity)
+        .accessibilityIdentifier(UIIdentifier.menu(title))
     }
 }
 
@@ -107,5 +112,6 @@ struct StatusLine: View {
         .padding(.vertical, 3)
         .background(DOS.white)
         .overlay(Rectangle().stroke(DOS.blue, lineWidth: 2))
+        .accessibilityIdentifier(UIIdentifier.statusLine)
     }
 }

@@ -17,6 +17,7 @@ struct NewCityView: View {
                 .padding(4)
                 .foregroundColor(DOS.lightBlue)
                 .overlay(Rectangle().stroke(Color(red: 0.67, green: 1, blue: 1), lineWidth: 2))
+                .accessibilityIdentifier("newCity.name")
 
             Text("Game Play Level").frame(maxWidth: .infinity)
             ForEach(GameLevel.allCases, id: \.self) { option in
@@ -32,6 +33,7 @@ struct NewCityView: View {
                 }
                 .buttonStyle(.plain)
                 .padding(.leading, 40)
+                .accessibilityIdentifier("newCity.level.\(option.rawValue)")
             }
 
             Button {
@@ -46,11 +48,13 @@ struct NewCityView: View {
             .buttonStyle(.plain)
             .keyboardShortcut(.defaultAction)
             .frame(maxWidth: .infinity)
+            .accessibilityIdentifier("newCity.ok")
 
             Button("Cancel") { dismiss() }
                 .keyboardShortcut(.cancelAction)
                 .hidden()
                 .frame(height: 0)
+                .accessibilityIdentifier("newCity.cancel")
         }
         .font(DOS.font(15))
         .foregroundColor(DOS.blue)

@@ -57,7 +57,7 @@ struct BudgetView: View {
 
         HStack(spacing: 16) {
             Text("Tax Rate")
-            Stepper2(value: sheet.taxRate, range: BudgetSheet.taxRange, label: "\(s.taxRate)%")
+            Stepper2(value: sheet.taxRate, range: BudgetSheet.taxRange, label: "\(s.taxRate)%", identifier: "tax")
         }
         HStack(spacing: 16) {
             Text("Taxes collected")
@@ -97,6 +97,7 @@ struct BudgetView: View {
         }
         .buttonStyle(.plain)
         .keyboardShortcut(.defaultAction)
+        .accessibilityIdentifier(UIIdentifier.budget("apply"))
     }
 
     private func departmentRow(_ name: String, _ requested: Int, _ allocated: Int, _ level: Binding<Int>) -> some View {
@@ -104,7 +105,7 @@ struct BudgetView: View {
             Text(name)
             Text(BudgetSheet.money(requested))
             Text(BudgetSheet.money(allocated))
-            Stepper2(value: level, range: BudgetSheet.levelRange, label: "\(level.wrappedValue)%")
+            Stepper2(value: level, range: BudgetSheet.levelRange, label: "\(level.wrappedValue)%", identifier: name.lowercased())
         }
     }
 
@@ -120,19 +121,20 @@ struct Stepper2: View {
     @Binding var value: Int
     let range: ClosedRange<Int>
     let label: String
+    let identifier: String
 
     var body: some View {
         HStack(spacing: 0) {
-            arrow("▲", +1)
+            arrow("▲", +1, "increase")
             Text(label)
                 .frame(minWidth: 52, alignment: .trailing)
                 .foregroundColor(DOS.white)
                 .background(DOS.blue)
-            arrow("▼", -1)
+            arrow("▼", -1, "decrease")
         }
     }
 
-    private func arrow(_ glyph: String, _ direction: Int) -> some View {
+    private func arrow(_ glyph: String, _ direction: Int, _ directionName: String) -> some View {
         Button {
             let step = NSEvent.modifierFlags.contains(.option) ? 10 : 1
             value = min(range.upperBound, max(range.lowerBound, value + direction * step))
@@ -144,5 +146,6 @@ struct Stepper2: View {
                 .background(Color(red: 0.67, green: 1, blue: 1).opacity(0.6))
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier(UIIdentifier.budget("\(identifier).\(directionName)"))
     }
 }

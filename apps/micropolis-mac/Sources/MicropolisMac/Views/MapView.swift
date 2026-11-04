@@ -57,6 +57,7 @@ class MapNSView: NSView {
         super.init(frame: .zero)
 
         wantsLayer = true
+        setAccessibilityIdentifier(UIIdentifier.mapCanvas)
         layer?.backgroundColor = NSColor.black.cgColor
         // The map layer is far larger than the view and is scrolled by moving
         // it. Views don't clip by default on macOS 14+, so without this the map

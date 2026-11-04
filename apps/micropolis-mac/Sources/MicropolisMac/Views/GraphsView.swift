@@ -34,8 +34,10 @@ struct GraphsView: View {
             GridRow {
                 Button { longRange = false } label: { DOSButtonLabel("10 YR", selected: !longRange) }
                     .buttonStyle(.plain)
+                    .accessibilityIdentifier(UIIdentifier.graph("10Year"))
                 Button { longRange = true } label: { DOSButtonLabel("120 YR", selected: longRange) }
                     .buttonStyle(.plain)
+                    .accessibilityIdentifier(UIIdentifier.graph("120Year"))
             }
         }
         .padding(4)
@@ -55,6 +57,7 @@ struct GraphsView: View {
         }
         .buttonStyle(.plain)
         .help(GraphSeries.name(kind))
+        .accessibilityIdentifier(UIIdentifier.graph(GraphSeries.shortName(kind)))
     }
 
     private var chart: some View {

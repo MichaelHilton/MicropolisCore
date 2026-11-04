@@ -2,9 +2,10 @@ import SwiftUI
 
 @main
 struct MicropolisApp: App {
-    @State private var model = GameModel()
+    @State private var model: GameModel
 
     init() {
+        _model = State(initialValue: UITestLaunchConfiguration.makeModel())
         NSApplication.shared.setActivationPolicy(.regular)
         NSApplication.shared.activate(ignoringOtherApps: true)
     }

@@ -12,12 +12,14 @@ struct TerrainPalette: View {
                     face(tool.name.uppercased(), selected: model.terrainTool == tool)
                 }
                 .buttonStyle(.plain)
+                .accessibilityIdentifier(UIIdentifier.terrain(tool.name))
             }
             Button { model.terrainFill.toggle() } label: {
                 face("FILL", selected: model.terrainFill)
             }
             .buttonStyle(.plain)
             .help("Click a patch of land, water or trees to fill it with the selected terrain")
+            .accessibilityIdentifier(UIIdentifier.terrain("fill"))
 
             Button { model.undoTerrain() } label: {
                 face("UNDO", selected: false)
@@ -25,12 +27,14 @@ struct TerrainPalette: View {
             .buttonStyle(.plain)
             .disabled(model.terrainUndo == nil)
             .opacity(model.terrainUndo == nil ? 0.45 : 1)
+            .accessibilityIdentifier(UIIdentifier.terrain("undo"))
 
             Button { model.smoothTerrain() } label: {
                 face("SMOOTH", selected: false)
             }
             .buttonStyle(.plain)
             .help("Tidy the edges of water and trees")
+            .accessibilityIdentifier(UIIdentifier.terrain("smooth"))
 
             Spacer(minLength: 0)
         }

@@ -109,6 +109,7 @@ struct MapsView: View {
         }
         .buttonStyle(.plain)
         .help(help)
+        .accessibilityIdentifier(UIIdentifier.overlay(label))
     }
 
     /// DOS pops up a small menu for buttons that cover two views.
@@ -128,6 +129,7 @@ struct MapsView: View {
         .menuIndicator(.hidden)
         .fixedSize()
         .help(help)
+        .accessibilityIdentifier(UIIdentifier.overlay(label))
     }
 
     private func redraw() {
