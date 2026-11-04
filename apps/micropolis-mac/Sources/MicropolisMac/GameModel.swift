@@ -20,6 +20,13 @@ enum GameOutcome: Equatable {
 
 typealias OpenCityChooser = @MainActor (@escaping (URL?) -> Void) -> Void
 typealias SaveCityChooser = @MainActor (String, @escaping (URL?) -> Void) -> Void
+typealias PrintRunner = @MainActor (NSView, NSPrintInfo, String) -> Void
+typealias AboutPresenter = @MainActor (AboutPanelContent) -> Void
+
+struct AboutPanelContent: Equatable {
+    let applicationName: String
+    let credits: String
+}
 
 @MainActor
 @Observable
@@ -83,6 +90,8 @@ final class GameModel: EngineDelegate {
     @ObservationIgnored var askForSaveLocation: () -> Void = {}
     @ObservationIgnored private let chooseCityToOpen: OpenCityChooser
     @ObservationIgnored private let chooseCityToSave: SaveCityChooser
+    @ObservationIgnored private let runPrint: PrintRunner
+    @ObservationIgnored private let presentAbout: AboutPresenter
 
     nonisolated(unsafe) private var timer: Timer?
     /// False keeps the frame timer from running, so the engine only moves
@@ -97,11 +106,15 @@ final class GameModel: EngineDelegate {
     init(city: URL? = Assets.city("haight"), sound: SoundPlaying = SoundManager.shared,
          seed: Int? = nil, runsTimer: Bool = true,
          chooseCityToOpen: @escaping OpenCityChooser = GameModel.presentOpenPanel,
-         chooseCityToSave: @escaping SaveCityChooser = GameModel.presentSavePanel) {
+         chooseCityToSave: @escaping SaveCityChooser = GameModel.presentSavePanel,
+         runPrint: @escaping PrintRunner = GameModel.presentPrintDialog,
+         presentAbout: @escaping AboutPresenter = GameModel.presentAboutPanel) {
         self.sound = sound
         self.runsTimer = runsTimer
         self.chooseCityToOpen = chooseCityToOpen
         self.chooseCityToSave = chooseCityToSave
+        self.runPrint = runPrint
+        self.presentAbout = presentAbout
         do {
             self.tileAtlas = try TileAtlas(atlasURL: Assets.tileAtlas)
         } catch {
@@ -306,15 +319,25 @@ final class GameModel: EngineDelegate {
         info.horizontalPagination = .fit
         info.verticalPagination = .fit
         info.orientation = .landscape
-        let operation = NSPrintOperation(view: imageView, printInfo: info)
-        operation.jobTitle = cityName
+        runPrint(imageView, info, cityName)
+    }
+
+    private static func presentPrintDialog(view: NSView, info: NSPrintInfo, title: String) {
+        let operation = NSPrintOperation(view: view, printInfo: info)
+        operation.jobTitle = title
         operation.runModal(for: NSApp.keyWindow ?? NSWindow(), delegate: nil, didRun: nil, contextInfo: nil)
     }
 
     func showAbout() {
+        presentAbout(AboutPanelContent(
+            applicationName: "Micropolis",
+            credits: "Based on the SimCity source released by Electronic Arts under the GPL."))
+    }
+
+    private static func presentAboutPanel(content: AboutPanelContent) {
         NSApp.orderFrontStandardAboutPanel(options: [
-            .applicationName: "Micropolis",
-            .credits: NSAttributedString(string: "Based on the SimCity source released by Electronic Arts under the GPL."),
+            .applicationName: content.applicationName,
+            .credits: NSAttributedString(string: content.credits),
         ])
     }
 

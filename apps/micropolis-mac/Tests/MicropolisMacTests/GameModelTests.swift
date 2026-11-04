@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Testing
 import MicropolisKit
@@ -386,6 +387,42 @@ struct GameModelTests {
         model.showSavePanel()
         let modified = try #require(try FileManager.default.attributesOfItem(atPath: destination.path)[.modificationDate] as? Date)
         #expect(modified == past)
+    }
+
+    @Test
+    func printMapBuildsALandscapeFitToPageRequest() throws {
+        var printedView: NSView?
+        var printedInfo: NSPrintInfo?
+        var printedTitle: String?
+        let model = GameModel(city: nil, sound: RecordingSound(), seed: 1, runsTimer: false,
+                              runPrint: { view, info, title in
+                                  printedView = view
+                                  printedInfo = info
+                                  printedTitle = title
+                              })
+        model.newCity(name: "Print City", level: .easy, seed: 3)
+        model.printMap()
+
+        let imageView = try #require(printedView as? NSImageView)
+        let image = try #require(imageView.image)
+        let info = try #require(printedInfo)
+        #expect(printedTitle == model.cityName)
+        #expect(imageView.imageScaling == .scaleProportionallyUpOrDown)
+        #expect(image.size == imageView.frame.size)
+        #expect(info.horizontalPagination == .fit)
+        #expect(info.verticalPagination == .fit)
+        #expect(info.orientation == .landscape)
+    }
+
+    @Test
+    func aboutPanelUsesTheMicropolisNameAndCredits() {
+        var presented: AboutPanelContent?
+        let model = GameModel(city: nil, sound: RecordingSound(), seed: 1, runsTimer: false,
+                              presentAbout: { presented = $0 })
+        model.showAbout()
+        #expect(presented == AboutPanelContent(
+            applicationName: "Micropolis",
+            credits: "Based on the SimCity source released by Electronic Arts under the GPL."))
     }
 
     // MARK: Scenarios
