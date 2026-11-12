@@ -1,3 +1,4 @@
+import AppKit
 import XCTest
 
 /// Exercises the production menu actions and AppKit event path with a fresh,
@@ -66,6 +67,60 @@ final class GameJourneysUITests: XCTestCase {
         cancelFilePanel("system.saveAs")
     }
 
+    func testSavingAndReopeningRestoresRoadAndFunds() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let file = directory.appendingPathComponent("RoundTripCity.cty")
+
+        choose("window.terrainEdit", from: "menu.windows")
+        let dirt = element("terrain.dirt")
+        XCTAssertTrue(dirt.waitForExistence(timeout: 5))
+        dirt.click()
+        let canvas = element("map.canvas")
+        clickPreparedTile(on: canvas)
+        choose("window.edit", from: "menu.windows")
+        app.buttons["tool.r"].click()
+        let initialFunds = try displayedFunds()
+        clickPreparedTile(on: canvas)
+        waitForFunds(initialFunds - 10)
+        app.buttons["tool.q"].click() // Move the pointer off the canvas before capturing pixels.
+        let savedMap = try centerMapPixels()
+        let savedFunds = try displayedFunds()
+
+        choose("system.saveAs", from: "menu.system")
+        let save = app.buttons["Save"].firstMatch
+        XCTAssertTrue(save.waitForExistence(timeout: 10))
+        let filename = app.textFields["saveAsNameTextField"]
+        XCTAssertTrue(filename.waitForExistence(timeout: 5), app.debugDescription)
+        filename.click()
+        filename.typeKey("a", modifierFlags: .command)
+        filename.typeText(file.lastPathComponent)
+        goToPath(directory.path)
+        save.click()
+        waitFor("exists == false", on: save)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: file.path))
+
+        // Change both map and balance after saving. Otherwise a broken Open
+        // action could leave the current city untouched and falsely pass.
+        app.buttons["tool.b"].click()
+        clickPreparedTile(on: canvas)
+        waitForFunds(savedFunds - 1)
+        app.buttons["tool.q"].click()
+        XCTAssertTrue(try centerMapPixels() != savedMap, "Bulldozing must visibly change the saved road")
+
+        choose("system.loadCity", from: "menu.system")
+        let open = app.buttons["Open"].firstMatch
+        XCTAssertTrue(open.waitForExistence(timeout: 10))
+        goToPath(file.path)
+        open.click()
+        waitFor("exists == false", on: open)
+        waitForFunds(savedFunds)
+        XCTAssertEqual(text(of: app.staticTexts["hud.cityName"]), "RoundTripCity")
+        app.buttons["tool.q"].click()
+        XCTAssertTrue(try centerMapPixels() == savedMap, "Opening must restore the saved road pixels")
+    }
+
     func testPlacingARoadOnClearedTerrainCostsTenDollars() throws {
         // Use the real terrain editor to prepare a known dirt tile instead of
         // depending on the contents of a bundled city at a chosen coordinate.
@@ -93,6 +148,35 @@ final class GameJourneysUITests: XCTestCase {
 
     private func element(_ identifier: String) -> XCUIElement {
         app.descendants(matching: .any)[identifier].firstMatch
+    }
+
+    private func goToPath(_ path: String) {
+        app.typeKey("g", modifierFlags: [.command, .shift])
+        app.typeText(path)
+        app.typeKey(XCUIKeyboardKey.return.rawValue, modifierFlags: [])
+    }
+
+    private func displayedFunds() throws -> Int {
+        try XCTUnwrap(Int(text(of: app.staticTexts["hud.funds"]).filter(\.isNumber)))
+    }
+
+    private func waitForFunds(_ expected: Int) {
+        let changed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            (try? self.displayedFunds()) == expected
+        }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [changed], timeout: 5), .completed)
+    }
+
+    private func centerMapPixels() throws -> Data {
+        let bitmap = try XCTUnwrap(NSBitmapImageRep(data: element("map.canvas").screenshot().pngRepresentation))
+        let image = try XCTUnwrap(bitmap.cgImage)
+        let region = CGRect(x: image.width / 2 - 32, y: image.height / 2 - 32, width: 64, height: 64)
+        let crop = try XCTUnwrap(image.cropping(to: region))
+        let context = try XCTUnwrap(CGContext(data: nil, width: 64, height: 64, bitsPerComponent: 8,
+                                             bytesPerRow: 256, space: CGColorSpaceCreateDeviceRGB(),
+                                             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+        context.draw(crop, in: CGRect(x: 0, y: 0, width: 64, height: 64))
+        return Data(bytes: try XCTUnwrap(context.data), count: 64 * 256)
     }
 
     private func cancelFilePanel(_ command: String) {

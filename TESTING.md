@@ -94,6 +94,12 @@ known dirt tile through the terrain editor before placing a road and checking
 the $10 funds deduction. Two further journeys open and cancel the real macOS
 Open and Save As panels and verify that city name and funds are unchanged and
 the map remains usable. These supplement the model's fake-panel unit tests.
+The save/load journey uses those real panels to save a road edit in a unique
+temporary folder, bulldozes the road, then reopens the saved city and verifies
+the restored balance, filename-based city name, and rendered pixels around the
+edited tile. It also checks that bulldozing actually changed the image, so an
+Open action that does nothing cannot pass. The test deletes its temporary folder
+on exit. There are seven desktop UI tests in total.
 Every journey launches a fresh, fixed-seed city with
 simulation timers stopped and sound disabled, and waits for observable state
 rather than sleeping. The UI suite is not yet part of the hosted CI workflow.
