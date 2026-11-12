@@ -40,6 +40,14 @@ class CoveragePathsTests(unittest.TestCase):
                         engine_coverage.run_tests(None)
                     self.assertEqual(failure.exception.code, 7)
 
+    def test_engine_gate_rejects_missing_native_instrumentation(self):
+        with patch("sys.argv", ["engine_coverage.py", "--check"]), \
+             patch("engine_coverage.coverage_paths", return_value=("/example", ["/example/tests"])), \
+             patch("engine_coverage.merge_profiles"), \
+             patch("engine_coverage.line_counts", return_value={}):
+            with self.assertRaisesRegex(SystemExit, "no instrumented engine lines"):
+                engine_coverage.main()
+
 
 if __name__ == "__main__":
     unittest.main()

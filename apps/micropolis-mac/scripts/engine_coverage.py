@@ -42,7 +42,10 @@ def run_tests(test_filter):
     # increments, and llvm-cov derives some line counts by subtraction, so
     # lines that never ran can show as covered. Atomic counters prevent that.
     command = ["swift", "test", "--enable-code-coverage",
-               "-Xcc", "-fprofile-update=atomic", "-Xcxx", "-fprofile-update=atomic"]
+               "-Xcc", "-fprofile-instr-generate", "-Xcc", "-fcoverage-mapping",
+               "-Xcc", "-fprofile-update=atomic",
+               "-Xcxx", "-fprofile-instr-generate", "-Xcxx", "-fcoverage-mapping",
+               "-Xcxx", "-fprofile-update=atomic"]
     if test_filter:
         command += ["--filter", test_filter]
     result = subprocess.run(command, cwd=APP)
@@ -119,6 +122,8 @@ def main():
     DEBUG, BINARIES = coverage_paths(APP)
     merge_profiles()
     rows, total, missed_total = summarize(line_counts())
+    if not total:
+        sys.exit("no instrumented engine lines: run --run or enable native -fprofile-instr-generate and -fcoverage-mapping flags")
 
     if args.show:
         for path, _, missed, source in rows:

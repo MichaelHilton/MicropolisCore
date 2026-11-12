@@ -36,7 +36,10 @@ jobs:
         run: |
           set -o pipefail
           python3 -m unittest discover -s scripts -p 'test_*.py'
-          swift test --enable-code-coverage -Xcc -fprofile-update=atomic -Xcxx -fprofile-update=atomic 2>&1 | tee test-reports/tests.log
+          swift test --enable-code-coverage \
+            -Xcc -fprofile-instr-generate -Xcc -fcoverage-mapping -Xcc -fprofile-update=atomic \
+            -Xcxx -fprofile-instr-generate -Xcxx -fcoverage-mapping -Xcxx -fprofile-update=atomic \
+            2>&1 | tee test-reports/tests.log
       - name: Require full engine line coverage
         run: |
           set -o pipefail
