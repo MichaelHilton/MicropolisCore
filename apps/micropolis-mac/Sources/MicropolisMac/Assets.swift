@@ -2,7 +2,17 @@ import Foundation
 
 enum Assets {
     static var root: URL {
-        Bundle.module.resourceURL!.appendingPathComponent("Resources")
+        resourceRoot(in: Bundle.module.resourceURL!)
+    }
+
+    /// Xcode nests the copied folder inside its resource directory; SwiftPM
+    /// can use that folder itself as the bundle's resource directory.
+    static func resourceRoot(in directory: URL) -> URL {
+        let nested = directory.appendingPathComponent("Resources")
+        if FileManager.default.fileExists(atPath: nested.appendingPathComponent("tiles/classic.png").path) {
+            return nested
+        }
+        return directory
     }
 
     static func city(_ name: String) -> URL {

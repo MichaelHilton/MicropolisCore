@@ -278,6 +278,16 @@ struct LookupTablesTests {
 
     // MARK: Assets
 
+    @Test(arguments: [false, true])
+    func resourceRootSupportsSwiftPMAndXcodeBundles(nested: Bool) throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let expected = nested ? directory.appendingPathComponent("Resources") : directory
+        try FileManager.default.createDirectory(at: expected.appendingPathComponent("tiles"), withIntermediateDirectories: true)
+        try Data().write(to: expected.appendingPathComponent("tiles/classic.png"))
+        #expect(Assets.resourceRoot(in: directory).path == expected.path)
+    }
+
     @Test
     func allCitiesAreSortedCtyFiles() {
         let cities = Assets.allCities
