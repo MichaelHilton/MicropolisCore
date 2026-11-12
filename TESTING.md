@@ -1,10 +1,41 @@
 # Testing
 
-This branch contains only the native macOS app (`apps/micropolis-mac`) and the C++ engine it links (`packages/micropolis-engine`). All automated tests are Swift tests that run through SwiftPM.
+This branch contains the native macOS app (`apps/micropolis-mac`) and the C++ engine it links (`packages/micropolis-engine`). The main automated suite runs through SwiftPM; Python tests also verify coverage-product discovery.
+
+## Continuous integration
+
+`.github/workflows/macos-tests.yml` runs on pull requests, pushes to `main` and
+`swift-only`, and manual dispatch. On a clean macOS runner it synchronizes game
+resources, runs the full Swift suite with atomic coverage counters, requires
+100% engine line coverage under the documented unreachable-code policy, and
+reports Swift coverage. Swift coverage is reported, not yet gated at 100%.
+Logs, coverage reports, and profiles are retained as artifacts for 14 days,
+including available diagnostics when a check fails. The job has a 30-minute
+timeout and superseded runs on the same ref are cancelled.
+
+The required-check name is `Swift tests and engine coverage`. Requiring this
+check in GitHub branch protection or a ruleset is a separate repository setting;
+adding the workflow alone does not prevent merging a failed check.
+
+Coverage scripts discover the active build products rather than assuming a
+local Xcode path. Run their portability checks with:
+
+```bash
+cd apps/micropolis-mac
+python3 -m unittest discover -s scripts -p 'test_*.py'
+```
 
 ## What is tested
 
-371 tests in all (213 XCTest, 158 Swift Testing), about 100 seconds of test time.
+Latest local verification (2026-11-12): 214 XCTest tests and 181 Swift Testing
+tests, including one opt-in benchmark skip, passed in about 110 seconds.
+Four known issues remain tracked as expected failures. The detailed target
+inventory below is an older snapshot and does not include all recent additions.
+
+The CI-equivalent atomic-counter run passed the engine coverage gate with
+7,096 executable lines and zero unexcluded misses. The broad mixed-language
+report measured 94.77% line coverage; its denominator differs from the dedicated
+engine gate and includes app code and unreachable paths.
 
 | Target | Framework | Tests | Covers |
 |--------|-----------|-------|--------|
@@ -81,6 +112,9 @@ tracker on this branch, so these identifiers are the local tracking reference.
 
 ## Known issues and gaps
 
-1. **No CI.** Nothing runs `swift test` automatically on this branch.
-2. **No UI tests** that click through the SwiftUI views. `ViewRenderTests` only checks that each view lays out without crashing.
+1. **CI workflow added.** Confirm its first hosted run and configure the required
+   check in branch protection; hosted execution cannot be verified locally.
+2. **UI coverage is still limited.** The local UI-test work includes a launch
+   smoke test; menu actions, dialogs, and full user journeys still need coverage.
+   `ViewRenderTests` only checks that each view lays out without crashing.
 3. **The engine has no C++ unit tests of its own.** It is tested only through the Swift wrapper.

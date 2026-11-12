@@ -76,6 +76,13 @@ machine-speed assertions.
 
 ## Phase 1 — Establish CI quality gates
 
+Implementation update (2026-11-12): `.github/workflows/macos-tests.yml` now
+defines a clean macOS test run, engine coverage gate, Swift coverage report,
+and retained diagnostic artifacts. Coverage scripts discover both SwiftPM and
+Xcode test-product layouts, with Python regression tests for that discovery.
+The engine runner now propagates test failures. First hosted-run verification,
+branch protection, nightly repeats, and compiler-warning policy remain pending.
+
 Create a macOS CI workflow with these pull-request checks:
 
 1. Build and run `swift test` from a clean checkout.

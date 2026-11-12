@@ -16,22 +16,18 @@ import json
 import os
 import subprocess
 import sys
+from coverage_paths import coverage_paths
 
 
 APP = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DEBUG = os.path.join(APP, ".build", "out", "Products", "Debug")
-PROFILE = os.path.join(DEBUG, "codecov", "default.profdata")
-BINARIES = [
-    os.path.join(DEBUG, "MicropolisMacTests.xctest", "Contents", "MacOS", "MicropolisMacTests"),
-    os.path.join(DEBUG, "MicropolisKitTests.xctest", "Contents", "MacOS", "MicropolisKitTests"),
-]
 KNOWN_COVERED = os.path.join(APP, "Sources", "MicropolisMac", "GameModel.swift")
 
 
 def coverage_command(format_name):
     return [
         "xcrun", "llvm-cov", "export" if format_name == "json" else "report",
-        BINARIES[0], "-object", BINARIES[1], "-instr-profile", PROFILE,
+        BINARIES[0], *[arg for binary in BINARIES[1:] for arg in ("-object", binary)],
+        "-instr-profile", PROFILE,
         "-ignore-filename-regex", r"\.build|Tests/",
         *( ["-format=text"] if format_name == "json" else [] ),
     ]
@@ -56,12 +52,15 @@ def verify_profile():
 
 
 def main():
+    global DEBUG, BINARIES, PROFILE
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--run", action="store_true", help="run the complete test suite with coverage first")
     args = parser.parse_args()
 
     if args.run:
         subprocess.run(["swift", "test", "--enable-code-coverage"], cwd=APP, check=True)
+    DEBUG, BINARIES = coverage_paths(APP)
+    PROFILE = os.path.join(DEBUG, "codecov", "default.profdata")
     verify_profile()
     subprocess.run(coverage_command("report"), check=True)
 

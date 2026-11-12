@@ -1,0 +1,62 @@
+name: macOS tests
+
+on:
+  pull_request:
+  push:
+    branches: [main, swift-only]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macos-tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Swift tests and engine coverage
+    runs-on: macos-15
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: apps/micropolis-mac
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Record toolchain
+        run: |
+          swift --version
+          xcodebuild -version
+      - name: Prepare resources and reports
+        run: |
+          bash scripts/sync-resources.sh
+          mkdir -p test-reports
+      - name: Test with atomic coverage counters
+        run: |
+          set -o pipefail
+          python3 -m unittest discover -s scripts -p 'test_*.py'
+          swift test --enable-code-coverage -Xcc -fprofile-update=atomic -Xcxx -fprofile-update=atomic 2>&1 | tee test-reports/tests.log
+      - name: Require full engine line coverage
+        run: |
+          set -o pipefail
+          python3 scripts/engine_coverage.py --check 2>&1 | tee test-reports/engine-coverage.txt
+      - name: Report Swift coverage
+        if: success() || failure()
+        run: |
+          set -o pipefail
+          python3 scripts/swift_coverage.py 2>&1 | tee test-reports/swift-coverage.txt
+      - name: Collect coverage profiles
+        if: success() || failure()
+        run: |
+          bin_path="$(swift build --show-bin-path)"
+          if [ -d "$bin_path/codecov" ]; then
+            cp -R "$bin_path/codecov" test-reports/codecov
+          fi
+      - name: Upload test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-test-reports
+          path: apps/micropolis-mac/test-reports/
+          retention-days: 14

@@ -22,22 +22,21 @@ import os
 import re
 import subprocess
 import sys
+from coverage_paths import coverage_paths
 
 APP = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ENGINE = os.path.normpath(os.path.join(APP, "..", "..", "packages", "micropolis-engine"))
-DEBUG = os.path.join(APP, ".build", "out", "Products", "Debug")
 PROFDATA = os.path.join(APP, ".build", "engine-coverage.profdata")
-BINARIES = [
-    os.path.join(DEBUG, "MicropolisMacTests.xctest", "Contents", "MacOS", "MicropolisMacTests"),
-    os.path.join(DEBUG, "MicropolisKitTests.xctest", "Contents", "MacOS", "MicropolisKitTests"),
-]
 MARK = "// coverage: unreachable"
 BEGIN = "// coverage: unreachable-begin"
 END = "// coverage: unreachable-end"
 
 
 def run_tests(test_filter):
-    for old in glob.glob(os.path.join(DEBUG, "codecov", "*.profraw")):
+    debug = subprocess.check_output(
+        ["swift", "build", "--show-bin-path"], cwd=APP, text=True
+    ).strip()
+    for old in glob.glob(os.path.join(debug, "codecov", "*.profraw")):
         os.remove(old)
     # Swift Testing runs suites on several threads. Plain counters then lose
     # increments, and llvm-cov derives some line counts by subtraction, so
@@ -46,10 +45,9 @@ def run_tests(test_filter):
                "-Xcc", "-fprofile-update=atomic", "-Xcxx", "-fprofile-update=atomic"]
     if test_filter:
         command += ["--filter", test_filter]
-    # A failing test still writes its profile, so the report goes ahead regardless.
     result = subprocess.run(command, cwd=APP)
     if result.returncode != 0:
-        print("warning: swift test failed; coverage below is from a failing run", file=sys.stderr)
+        sys.exit(result.returncode)
 
 
 def merge_profiles():
@@ -62,7 +60,8 @@ def merge_profiles():
 def line_counts():
     """{engine-relative path: {line: hit count}} for every executable engine line."""
     cmd = ["xcrun", "llvm-cov", "export", "-format=lcov", "-skip-functions",
-           BINARIES[0], "-object", BINARIES[1], "-instr-profile", PROFDATA,
+           BINARIES[0], *[arg for binary in BINARIES[1:] for arg in ("-object", binary)],
+           "-instr-profile", PROFDATA,
            os.path.join(ENGINE, "src"), os.path.join(ENGINE, "native")]
     out = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout
     files, current = {}, None
@@ -105,6 +104,7 @@ def summarize(files):
 
 
 def main():
+    global DEBUG, BINARIES
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--run", action="store_true", help="run swift test with coverage first")
     parser.add_argument("--filter", help="with --run, run only the tests matching this filter")
@@ -116,6 +116,7 @@ def main():
         run_tests(args.filter)
     elif args.filter:
         parser.error("--filter needs --run")
+    DEBUG, BINARIES = coverage_paths(APP)
     merge_profiles()
     rows, total, missed_total = summarize(line_counts())
 

@@ -20,6 +20,21 @@ final class BigBuildingToolTests: XCTestCase {
 
     // MARK: Bulldozing from each tile
 
+    func testInvalidZoneFlagOnARoadDoesNotDemolishNearbyTiles() {
+        let engine = F.engine()
+        let recorder = ZoneReportRecorder()
+        engine.delegate = recorder
+        F.put(engine, 50, 50, 66, flags: F.zoneCenter | F.bulldozable)
+        F.put(engine, 49, 50, 37, flags: F.bulldozable)
+        let neighbor = engine.tile(x: 49, y: 50)
+        let funds = engine.funds
+        XCTAssertEqual(engine.apply(.bulldozer, x: 50, y: 50), .ok)
+        XCTAssertEqual(F.number(engine, 50, 50), 0)
+        XCTAssertEqual(engine.tile(x: 49, y: 50), neighbor)
+        XCTAssertEqual(funds - engine.funds, 1)
+        XCTAssertTrue(recorder.sounds.isEmpty)
+    }
+
     func testBulldozingAnyInnerTileLevelsTheWholeBuilding() {
         for (tool, size, inner) in bigBuildings {
             let engine = F.engine()
