@@ -71,6 +71,32 @@ prints their median in milliseconds. It has no pass/fail time limit: compare
 the reported metric only on a controlled machine or in a dedicated benchmark
 job, not in the default correctness suite.
 
+## Desktop UI journeys
+
+The local XCUITest foundation in `apps/micropolis-mac` builds a small app host
+around the production SwiftPM executable. It requires Xcode, XcodeGen, and an
+available macOS desktop session. Run it separately from the SwiftPM unit suite:
+
+```bash
+cd apps/micropolis-mac
+bash scripts/run-ui-tests.sh -resultBundlePath /tmp/MicropolisUIResults.xcresult
+```
+
+Use a new result-bundle path for each run. The tests interact with the desktop;
+avoid using the mouse or keyboard during a run. Xcode retains recordings and
+failure diagnostics in the result bundle.
+
+The launch smoke test checks core controls. `GameJourneysUITests` additionally
+opens Maps, Graphs, and Budget from the menu; creates a named city; and paints a
+known dirt tile through the terrain editor before placing a road and checking
+the $10 funds deduction. Every journey launches a fresh, fixed-seed city with
+simulation timers stopped and sound disabled, and waits for observable state
+rather than sleeping. The UI suite is not yet part of the hosted CI workflow.
+
+The road journey exposed deferred HUD/map refresh while paused. A matching unit
+regression checks that successful tools immediately publish funds and map
+changes, while failed tools preserve both.
+
 ## Coverage baseline
 
 Engine row measured on 2026-10-13 with `scripts/engine_coverage.py --run --check`; the Swift rows on 2026-11-03 with `scripts/swift_coverage.py --run`:

@@ -348,6 +348,12 @@ final class GameModel: EngineDelegate {
     @discardableResult
     func applyTool(atX x: Int, y: Int) -> ToolResult {
         let result = engine.apply(selectedTool, x: x, y: y)
+        if result == .ok {
+            // Engine display callbacks are deferred until its next tick.
+            // Manual edits must also be visible while simulation is paused.
+            funds = engine.funds
+            mapVersion += 1
+        }
         toolMessage = Self.toolMessage(for: result)
         toolMessageTimer?.invalidate()
         if toolMessage != nil {

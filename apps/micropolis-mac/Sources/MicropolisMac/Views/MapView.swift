@@ -74,6 +74,13 @@ class MapNSView: NSView {
 
     override var isFlipped: Bool { true }
 
+    // This is a canvas, so AppKit does not expose it by default. Making the
+    // canvas an accessibility group gives keyboard/screen-reader users and
+    // XCUITest a stable representation of the primary map interaction area.
+    override func isAccessibilityElement() -> Bool { true }
+    override func accessibilityRole() -> NSAccessibility.Role? { .group }
+    override func accessibilityLabel() -> String? { "City map" }
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }

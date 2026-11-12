@@ -53,6 +53,27 @@ struct GameModelTests {
     // MARK: Messages
 
     @Test
+    func pausedToolEditsImmediatelyPublishFundsAndMapChanges() {
+        let model = emptyModel()
+        model.engine.setFunds(100)
+        model.engineUpdateFunds(funds: 100)
+        model.engine.setTile(x: 2, y: 2, cell: 0)
+        model.selectedTool = .road
+        let before = model.mapVersion
+
+        #expect(model.applyTool(atX: 2, y: 2) == .ok)
+        #expect(model.engine.tile(x: 2, y: 2) & 0x3FF != 0)
+        #expect(model.funds == 90)
+        #expect(model.mapVersion == before + 1)
+        #expect(model.paused)
+
+        let after = model.mapVersion
+        #expect(model.applyTool(atX: -1, y: -1) == .failed)
+        #expect(model.funds == 90)
+        #expect(model.mapVersion == after)
+    }
+
+    @Test
     func messageSetsTheTextOfItsIndex() {
         let model = emptyModel()
         model.engineSendMessage(index: 20, x: -1, y: -1, picture: false, important: false)
