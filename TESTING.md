@@ -13,9 +13,11 @@ Logs, coverage reports, and profiles are retained as artifacts for 14 days,
 including available diagnostics when a check fails. The job has a 30-minute
 timeout and superseded runs on the same ref are cancelled.
 
-The required-check name is `Swift tests and engine coverage`. Requiring this
-check in GitHub branch protection or a ruleset is a separate repository setting;
-adding the workflow alone does not prevent merging a failed check.
+The required-check name is `Swift tests and engine coverage`. The first hosted
+run passed on 2026-11-12 after fixing resource discovery and explicitly enabling
+C++ coverage instrumentation. This check is required on the fork's `swift-only`
+branch with up-to-date branches required; administrators retain bypass access.
+Other branches need their own protection settings.
 
 Coverage scripts discover the active build products rather than assuming a
 local Xcode path. Run their portability checks with:
@@ -89,7 +91,10 @@ failure diagnostics in the result bundle.
 The launch smoke test checks core controls. `GameJourneysUITests` additionally
 opens Maps, Graphs, and Budget from the menu; creates a named city; and paints a
 known dirt tile through the terrain editor before placing a road and checking
-the $10 funds deduction. Every journey launches a fresh, fixed-seed city with
+the $10 funds deduction. Two further journeys open and cancel the real macOS
+Open and Save As panels and verify that city name and funds are unchanged and
+the map remains usable. These supplement the model's fake-panel unit tests.
+Every journey launches a fresh, fixed-seed city with
 simulation timers stopped and sound disabled, and waits for observable state
 rather than sleeping. The UI suite is not yet part of the hosted CI workflow.
 
@@ -138,8 +143,8 @@ tracker on this branch, so these identifiers are the local tracking reference.
 
 ## Known issues and gaps
 
-1. **CI workflow added.** Confirm its first hosted run and configure the required
-   check in branch protection; hosted execution cannot be verified locally.
+1. **CI enforced on `swift-only`.** Hosted tests and engine coverage have passed;
+   nightly repeat runs and a compiler-warning policy remain future work.
 2. **UI coverage is still limited.** The local UI-test work includes a launch
    smoke test; menu actions, dialogs, and full user journeys still need coverage.
    `ViewRenderTests` only checks that each view lays out without crashing.

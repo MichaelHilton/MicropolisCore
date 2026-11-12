@@ -80,8 +80,10 @@ Implementation update (2026-11-12): `.github/workflows/macos-tests.yml` now
 defines a clean macOS test run, engine coverage gate, Swift coverage report,
 and retained diagnostic artifacts. Coverage scripts discover both SwiftPM and
 Xcode test-product layouts, with Python regression tests for that discovery.
-The engine runner now propagates test failures. First hosted-run verification,
-branch protection, nightly repeats, and compiler-warning policy remain pending.
+The engine runner now propagates test failures. Hosted verification passed after
+fixing SwiftPM resource discovery and explicitly enabling native instrumentation.
+The `swift-only` branch requires the check and up-to-date branches, with normal
+administrator bypass. Nightly repeats and compiler-warning policy remain pending.
 
 Create a macOS CI workflow with these pull-request checks:
 

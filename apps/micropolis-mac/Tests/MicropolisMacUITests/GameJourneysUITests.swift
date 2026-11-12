@@ -58,6 +58,14 @@ final class GameJourneysUITests: XCTestCase {
         XCTAssertTrue(element("map.canvas").isHittable)
     }
 
+    func testCancellingOpenPreservesTheCurrentCity() {
+        cancelFilePanel("system.loadCity")
+    }
+
+    func testCancellingSaveAsPreservesTheCurrentCity() {
+        cancelFilePanel("system.saveAs")
+    }
+
     func testPlacingARoadOnClearedTerrainCostsTenDollars() throws {
         // Use the real terrain editor to prepare a known dirt tile instead of
         // depending on the contents of a bundled city at a chosen coordinate.
@@ -85,6 +93,21 @@ final class GameJourneysUITests: XCTestCase {
 
     private func element(_ identifier: String) -> XCUIElement {
         app.descendants(matching: .any)[identifier].firstMatch
+    }
+
+    private func cancelFilePanel(_ command: String) {
+        let cityName = app.staticTexts["hud.cityName"]
+        let funds = app.staticTexts["hud.funds"]
+        let beforeName = text(of: cityName)
+        let beforeFunds = text(of: funds)
+        choose(command, from: "menu.system")
+        let cancel = app.buttons["Cancel"].firstMatch
+        XCTAssertTrue(cancel.waitForExistence(timeout: 10))
+        cancel.click()
+        waitFor("exists == false", on: cancel)
+        XCTAssertEqual(text(of: cityName), beforeName)
+        XCTAssertEqual(text(of: funds), beforeFunds)
+        XCTAssertTrue(element("map.canvas").isHittable)
     }
 
     private func clickPreparedTile(on canvas: XCUIElement) {
