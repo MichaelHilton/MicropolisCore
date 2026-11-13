@@ -267,29 +267,28 @@ struct GameModelTests {
         #expect(model.funds == 20_000)
     }
 
-    /// The engine's setCityName turns spaces into underscores and reports
-    /// that back through engineUpdateCityName, which overwrites the name
-    /// newCity just chose.
     @Test
     func newCityNamesAreUnnamedCityAndKeepTheirSpaces() {
         let model = emptyModel()
-        withKnownIssue("[TEST-DEBT-004] engine reports \"Unnamed_City\" back to the model") {
-            model.newCity(seed: 7)
-            #expect(model.cityName == "Unnamed City")
-        }
-        withKnownIssue("[TEST-DEBT-004] a typed name loses its spaces too") {
-            model.newCity(name: "My Town", level: .easy, seed: 7)
-            #expect(model.cityName == "My Town")
-        }
+        model.newCity(seed: 7)
+        #expect(model.cityName == "Unnamed City")
+        model.newCity(name: "My Town", level: .easy, seed: 7)
+        #expect(model.cityName == "My Town")
+    }
+
+    @Test(arguments: [("  My Town  ", "My Town"), ("Port_Town", "Port_Town"),
+                      ("Harbor-East", "Harbor-East"), ("Town & Country", "Town & Country")])
+    func newCityDisplayNamesPreserveSpelling(input: String, expected: String) {
+        let model = emptyModel()
+        model.newCity(name: input, level: .easy, seed: 7)
+        #expect(model.cityName == expected)
     }
 
     @Test
     func blankNameFallsBackToUnnamedCity() {
         let model = emptyModel()
         model.newCity(name: "   ", level: .medium, seed: 7)
-        withKnownIssue("[TEST-DEBT-004] engine reports \"Unnamed_City\" back to the model") {
-            #expect(model.cityName == "Unnamed City")
-        }
+        #expect(model.cityName == "Unnamed City")
         #expect(model.funds == 10_000)
     }
 
@@ -398,7 +397,7 @@ struct GameModelTests {
                               })
         model.newCity(name: "Panel City", level: .easy, seed: 3)
         model.showSavePanel()
-        #expect(proposedName == model.cityName)
+        #expect(proposedName == "Panel City")
         #expect(model.currentFileURL == destination)
         #expect(FileManager.default.fileExists(atPath: destination.path))
 
@@ -427,7 +426,7 @@ struct GameModelTests {
         let imageView = try #require(printedView as? NSImageView)
         let image = try #require(imageView.image)
         let info = try #require(printedInfo)
-        #expect(printedTitle == model.cityName)
+        #expect(printedTitle == "Print City")
         #expect(imageView.imageScaling == .scaleProportionallyUpOrDown)
         #expect(image.size == imageView.frame.size)
         #expect(info.horizontalPagination == .fit)

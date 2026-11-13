@@ -11,6 +11,18 @@ final class EngineWrapperTests: XCTestCase {
 
     // MARK: Setting round trips
 
+    func testCityNameCallbackRetainsEngineCanonicalization() {
+        final class NameRecorder: EngineDelegate {
+            var names: [String] = []
+            func engineUpdateCityName(name: String) { names.append(name) }
+        }
+        let engine = Engine(seed: 1)
+        let recorder = NameRecorder()
+        engine.delegate = recorder
+        engine.setCityName("My Town-West")
+        XCTAssertEqual(recorder.names, ["My_Town_West"])
+    }
+
     func testPassesRoundTrip() {
         let engine = Engine(seed: 1)
         engine.setPasses(5)

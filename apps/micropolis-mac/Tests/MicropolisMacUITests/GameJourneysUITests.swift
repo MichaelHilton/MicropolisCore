@@ -46,14 +46,14 @@ final class GameJourneysUITests: XCTestCase {
         XCTAssertTrue(name.waitForExistence(timeout: 5))
         name.click()
         name.typeKey("a", modifierFlags: .command)
-        name.typeText("UITESTCITY")
+        name.typeText("UI Test_City-West")
         element("newCity.level.0").click()
         element("newCity.ok").click()
 
         waitFor("exists == false", on: name)
         let cityName = app.staticTexts["hud.cityName"]
         let renamed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
-            self.text(of: cityName) == "UITESTCITY"
+            self.text(of: cityName) == "UI Test_City-West"
         }, object: nil)
         XCTAssertEqual(XCTWaiter.wait(for: [renamed], timeout: 5), .completed)
         XCTAssertTrue(element("map.canvas").isHittable)

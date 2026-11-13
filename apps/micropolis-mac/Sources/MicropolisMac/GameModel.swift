@@ -226,8 +226,11 @@ final class GameModel: EngineDelegate {
         engine.generateMap(seed: seed)
         engine.setGameLevel(level)
         let trimmed = name.trimmingCharacters(in: .whitespaces)
-        cityName = trimmed.isEmpty ? "Unnamed City" : trimmed
-        engine.setCityName(cityName)
+        let displayName = trimmed.isEmpty ? "Unnamed City" : trimmed
+        // The engine synchronously reports a filename-style sanitized name.
+        // Keep its canonical name while showing the player's chosen spelling.
+        engine.setCityName(displayName)
+        cityName = displayName
         currentFileURL = nil
         hasUnsavedChanges = false
         refreshCityState()

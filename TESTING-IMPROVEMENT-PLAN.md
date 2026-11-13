@@ -54,6 +54,12 @@ before expanding the suite:
 
 ## Phase 0 — Restore a trustworthy baseline
 
+Debt update (2026-11-13): `TEST-DEBT-004` is resolved. The app preserves chosen
+city display names while retaining the engine's canonical-name callback.
+Its expected-failure wrappers are removed; model, wrapper, save/print, and
+desktop New City regressions protect the boundary. `TEST-DEBT-001` through
+`TEST-DEBT-003` remain open.
+
 1. Triage the failing bulldozer test. Determine whether the engine behavior or
    the test fixture represents the intended game rule; make the smallest
    appropriate correction and document the rule in the test name or comment.
