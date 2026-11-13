@@ -121,7 +121,10 @@ temporary folder, bulldozes the road, then reopens the saved city and verifies
 the restored balance, filename-based city name, and rendered pixels around the
 edited tile. It also checks that bulldozing actually changed the image, so an
 Open action that does nothing cannot pass. The test deletes its temporary folder
-on exit. There are seven desktop UI tests in total.
+on exit. The query journey builds a road, opens its tile-anchored native status
+popover, verifies the category and all detail fields, closes it, then queries
+the same tile again and dismisses with Escape. Querying must preserve funds.
+There are eight desktop UI tests in total.
 Every journey launches a fresh, fixed-seed city with
 simulation timers stopped and sound disabled, and waits for observable state
 rather than sleeping. The UI suite is not yet part of the hosted CI workflow.
@@ -186,11 +189,11 @@ Two tracked defects remain in the table above.
 
 1. **CI enforced on `swift-only`.** Hosted tests and engine coverage have passed;
    nightly repeat runs and a compiler-warning policy remain future work.
-2. **UI coverage is still limited.** Seven local desktop journeys cover launch,
-   window menus, city creation, road edits, dialog cancellation and save/load.
+2. **UI coverage is still limited.** Eight local desktop journeys cover launch,
+   window menus, city creation, road edits, dialog cancellation, save/load and
+   query-popover presentation/dismissal.
    Scenario outcomes, budget edits, and message navigation still need coverage.
-   Query data and popover rendering are tested, but the popover is not yet
-   attached to the main view. The engine also reports an invalid category ID
+   The engine still reports an invalid category ID
    for bare dirt; the presentation safely shows `Unknown` for that ID.
    `ViewRenderTests` only checks that each view lays out without crashing.
 3. **The engine has no C++ unit tests of its own.** It is tested only through the Swift wrapper.

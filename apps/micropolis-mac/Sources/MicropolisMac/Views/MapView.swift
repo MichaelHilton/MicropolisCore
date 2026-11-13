@@ -23,10 +23,11 @@ struct MapView: NSViewRepresentable {
     }
 
     static func dismantleNSView(_ nsView: NSView, coordinator: ()) {
+        (nsView as? MapNSView)?.closeZoneStatus()
     }
 }
 
-class MapNSView: NSView {
+class MapNSView: NSView, NSPopoverDelegate {
     let gameModel: GameModel
     let renderer: MapRenderer
     let tileAtlas: TileAtlas
@@ -47,6 +48,7 @@ class MapNSView: NSView {
     private var lastMapVersion = -1
     private var lastDragTile: (x: Int, y: Int)? = nil
     private var lastScrollRequestID = 0
+    private var queryPopover: NSPopover?
 
     private let lineDrawTools: [Tool] = [.road, .railroad, .wire, .bulldozer, .park]
 
@@ -305,7 +307,32 @@ class MapNSView: NSView {
     }
 
     private func applyTool(at tile: (x: Int, y: Int)) {
-        gameModel.applyTool(atX: tile.x, y: tile.y)
+        closeZoneStatus()
+        let result = gameModel.applyTool(atX: tile.x, y: tile.y)
+        guard result == .ok, gameModel.selectedTool == .query,
+              let info = gameModel.zoneStatus, window != nil else { return }
+
+        let popover = NSPopover()
+        popover.behavior = .transient
+        popover.delegate = self
+        popover.contentViewController = NSHostingController(rootView: ZoneStatusPopover(
+            info: info, onClose: { [weak self] in self?.closeZoneStatus() }))
+        queryPopover = popover
+        let size = CGFloat(tileAtlas.tileSize) * zoom
+        let tileRect = NSRect(x: CGFloat(tile.x) * size - offset.x,
+                              y: CGFloat(tile.y) * size - offset.y,
+                              width: size, height: size)
+        popover.show(relativeTo: tileRect.intersection(bounds), of: self, preferredEdge: .maxX)
+    }
+
+    func closeZoneStatus() {
+        queryPopover?.close()
+    }
+
+    func popoverDidClose(_ notification: Notification) {
+        guard let closed = notification.object as? NSPopover, closed === queryPopover else { return }
+        queryPopover = nil
+        gameModel.zoneStatus = nil
     }
 
     override func magnify(with event: NSEvent) {

@@ -60,8 +60,8 @@ Its expected-failure wrappers are removed; model, wrapper, save/print, and
 desktop New City regressions protect the boundary. `TEST-DEBT-003` is also
 resolved: zone labels decode raw engine text IDs with separate crime/pollution
 ranges. Real-engine tile queries, every valid lookup ID, invalid boundaries,
-and popover rendering are covered. Query-popover attachment and the engine's
-invalid bare-dirt category remain separate UI/engine gaps. `TEST-DEBT-001` and
+and popover rendering are covered. Query-popover attachment is covered in
+Phase 6; the engine's invalid bare-dirt category remains a separate gap. `TEST-DEBT-001` and
 `TEST-DEBT-002` remain open.
 
 1. Triage the failing bulldozer test. Determine whether the engine behavior or
@@ -194,6 +194,14 @@ why the change is observationally irrelevant.
 modules, and mutation survivors drive targeted test improvements.
 
 ## Phase 6 — User-flow, rendering, and accessibility coverage
+
+Implementation update (2026-11-13): eight desktop journeys cover launch,
+window menus, city creation, road edits, native dialog cancellation, save/load,
+and query-status presentation. Query results are anchored to the clicked tile;
+Close and Escape dismissal plus repeat queries are exercised. The native
+popover closes when its map view is dismantled, and dismissing clears the
+model's query state. Hosted UI automation and broader scenario/budget/message
+flows remain future work.
 
 Add a focused UI layer above the current layout checks. Cover the highest-value
 flows with accessibility identifiers and deterministic fixtures:

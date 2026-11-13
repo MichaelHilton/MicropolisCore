@@ -69,6 +69,44 @@ final class GameJourneysUITests: XCTestCase {
         cancelFilePanel("system.saveAs")
     }
 
+    func testQueryingARoadShowsStatusAndCanBeReopened() {
+        choose("window.terrainEdit", from: "menu.windows")
+        let dirt = element("terrain.dirt")
+        XCTAssertTrue(dirt.waitForExistence(timeout: 5))
+        dirt.click()
+        let canvas = element("map.canvas")
+        clickPreparedTile(on: canvas)
+        choose("window.edit", from: "menu.windows")
+        app.activate()
+        let road = app.buttons["tool.r"]
+        XCTAssertTrue(road.waitForExistence(timeout: 10))
+        waitFor("hittable == true", on: road)
+        road.click()
+        clickPreparedTile(on: canvas)
+        app.buttons["tool.q"].click()
+        let funds = text(of: app.staticTexts["hud.funds"])
+
+        for cycle in 0..<2 {
+            clickPreparedTile(on: canvas)
+            let category = app.staticTexts["zoneStatus.category"]
+            XCTAssertTrue(category.waitForExistence(timeout: 5))
+            XCTAssertEqual(text(of: category), "Road")
+            for field in ["density", "value", "crime", "pollution", "growth"] {
+                let value = app.staticTexts["zoneStatus.\(field)"]
+                XCTAssertTrue(value.exists)
+                XCTAssertFalse(text(of: value).isEmpty)
+                XCTAssertNotEqual(text(of: value), "Unknown", "\(field) should decode an engine text ID")
+            }
+            if cycle == 0 {
+                element("zoneStatus.close").click()
+            } else {
+                app.typeKey(XCUIKeyboardKey.escape.rawValue, modifierFlags: [])
+            }
+            waitFor("exists == false", on: category)
+            XCTAssertEqual(text(of: app.staticTexts["hud.funds"]), funds)
+        }
+    }
+
     func testSavingAndReopeningRestoresRoadAndFunds() throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -203,8 +241,10 @@ final class GameJourneysUITests: XCTestCase {
     }
 
     private func choose(_ identifier: String, from menu: String) {
+        app.activate()
         let trigger = element(menu)
         XCTAssertTrue(trigger.waitForExistence(timeout: 5))
+        waitFor("hittable == true", on: trigger)
         trigger.click()
         let item = element(identifier)
         XCTAssertTrue(item.waitForExistence(timeout: 5))
