@@ -73,6 +73,27 @@ prints their median in milliseconds. It has no pass/fail time limit: compare
 the reported metric only on a controlled machine or in a dedicated benchmark
 job, not in the default correctness suite.
 
+## Generated editing properties
+
+`GeneratedEditingTests` runs a fixed corpus of four seeds and 128 actions per
+seed through the real engine. It checks rejection atomicity and query read-only
+behavior, and compares action results plus map, funds, tax, and auto-bulldoze
+state after every step of two identical replays. The corpus includes all tools,
+overlapping placements, map edges, off-map coordinates, and insufficient funds.
+The generator uses explicit wrapping arithmetic rather than system randomness.
+
+A persistence property filters those sequences to infrastructure tools and
+compares all tile bits, funds, tax, and auto-bulldoze after two save/load cycles.
+Exact building-map equality is deliberately outside this property: loading
+performs a zone scan that recomputes power and installs coal smoke graphics.
+All tools remain included in the atomicity and replay properties.
+
+Failures report the seed, action prefix length, tool/coordinates, and first
+different tile. Run the suite with `swift test --filter GeneratedEditingTests`;
+it takes under a second locally and is included in normal CI. There is no
+automatic shrinking yet; reduce a reported prefix to a focused regression
+before fixing a newly discovered defect.
+
 ## Desktop UI journeys
 
 The local XCUITest foundation in `apps/micropolis-mac` builds a small app host

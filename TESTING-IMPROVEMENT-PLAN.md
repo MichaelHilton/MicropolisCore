@@ -125,6 +125,15 @@ private-layout reflection.
 
 ## Phase 3 — Add generative, property, and metamorphic tests
 
+Implementation update (2026-11-13): `GeneratedEditingTests` adds four fixed
+seeds with 128 actions each, covering all tools, clustered edits, bounds and
+funds rejection. It checks failed-edit atomicity, query read-only state, and
+identical replay after every action. Infrastructure sequences also preserve
+exact map bits, funds, tax and auto-bulldoze across two save/load cycles.
+Building-map persistence requires a separate semantic contract because loading
+initializes power and coal smoke. Simulation-time invariants, commuting action
+properties, and automated shrinking remain future work.
+
 Introduce deterministic generated action sequences using a seedable generator.
 Start with these properties:
 
