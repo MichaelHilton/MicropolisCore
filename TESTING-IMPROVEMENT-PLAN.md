@@ -57,8 +57,12 @@ before expanding the suite:
 Debt update (2026-11-13): `TEST-DEBT-004` is resolved. The app preserves chosen
 city display names while retaining the engine's canonical-name callback.
 Its expected-failure wrappers are removed; model, wrapper, save/print, and
-desktop New City regressions protect the boundary. `TEST-DEBT-001` through
-`TEST-DEBT-003` remain open.
+desktop New City regressions protect the boundary. `TEST-DEBT-003` is also
+resolved: zone labels decode raw engine text IDs with separate crime/pollution
+ranges. Real-engine tile queries, every valid lookup ID, invalid boundaries,
+and popover rendering are covered. Query-popover attachment and the engine's
+invalid bare-dirt category remain separate UI/engine gaps. `TEST-DEBT-001` and
+`TEST-DEBT-002` remain open.
 
 1. Triage the failing bulldozer test. Determine whether the engine behavior or
    the test fixture represents the intended game rule; make the smallest

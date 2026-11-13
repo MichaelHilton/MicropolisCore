@@ -13,8 +13,8 @@ struct ZoneStatusPopover: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack { Text("Density:"); Spacer(); Text(ZoneStatus.densityName(info.density)) }
                 HStack { Text("Value:"); Spacer(); Text(ZoneStatus.valueName(info.landValue)) }
-                HStack { Text("Crime:"); Spacer(); Text(ZoneStatus.levelName(info.crime)) }
-                HStack { Text("Pollution:"); Spacer(); Text(ZoneStatus.levelName(info.pollution)) }
+                HStack { Text("Crime:"); Spacer(); Text(ZoneStatus.crimeName(info.crime)) }
+                HStack { Text("Pollution:"); Spacer(); Text(ZoneStatus.pollutionName(info.pollution)) }
                 HStack { Text("Growth:"); Spacer(); Text(ZoneStatus.growthName(info.growth)) }
             }
             .font(.system(.caption, design: .default))

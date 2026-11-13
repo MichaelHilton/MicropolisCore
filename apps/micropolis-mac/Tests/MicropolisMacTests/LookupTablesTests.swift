@@ -10,19 +10,35 @@ struct LookupTablesTests {
 
     @Test
     func zoneStatusNamesCoverTheirTablesAndNothingMore() {
-        let tables: [(table: [String], name: (Int) -> String)] = [
-            (ZoneStatus.zones, ZoneStatus.categoryName),
-            (ZoneStatus.densities, ZoneStatus.densityName),
-            (ZoneStatus.values, ZoneStatus.valueName),
-            (ZoneStatus.levels, ZoneStatus.levelName),
-            (ZoneStatus.growth, ZoneStatus.growthName),
+        let tables: [(table: [String], first: Int, name: (Int) -> String)] = [
+            (ZoneStatus.zones, 1, ZoneStatus.categoryName),
+            (ZoneStatus.densities, 1, ZoneStatus.densityName),
+            (ZoneStatus.values, 5, ZoneStatus.valueName),
+            (ZoneStatus.crimeLevels, 9, ZoneStatus.crimeName),
+            (ZoneStatus.pollutionLevels, 13, ZoneStatus.pollutionName),
+            (ZoneStatus.growth, 17, ZoneStatus.growthName),
         ]
-        for (table, name) in tables {
-            #expect(name(0) == table.first)
-            #expect(name(table.count - 1) == table.last)
-            #expect(name(-1) == "Unknown")
-            #expect(name(table.count) == "Unknown")
+        for (table, first, name) in tables {
+            for (offset, expected) in table.enumerated() {
+                #expect(name(first + offset) == expected)
+            }
+            for invalid in [Int.min, -1, 0, first - 1, first + table.count, Int.max] {
+                #expect(name(invalid) == "Unknown")
+            }
         }
+    }
+
+    @Test
+    func zoneStatusUsesEngineCategoryAndDetailTextIDs() {
+        #expect(ZoneStatus.categoryName(8) == "Road")
+        #expect(ZoneStatus.categoryName(11) == "Residential")
+        #expect(ZoneStatus.categoryName(12) == "Commercial")
+        #expect(ZoneStatus.categoryName(16) == "Coal Power")
+        #expect(ZoneStatus.densityName(4) == "Very High")
+        #expect(ZoneStatus.valueName(5) == "Slum")
+        #expect(ZoneStatus.crimeName(9) == "Safe")
+        #expect(ZoneStatus.pollutionName(13) == "None")
+        #expect(ZoneStatus.growthName(18) == "Stable")
     }
 
     // MARK: EvaluationText

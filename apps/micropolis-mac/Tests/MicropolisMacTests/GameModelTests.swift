@@ -175,18 +175,34 @@ struct GameModelTests {
         #expect(status?.x == 7 && status?.y == 8)
     }
 
-    /// The engine sends a 1-based tile-category index (residential is 11) and
-    /// 1-based text indexes, while ZoneStatus names are looked up from 0.
+    /// Keep raw engine IDs (residential is 11); presentation decodes them.
     @Test
     func queryingAHouseNamesItResidential() throws {
         let model = GameModel(sound: RecordingSound(), seed: 1, runsTimer: false)
         let cells = model.engine.mapSnapshot()
         let house = try #require(cells.firstIndex { $0 & 0x0400 != 0 && (240..<423).contains(Int($0 & 0x3FF)) })
-        model.engine.apply(.query, x: house / Engine.height, y: house % Engine.height)
+        #expect(model.engine.apply(.query, x: house / Engine.height, y: house % Engine.height) == .ok)
         let info = try #require(model.zoneStatus)
-        withKnownIssue("[TEST-DEBT-003] engine category \(info.category) is not a 0-based ZoneStatus index") {
-            #expect(ZoneStatus.categoryName(info.category) == "Residential")
-        }
+        #expect(ZoneStatus.categoryName(info.category) == "Residential")
+    }
+
+    @Test(arguments: [(66, "Road"), (210, "Power"), (226, "Rail"),
+                      (244, "Residential"), (427, "Commercial"), (616, "Industrial"),
+                      (698, "Port"), (716, "Airport"), (750, "Coal Power"),
+                      (916, "Coal Power"), (765, "Fire Department"),
+                      (774, "Police Department"), (784, "Stadium"), (816, "Nuclear Power")])
+    func queriesDecodeRealEngineCategoryAndDetailIDs(tile: Int, expected: String) throws {
+        let model = emptyModel()
+        model.engine.setTile(x: 10, y: 10, cell: UInt16(tile))
+        #expect(model.engine.apply(.query, x: 10, y: 10) == .ok)
+        let info = try #require(model.zoneStatus)
+        #expect(ZoneStatus.categoryName(info.category) == expected)
+        #expect(ZoneStatus.densityName(info.density) == "Low")
+        #expect(ZoneStatus.valueName(info.landValue) == "Slum")
+        #expect(ZoneStatus.crimeName(info.crime) == "Safe")
+        #expect(ZoneStatus.pollutionName(info.pollution) == "None")
+        #expect(ZoneStatus.growthName(info.growth) == "Stable")
+        #expect(info.x == 10 && info.y == 10)
     }
 
     @Test

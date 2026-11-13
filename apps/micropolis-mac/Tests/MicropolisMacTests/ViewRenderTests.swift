@@ -103,8 +103,8 @@ struct ViewRenderTests {
 
     @Test
     func zoneStatusPopoverForKnownAndUnknownValues() {
-        let known = ZoneStatusInfo(category: 1, density: 2, landValue: 3, crime: 1, pollution: 2, growth: 3, x: 4, y: 5)
-        let unknown = ZoneStatusInfo(category: 11, density: 4, landValue: 9, crime: 12, pollution: 14, growth: 19, x: 4, y: 5)
+        let known = ZoneStatusInfo(category: 11, density: 2, landValue: 7, crime: 10, pollution: 15, growth: 19, x: 4, y: 5)
+        let unknown = ZoneStatusInfo(category: -1, density: -1, landValue: -1, crime: -1, pollution: -1, growth: -1, x: 4, y: 5)
         for info in [known, unknown] {
             let host = NSHostingView(rootView: ZoneStatusPopover(info: info))
             host.layoutSubtreeIfNeeded()

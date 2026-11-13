@@ -32,7 +32,7 @@ python3 -m unittest discover -s scripts -p 'test_*.py'
 Latest local verification (2026-11-12): 214 XCTest tests and 181 Swift Testing
 tests, including one opt-in benchmark skip, passed in about 110 seconds.
 At that snapshot, four known issues were tracked as expected failures;
-`TEST-DEBT-004` was subsequently resolved (see below). The detailed target
+`TEST-DEBT-003` and `TEST-DEBT-004` were subsequently resolved (see below). The detailed target
 inventory below is an older snapshot and does not include all recent additions.
 
 The CI-equivalent atomic-counter run passed the engine coverage gate with
@@ -166,7 +166,6 @@ tracker on this branch, so these identifiers are the local tracking reference.
 |----|-------|------------------|---------------------------------|
 | `TEST-DEBT-001` | `BigBuildingToolTests.testBulldozingTheEdgeOfABuildingShouldLevelIt` | Only inner tiles of 4×4/6×6 buildings and the center of 3×3 zones can be bulldozed. | A click on any building-footprint tile levels the complete building with the correct cost and effects. |
 | `TEST-DEBT-002` | `BigBuildingToolTests.testLandToolShouldClearARoadAndChargeTheBulldozer` | The land tool fails on a road, leaves it in place, and charges nothing. | The land tool applies the bulldozer result, changes the road to dirt, and charges the bulldozer cost. |
-| `TEST-DEBT-003` | `GameModelTests.queryingAHouseNamesItResidential` | Engine zone categories do not index the app's zero-based `ZoneStatus` names. | The bridge explicitly maps engine categories to the displayed zone-status category. |
 
 Resolved on 2026-11-13: **`TEST-DEBT-004` — city display names.** New City now
 keeps the player's trimmed spelling after the engine's synchronous canonical
@@ -174,7 +173,14 @@ name callback. The engine still converts non-alphanumeric characters to
 underscores; a wrapper regression verifies that boundary. The former expected
 failures now pass normally, with extra checks for punctuation, literal
 underscores, save-panel names, print titles, and the real New City dialog.
-Three tracked defects remain in the table above.
+
+Resolved on 2026-11-13: **`TEST-DEBT-003` — zone-status text IDs.** Presentation
+now decodes the engine's 1-based category IDs and the separate density, value,
+crime, pollution and growth text-ID ranges from `tool.cpp`/`text.h`. Crime and
+pollution have separate labels. Raw callback IDs remain unchanged. The former
+residential expected failure passes normally; real-engine queries cover 14
+tile types, and pure lookups check every valid ID plus invalid boundaries.
+Two tracked defects remain in the table above.
 
 ## Known issues and gaps
 
@@ -183,5 +189,8 @@ Three tracked defects remain in the table above.
 2. **UI coverage is still limited.** Seven local desktop journeys cover launch,
    window menus, city creation, road edits, dialog cancellation and save/load.
    Scenario outcomes, budget edits, and message navigation still need coverage.
+   Query data and popover rendering are tested, but the popover is not yet
+   attached to the main view. The engine also reports an invalid category ID
+   for bare dirt; the presentation safely shows `Unknown` for that ID.
    `ViewRenderTests` only checks that each view lays out without crashing.
 3. **The engine has no C++ unit tests of its own.** It is tested only through the Swift wrapper.
