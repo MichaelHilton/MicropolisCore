@@ -32,7 +32,7 @@ python3 -m unittest discover -s scripts -p 'test_*.py'
 Latest local verification (2026-11-12): 214 XCTest tests and 181 Swift Testing
 tests, including one opt-in benchmark skip, passed in about 110 seconds.
 At that snapshot, four known issues were tracked as expected failures;
-`TEST-DEBT-003` and `TEST-DEBT-004` were subsequently resolved (see below). The detailed target
+`TEST-DEBT-002` through `TEST-DEBT-004` were subsequently resolved (see below). The detailed target
 inventory below is an older snapshot and does not include all recent additions.
 
 The CI-equivalent atomic-counter run passed the engine coverage gate with
@@ -168,7 +168,6 @@ tracker on this branch, so these identifiers are the local tracking reference.
 | ID | Tests | Current behavior | Remove the expected failure when |
 |----|-------|------------------|---------------------------------|
 | `TEST-DEBT-001` | `BigBuildingToolTests.testBulldozingTheEdgeOfABuildingShouldLevelIt` | Only inner tiles of 4×4/6×6 buildings and the center of 3×3 zones can be bulldozed. | A click on any building-footprint tile levels the complete building with the correct cost and effects. |
-| `TEST-DEBT-002` | `BigBuildingToolTests.testLandToolShouldClearARoadAndChargeTheBulldozer` | The land tool fails on a road, leaves it in place, and charges nothing. | The land tool applies the bulldozer result, changes the road to dirt, and charges the bulldozer cost. |
 
 Resolved on 2026-11-13: **`TEST-DEBT-004` — city display names.** New City now
 keeps the player's trimmed spelling after the engine's synchronous canonical
@@ -183,7 +182,16 @@ crime, pollution and growth text-ID ranges from `tool.cpp`/`text.h`. Crime and
 pollution have separate labels. Raw callback IDs remain unchanged. The former
 residential expected failure passes normally; real-engine queries cover 14
 tile types, and pure lookups check every valid ID plus invalid boundaries.
-Two tracked defects remain in the table above.
+
+Resolved on 2026-11-13: **`TEST-DEBT-002` — land-tool demolition.** The land
+tool now preserves successful demolition when the staged tile is already dirt,
+and converts bridge water/building rubble only when necessary. Natural water
+and shore tiles drain for free; bare dirt is rejected as a no-op. Non-water
+tiles that cannot be bulldozed remain intact. Tests cover road cost, exact and
+insufficient funds, water tile IDs 2–20 with and without the bulldozable flag,
+trees, bridges, building-center demolition, protected tiles, and map bounds.
+The road regression no longer carries an expected-failure wrapper. Only
+`TEST-DEBT-001` remains in the table above.
 
 ## Known issues and gaps
 

@@ -95,8 +95,8 @@ final class ToolTests: XCTestCase {
         XCTAssertTrue((21...43).contains(number(engine, 60, 60)), "forest plants trees")
     }
 
-    /// The land and water tools run the bulldozer first, which has nothing to
-    /// do on bare dirt, so they report failure there.
+    /// Land is a no-op on dirt; water requires successful demolition first.
+    /// Both reject bare dirt without changing the map.
     func testLandAndWaterToolsNeedSomethingToClear() {
         let engine = clearEngine()
         let map = engine.mapSnapshot()

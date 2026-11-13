@@ -1312,11 +1312,19 @@ ToolResult Micropolis::landTool(short x, short y, ToolEffects *effects)
         return TOOLRESULT_FAILED;
     }
 
-    /// @todo: Is this good? It is not auto-bulldoze!!
-    /// @todo: Handle result value (probably)
-    ToolResult result = bulldozerTool(x, y, effects);
-
-    result = putDownLand(x, y, effects);
+    MapTile tile = effects->getMapTile(x, y);
+    ToolResult result;
+    if (tile == DIRT || (tile >= WATER_LOW && tile <= WATER_HIGH)) {
+        // Water can be drained without demolition; dirt remains a no-op.
+        result = putDownLand(x, y, effects);
+    } else {
+        result = bulldozerTool(x, y, effects);
+        // Ordinary demolition already stages dirt. Preserve that success and
+        // its cost; bridges and building rubble still need conversion to land.
+        if (result == TOOLRESULT_OK && effects->getMapTile(x, y) != DIRT) {
+            result = putDownLand(x, y, effects);
+        }
+    }
 
     if (result == TOOLRESULT_OK) {
         /* send 'didtool' message */

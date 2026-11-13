@@ -282,22 +282,81 @@ final class BigBuildingToolTests: XCTestCase {
 
     func testLandToolDrainsWaterForFree() {
         let engine = F.engine()
-        F.put(engine, 50, 50, 2)
-        let funds = engine.funds
-        XCTAssertEqual(engine.apply(.land, x: 50, y: 50), .ok)
-        XCTAssertEqual(F.number(engine, 50, 50), 0)
-        XCTAssertEqual(engine.funds, funds)
+        engine.setFunds(0)
+        for tile in 2...20 {
+            for flags: UInt16 in [0, F.bulldozable] {
+                F.put(engine, 50, 50, tile, flags: flags)
+                XCTAssertEqual(engine.apply(.land, x: 50, y: 50), .ok, "water tile \(tile), flags \(flags)")
+                XCTAssertEqual(F.number(engine, 50, 50), 0)
+                XCTAssertEqual(engine.funds, 0)
+            }
+        }
     }
 
-    func testLandToolShouldClearARoadAndChargeTheBulldozer() {
+    func testLandToolClearsARoadAndChargesTheBulldozer() {
         let engine = F.engine()
         XCTAssertEqual(engine.apply(.road, x: 50, y: 50), .ok)
         let funds = engine.funds
-        XCTExpectFailure("[TEST-DEBT-002] landTool ignores the bulldozer's result and then finds the tile already dirt, so it reports failure and leaves the road (the @todo in landTool)") {
+        XCTAssertEqual(engine.apply(.land, x: 50, y: 50), .ok)
+        XCTAssertEqual(F.number(engine, 50, 50), 0)
+        XCTAssertEqual(funds - engine.funds, 1)
+    }
+
+    func testLandToolRequiresExactlyTheBulldozerCostForARoad() {
+        for funds in [0, 1] {
+            let engine = F.engine()
+            XCTAssertEqual(engine.apply(.road, x: 50, y: 50), .ok)
+            engine.setFunds(funds)
+            let before = engine.mapSnapshot()
+            let result = engine.apply(.land, x: 50, y: 50)
+            if funds == 0 {
+                XCTAssertEqual(result, .noMoney)
+                XCTAssertEqual(engine.mapSnapshot(), before)
+                XCTAssertEqual(engine.funds, 0)
+            } else {
+                XCTAssertEqual(result, .ok)
+                XCTAssertEqual(F.number(engine, 50, 50), 0)
+                XCTAssertEqual(engine.funds, 0)
+            }
+        }
+    }
+
+    func testLandToolRejectsBareDirtProtectedTilesAndOffMapClicks() {
+        let engine = F.engine()
+        F.put(engine, 60, 50, 66) // A road without the bulldozable flag.
+        let before = engine.mapSnapshot()
+        let funds = engine.funds
+        for (x, y) in [(50, 50), (60, 50), (-1, 50), (Engine.width, 50),
+                       (50, -1), (50, Engine.height)] {
+            XCTAssertEqual(engine.apply(.land, x: x, y: y), .failed, "(\(x),\(y))")
+            XCTAssertEqual(engine.mapSnapshot(), before)
+            XCTAssertEqual(engine.funds, funds)
+        }
+    }
+
+    func testLandToolClearsTreesAndBridgesForOneDollar() {
+        let engine = F.engine()
+        for tile in [37, 64] {
+            F.put(engine, 50, 50, tile, flags: F.bulldozable)
+            let before = engine.funds
             XCTAssertEqual(engine.apply(.land, x: 50, y: 50), .ok)
             XCTAssertEqual(F.number(engine, 50, 50), 0)
-            XCTAssertEqual(funds - engine.funds, 1)
+            XCTAssertEqual(engine.funds, before - 1)
         }
+    }
+
+    func testLandToolUsesWholeBuildingDemolitionBeforeClearingTheCenter() {
+        let engine = F.engine()
+        XCTAssertEqual(engine.apply(.residential, x: 50, y: 50), .ok)
+        let before = engine.funds
+        XCTAssertEqual(engine.apply(.land, x: 50, y: 50), .ok)
+        XCTAssertEqual(engine.funds, before - 1)
+        XCTAssertEqual(F.number(engine, 50, 50), 0)
+        for x in 49...51 { for y in 49...51 where x != 50 || y != 50 {
+            XCTAssertTrue(isExplosion(engine, x, y), "demolition left tile (\(x),\(y)) intact")
+        } }
+        XCTAssertEqual(F.number(engine, 48, 50), 0)
+        XCTAssertEqual(F.number(engine, 52, 50), 0)
     }
 
     func testForestToolLeavesExistingTreesAlone() {

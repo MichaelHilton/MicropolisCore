@@ -61,8 +61,11 @@ desktop New City regressions protect the boundary. `TEST-DEBT-003` is also
 resolved: zone labels decode raw engine text IDs with separate crime/pollution
 ranges. Real-engine tile queries, every valid lookup ID, invalid boundaries,
 and popover rendering are covered. Query-popover attachment is covered in
-Phase 6; the engine's invalid bare-dirt category remains a separate gap. `TEST-DEBT-001` and
-`TEST-DEBT-002` remain open.
+Phase 6; the engine's invalid bare-dirt category remains a separate gap.
+`TEST-DEBT-002` is resolved by preserving staged bulldozer success, retaining
+free water drainage, and rejecting protected non-water tiles. Road, tree,
+bridge, building-center, funds, water-edge and bounds regressions protect it.
+Only `TEST-DEBT-001` remains open in the expected-failure ledger.
 
 1. Triage the failing bulldozer test. Determine whether the engine behavior or
    the test fixture represents the intended game rule; make the smallest
