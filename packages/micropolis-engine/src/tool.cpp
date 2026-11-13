@@ -374,146 +374,23 @@ ToolResult Micropolis::putDownForest(short mapH, short mapV,
 
 
 /**
- * Compute where the 'center' (at (1,1)) of the zone is, depending on where the
- * user clicked.
- *
- * Only inner tiles are recognized, and possibly not even complete (ie stadium
- * while game is playing).
- *
- * @param id Tile character value of the tile that the user clicked on.
- * @param deltaHPtr Pointer where horizontal position correction is written to.
- * @param deltaVPtr Pointer where vertical position correction is written to.
- * @return Size of the zone clicked at (or \c 0 if clicked outside zone).
- * @todo Make this table driven.
+ * Recognize legacy large-building center tiles whose ZONEBIT is missing.
+ * Normal footprint lookup uses the actual zone-center marker in the map.
  */
-static short checkBigZone(MapTile id, short *deltaHPtr, short *deltaVPtr)
+static short checkUnflaggedCenter(MapTile id)
 {
     switch (id) {
-
-    case POWERPLANT:      /* check coal plant */
-    case PORT:            /* check sea port */
-    case NUCLEAR:         /* check nuc plant */
-    case STADIUM:         /* check stadium */
-        *deltaHPtr = 0;
-        *deltaVPtr = 0;
+    case POWERPLANT:
+    case PORT:
+    case NUCLEAR:
+    case STADIUM:
         return 4;
-
-    case POWERPLANT + 1:  /* check coal plant */
-    case COALSMOKE3:      /* check coal plant, smoke */
-    case COALSMOKE3 + 1:  /* check coal plant, smoke */
-    case COALSMOKE3 + 2:  /* check coal plant, smoke */
-    case COALSMOKE3 + 3:  /* check coal plant, smoke */
-    case PORT + 1:        /* check sea port */
-    case NUCLEAR + 1:     /* check nuc plant */
-    case STADIUM + 1:     /* check stadium */
-        *deltaHPtr = -1;
-        *deltaVPtr = 0;
-        return 4;
-
-    case POWERPLANT + 4:  /* check coal plant */
-    case PORT + 4:        /* check sea port */
-    case NUCLEAR + 4:     /* check nuc plant */
-    case STADIUM + 4:     /* check stadium */
-        *deltaHPtr = 0;
-        *deltaVPtr = -1;
-        return 4;
-
-    case POWERPLANT + 5:  /* check coal plant */
-    case PORT + 5:        /* check sea port */
-    case NUCLEAR + 5:     /* check nuc plant */
-    case STADIUM + 5:     /* check stadium */
-        *deltaHPtr = -1;
-        *deltaVPtr = -1;
-        return 4;
-
-    case AIRPORT:         /* check airport */
-        *deltaHPtr = 0;
-        *deltaVPtr = 0;
+    case AIRPORT:
         return 6;
-
-    case AIRPORT + 1:
-        *deltaHPtr = -1;
-        *deltaVPtr = 0;
-        return 6;
-
-    case AIRPORT + 2:
-        *deltaHPtr = -2;
-        *deltaVPtr = 0;
-        return 6;
-
-    case AIRPORT + 3:
-        *deltaHPtr = -3;
-        *deltaVPtr = 0;
-        return 6;
-
-    case AIRPORT + 6:
-        *deltaHPtr = 0;
-        *deltaVPtr = -1;
-        return 6;
-
-    case AIRPORT + 7:
-        *deltaHPtr = -1;
-        *deltaVPtr = -1;
-        return 6;
-
-    case AIRPORT + 8:
-        *deltaHPtr = -2;
-        *deltaVPtr = -1;
-        return 6;
-
-    case AIRPORT + 9:
-        *deltaHPtr = -3;
-        *deltaVPtr = -1;
-        return 6;
-
-    case AIRPORT + 12:
-        *deltaHPtr = 0;
-        *deltaVPtr = -2;
-        return 6;
-
-    case AIRPORT + 13:
-        *deltaHPtr = -1;
-        *deltaVPtr = -2;
-        return 6;
-
-    case AIRPORT + 14:
-        *deltaHPtr = -2;
-        *deltaVPtr = -2;
-        return 6;
-
-    case AIRPORT + 15:
-        *deltaHPtr = -3;
-        *deltaVPtr = -2;
-        return 6;
-
-    case AIRPORT + 18:
-        *deltaHPtr = 0;
-        *deltaVPtr = -3;
-        return 6;
-
-    case AIRPORT + 19:
-        *deltaHPtr = -1;
-        *deltaVPtr = -3;
-        return 6;
-
-    case AIRPORT + 20:
-        *deltaHPtr = -2;
-        *deltaVPtr = -3;
-        return 6;
-
-    case AIRPORT + 21:
-        *deltaHPtr = -3;
-        *deltaVPtr = -3;
-        return 6;
-
     default:
-        *deltaHPtr = 0;
-        *deltaVPtr = 0;
         return 0;
-
     }
 }
-
 
 /**
  * Can the tile be auto-bulldozed?.
@@ -981,8 +858,7 @@ ToolResult Micropolis::queryTool(short x, short y)
  *
  * @todo Code is too complex/long.
  * @bug Tool does not return TOOLRESULT_NO_MONEY.
- * @bug Sometimes we can delete parts of a residential zone, but not always.
- *      Decide what rule we should have, and fix accordingly.
+ * Clicking any tile of a marked building demolishes its entire footprint.
  *
  * @note Auto-bulldoze functionality is in Micropolis::prepareBuildingSite()
  */
@@ -1006,8 +882,31 @@ ToolResult Micropolis::bulldozerTool(short x, short y, ToolEffects *effects)
         zoneSize = checkSize(tile);
         deltaH = 0;
         deltaV = 0;
-    } else {
-        zoneSize = checkBigZone(tile, &deltaH, &deltaV);
+    }
+
+    // Every supported building has its center at offset (1,1), and the
+    // largest footprint is 6x6. Look for a real owner instead of depending
+    // on graphics IDs, which can change to houses, smoke, radar or football.
+    for (short dy = -4; dy <= 1 && zoneSize == 0; dy++) {
+        for (short dx = -4; dx <= 1; dx++) {
+            int centerX = x + dx;
+            int centerY = y + dy;
+            if (!testBounds(centerX, centerY)) continue;
+            MapValue center = effects->getMapValue(centerX, centerY);
+            if (!(center & ZONEBIT)) continue;
+            short size = checkSize(center & LOMASK);
+            if (size > 0 && x >= centerX - 1 && x < centerX - 1 + size &&
+                            y >= centerY - 1 && y < centerY - 1 + size) {
+                zoneSize = size;
+                deltaH = dx;
+                deltaV = dy;
+                break;
+            }
+        }
+    }
+    if (zoneSize == 0) {
+        zoneSize = checkUnflaggedCenter(tile);
+        deltaH = deltaV = 0;
     }
 
     if (zoneSize > 0) {
@@ -1048,7 +947,7 @@ ToolResult Micropolis::bulldozerTool(short x, short y, ToolEffects *effects)
             putRubble(centerX - 1, centerY - 1, 6, effects);
             break;
 
-        // coverage: unreachable-begin (zoneSize comes from checkSize or checkBigZone, which return only 0, 3, 4 or 6, and 0 was excluded above)
+        // coverage: unreachable-begin (zoneSize comes from checkSize or checkUnflaggedCenter, which return only 0, 3, 4 or 6, and 0 was excluded above)
         default:
             NOT_REACHED();
             break;

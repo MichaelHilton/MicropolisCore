@@ -65,7 +65,11 @@ Phase 6; the engine's invalid bare-dirt category remains a separate gap.
 `TEST-DEBT-002` is resolved by preserving staged bulldozer success, retaining
 free water drainage, and rejecting protected non-water tiles. Road, tree,
 bridge, building-center, funds, water-edge and bounds regressions protect it.
-Only `TEST-DEBT-001` remains open in the expected-failure ledger.
+`TEST-DEBT-001` is also resolved: bounded zone-center lookup now finds ownership
+from every building-footprint tile, including animation replacements. Tests
+cover all 145 footprint positions of ten buildable types, map corners,
+neighbors, animation frames and funding atomicity. The original four debt IDs
+are now all resolved; no expected-failure wrappers remain.
 
 1. Triage the failing bulldozer test. Determine whether the engine behavior or
    the test fixture represents the intended game rule; make the smallest

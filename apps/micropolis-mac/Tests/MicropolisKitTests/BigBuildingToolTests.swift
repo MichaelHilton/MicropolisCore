@@ -7,11 +7,10 @@ import MicropolisEngine
 final class BigBuildingToolTests: XCTestCase {
     private typealias F = ToolFixture
 
-    /// Tool, side of the building, and the tile offsets (from its top-left
-    /// corner) that the bulldozer accepts: the inner tiles.
-    private let bigBuildings: [(tool: Tool, size: Int, inner: ClosedRange<Int>)] = [
-        (.stadium, 4, 1...2), (.seaport, 4, 1...2), (.coalPower, 4, 1...2), (.nuclearPower, 4, 1...2),
-        (.airport, 6, 1...4),
+    private let buildings: [(tool: Tool, size: Int)] = [
+        (.residential, 3), (.commercial, 3), (.industrial, 3),
+        (.fireStation, 3), (.policeStation, 3),
+        (.stadium, 4), (.seaport, 4), (.coalPower, 4), (.nuclearPower, 4), (.airport, 6),
     ]
 
     private func isExplosion(_ engine: Engine, _ x: Int, _ y: Int) -> Bool {
@@ -35,17 +34,16 @@ final class BigBuildingToolTests: XCTestCase {
         XCTAssertTrue(recorder.sounds.isEmpty)
     }
 
-    func testBulldozingAnyInnerTileLevelsTheWholeBuilding() {
-        for (tool, size, inner) in bigBuildings {
+    func testBulldozingEveryFootprintTileLevelsTheWholeBuilding() {
+        for (tool, size) in buildings {
             let engine = F.engine()
             let recorder = ZoneReportRecorder()
             engine.delegate = recorder
-            for dy in inner { for dx in inner {
-                // The airport's very center is a known bug, tested below.
-                if tool == .airport && dx == 1 && dy == 1 { continue }
+            for dy in 0..<size { for dx in 0..<size {
                 F.wipe(engine, x: 40...60, y: 40...60)
                 XCTAssertEqual(engine.apply(tool, x: 50, y: 50), .ok)
                 let funds = engine.funds
+                let before = engine.mapSnapshot()
                 recorder.sounds.removeAll()
                 XCTAssertEqual(engine.apply(.bulldozer, x: 49 + dx, y: 49 + dy), .ok, "\(tool) from (\(dx), \(dy))")
                 XCTAssertEqual(funds - engine.funds, 1, "\(tool) from (\(dx), \(dy))")
@@ -54,7 +52,13 @@ final class BigBuildingToolTests: XCTestCase {
                 } }
                 XCTAssertEqual(F.number(engine, 48, 50), 0)
                 XCTAssertEqual(F.number(engine, 49 + size, 50), 0)
-                let expected = size == 6 ? ["Explosion-High", "Explosion-Low"] : ["Explosion-Low"]
+                let after = engine.mapSnapshot()
+                let changed = Set(zip(before, after).enumerated().compactMap { $0.element.0 != $0.element.1 ? $0.offset : nil })
+                let footprint = Set((49..<(49 + size)).flatMap { x in
+                    (49..<(49 + size)).map { y in x * Engine.height + y }
+                })
+                XCTAssertEqual(changed, footprint, "\(tool) from (\(dx),\(dy)) changed cells outside its footprint")
+                let expected = size == 6 ? ["Explosion-High", "Explosion-Low"] : [size == 3 ? "Explosion-High" : "Explosion-Low"]
                 XCTAssertEqual(recorder.sounds, expected, "\(tool) from (\(dx), \(dy))")
             } }
         }
@@ -131,19 +135,103 @@ final class BigBuildingToolTests: XCTestCase {
         let engine = F.engine()
         XCTAssertEqual(engine.apply(.stadium, x: 50, y: 50), .ok)
         XCTAssertEqual(engine.apply(.residential, x: 70, y: 50), .ok)
-        XCTExpectFailure("[TEST-DEBT-001] only the inner tiles of a 4x4 or 6x6 building, and only the center of a 3x3 zone, can be bulldozed (the @bug note in bulldozerTool)") {
-            XCTAssertEqual(engine.apply(.bulldozer, x: 49, y: 49), .ok, "stadium corner")
-            XCTAssertEqual(engine.apply(.bulldozer, x: 69, y: 50), .ok, "house edge")
+        XCTAssertEqual(engine.apply(.bulldozer, x: 49, y: 49), .ok, "stadium corner")
+        XCTAssertEqual(engine.apply(.bulldozer, x: 69, y: 50), .ok, "house edge")
+    }
+
+    func testBulldozingAnOuterTileWithoutFundsIsAtomic() {
+        for (tool, _) in buildings {
+            let engine = F.engine()
+            XCTAssertEqual(engine.apply(tool, x: 50, y: 50), .ok)
+            engine.setFunds(0)
+            let map = engine.mapSnapshot()
+            XCTAssertEqual(engine.apply(.bulldozer, x: 49, y: 49), .noMoney, "\(tool)")
+            XCTAssertEqual(engine.funds, 0)
+            XCTAssertEqual(engine.mapSnapshot(), map, "\(tool)")
         }
     }
 
-    func testBulldozingAnOuterTileChangesNothingAndCostsNothing() {
+    func testBuildingDemolitionAtAllFourMapCorners() {
+        for (tool, size) in buildings {
+            let corners = [(1, 1, 0, 0), (Engine.width - size + 1, 1, size - 1, 0),
+                           (1, Engine.height - size + 1, 0, size - 1),
+                           (Engine.width - size + 1, Engine.height - size + 1, size - 1, size - 1)]
+            for (cx, cy, dx, dy) in corners {
+                let engine = F.engine()
+                XCTAssertEqual(engine.apply(tool, x: cx, y: cy), .ok)
+                engine.setFunds(1)
+                XCTAssertEqual(engine.apply(.bulldozer, x: cx - 1 + dx, y: cy - 1 + dy), .ok, "\(tool) at (\(cx),\(cy))")
+                XCTAssertEqual(engine.funds, 0)
+                let footprint = Set(((cx - 1)..<(cx - 1 + size)).flatMap { x in
+                    ((cy - 1)..<(cy - 1 + size)).map { y in x * Engine.height + y }
+                })
+                let occupied = Set(engine.mapSnapshot().enumerated().compactMap { $0.element != 0 ? $0.offset : nil })
+                XCTAssertEqual(occupied, footprint, "\(tool) damaged tiles outside its footprint")
+                for x in (cx - 1)..<(cx - 1 + size) { for y in (cy - 1)..<(cy - 1 + size) {
+                    XCTAssertTrue(isExplosion(engine, x, y))
+                } }
+            }
+        }
+    }
+
+    func testAdjacentBuildingIsNotDemolished() {
+        let engine = F.engine()
+        XCTAssertEqual(engine.apply(.residential, x: 50, y: 50), .ok)
+        XCTAssertEqual(engine.apply(.airport, x: 53, y: 50), .ok)
+        let neighbor = (49...51).flatMap { x in (49...51).map { engine.tile(x: x, y: $0) } }
+        XCTAssertEqual(engine.apply(.bulldozer, x: 52, y: 49), .ok)
+        XCTAssertEqual((49...51).flatMap { x in (49...51).map { engine.tile(x: x, y: $0) } }, neighbor)
+        for x in 52...57 { for y in 49...54 {
+            XCTAssertTrue(isExplosion(engine, x, y))
+        } }
+    }
+
+    func testRoadOutsideBuildingFootprintDoesNotDemolishIt() {
         let engine = F.engine()
         XCTAssertEqual(engine.apply(.coalPower, x: 50, y: 50), .ok)
-        let (funds, map) = (engine.funds, engine.mapSnapshot())
-        XCTAssertEqual(engine.apply(.bulldozer, x: 49, y: 49), .failed)
-        XCTAssertEqual(engine.funds, funds)
-        XCTAssertEqual(engine.mapSnapshot(), map)
+        F.put(engine, 53, 50, 66, flags: F.bulldozable)
+        var expected = engine.mapSnapshot()
+        expected[53 * Engine.height + 50] = 0
+        let funds = engine.funds
+        XCTAssertEqual(engine.apply(.bulldozer, x: 53, y: 50), .ok)
+        XCTAssertEqual(engine.mapSnapshot(), expected)
+        XCTAssertEqual(engine.funds, funds - 1)
+    }
+
+    func testAnimatedTilesStillBelongToTheirBuilding() {
+        var cases: [(tool: Tool, size: Int, frame: Int, dx: Int, dy: Int)] = []
+        for frame in 916...931 { // Four coal chimneys, four frames each.
+            let chimney = (frame - 916) / 4
+            cases.append((.coalPower, 4, frame, 1 + chimney % 2, -1 + chimney / 2))
+        }
+        for frame in 832...839 { cases.append((.airport, 6, frame, 1, -1)) }
+        for frame in 932...947 { cases.append((.stadium, 4, frame, 1, frame < 940 ? 0 : 1)) }
+        for (tool, size, frame, dx, dy) in cases {
+            let engine = F.engine()
+            XCTAssertEqual(engine.apply(tool, x: 50, y: 50), .ok)
+            if tool == .stadium {
+                F.put(engine, 50, 50, 800, flags: F.zoneCenter | F.burnable | F.conductive)
+            }
+            F.put(engine, 50 + dx, 50 + dy, frame, flags: F.animated | F.burnable | F.conductive)
+            let funds = engine.funds
+            XCTAssertEqual(engine.apply(.bulldozer, x: 50 + dx, y: 50 + dy), .ok, "frame \(frame)")
+            XCTAssertEqual(engine.funds, funds - 1)
+            for x in 49..<(49 + size) { for y in 49..<(49 + size) {
+                XCTAssertTrue(isExplosion(engine, x, y), "frame \(frame) left (\(x),\(y))")
+            } }
+        }
+    }
+
+    func testResidentialHouseTilesUseTheOwningZone() {
+        for tile in 249...260 {
+            let engine = F.engine()
+            XCTAssertEqual(engine.apply(.residential, x: 50, y: 50), .ok)
+            F.put(engine, 51, 50, tile, flags: F.bulldozable | F.burnable)
+            XCTAssertEqual(engine.apply(.bulldozer, x: 51, y: 50), .ok)
+            for x in 49...51 { for y in 49...51 {
+                XCTAssertTrue(isExplosion(engine, x, y), "house \(tile) left (\(x),\(y))")
+            } }
+        }
     }
 
     /// A water tile that carries the bulldozable flag can be dug out to dirt,

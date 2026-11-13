@@ -29,13 +29,15 @@ python3 -m unittest discover -s scripts -p 'test_*.py'
 
 ## What is tested
 
-Latest local verification (2026-11-12): 214 XCTest tests and 181 Swift Testing
-tests, including one opt-in benchmark skip, passed in about 110 seconds.
-At that snapshot, four known issues were tracked as expected failures;
-`TEST-DEBT-002` through `TEST-DEBT-004` were subsequently resolved (see below). The detailed target
-inventory below is an older snapshot and does not include all recent additions.
+Latest isolated verification (2026-11-13): 227 XCTest tests and 186 Swift Testing
+tests, including one opt-in benchmark skip, passed in about two minutes.
+This used the committed app plus the bulldozer fix, separate from in-progress
+graphics edits. All four original expected failures are resolved. The engine
+coverage gate passed with 7,032 executable lines and zero unexcluded misses.
+The detailed target inventory below is an older snapshot and does not include
+all recent additions.
 
-The CI-equivalent atomic-counter run passed the engine coverage gate with
+The earlier 2026-11-12 atomic-counter run passed the engine coverage gate with
 7,096 executable lines and zero unexcluded misses. The broad mixed-language
 report measured 94.77% line coverage; its denominator differs from the dedicated
 engine gate and includes app code and unreachable paths.
@@ -161,13 +163,22 @@ false 0% app report. The script refuses to report if its known-covered
 ## Expected failures
 
 Expected failures document known user-visible defects. They must include a
-stable `TEST-DEBT-*` identifier in the test and remain in this table until the
+stable `TEST-DEBT-*` identifier in the test and remain listed here until the
 test passes without its expected-failure wrapper. There is no configured issue
 tracker on this branch, so these identifiers are the local tracking reference.
 
-| ID | Tests | Current behavior | Remove the expected failure when |
-|----|-------|------------------|---------------------------------|
-| `TEST-DEBT-001` | `BigBuildingToolTests.testBulldozingTheEdgeOfABuildingShouldLevelIt` | Only inner tiles of 4×4/6×6 buildings and the center of 3×3 zones can be bulldozed. | A click on any building-footprint tile levels the complete building with the correct cost and effects. |
+There are no active expected failures. The four original debt IDs are retained
+below as resolution history.
+
+Resolved on 2026-11-13: **`TEST-DEBT-001` — building-edge bulldozing.** The
+bulldozer finds a marked zone center whose footprint contains the clicked tile,
+instead of recognizing only selected inner-tile graphics. A bounded lookup
+covers 3x3, 4x4 and 6x6 buildings, including houses and smoke/radar/football
+animations. The existing missing-marker fallback for known large-building
+center tiles remains. Tests exercise all 145 footprint positions across ten
+buildable types, map corners, adjacent buildings, nearby roads, animation
+frames, exact funds and insufficient-funds atomicity. Whole-building demolition
+still costs $1 and keeps its size-specific sound effects.
 
 Resolved on 2026-11-13: **`TEST-DEBT-004` — city display names.** New City now
 keeps the player's trimmed spelling after the engine's synchronous canonical
@@ -190,8 +201,7 @@ and shore tiles drain for free; bare dirt is rejected as a no-op. Non-water
 tiles that cannot be bulldozed remain intact. Tests cover road cost, exact and
 insufficient funds, water tile IDs 2–20 with and without the bulldozable flag,
 trees, bridges, building-center demolition, protected tiles, and map bounds.
-The road regression no longer carries an expected-failure wrapper. Only
-`TEST-DEBT-001` remains in the table above.
+The road regression no longer carries an expected-failure wrapper.
 
 ## Known issues and gaps
 
