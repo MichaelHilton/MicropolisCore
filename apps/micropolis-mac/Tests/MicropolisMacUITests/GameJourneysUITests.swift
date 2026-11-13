@@ -44,6 +44,8 @@ final class GameJourneysUITests: XCTestCase {
         choose("system.newCity", from: "menu.system")
         let name = app.textFields["newCity.name"]
         XCTAssertTrue(name.waitForExistence(timeout: 5))
+        app.activate()
+        waitFor("exists == true AND hittable == true", on: name)
         name.click()
         name.typeKey("a", modifierFlags: .command)
         name.typeText("UI Test_City-West")
