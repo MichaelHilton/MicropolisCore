@@ -4,6 +4,8 @@ enum GraphicsPackage: String, CaseIterable, Identifiable {
     case classic
     case retroSquare
     case handInked
+    case plannersMap
+    case toyBlocks
 
     var id: String { rawValue }
     var title: String {
@@ -11,9 +13,24 @@ enum GraphicsPackage: String, CaseIterable, Identifiable {
         case .classic: "Classic"
         case .retroSquare: "Retro Borough (Preview)"
         case .handInked: "Hand-inked Town (Preview)"
+        case .plannersMap: "Planner's Map (Preview)"
+        case .toyBlocks: "Toy Blocks (Preview)"
         }
     }
 
+    /// Code-drawn packages built from the classic atlas's tile layout.
+    var proceduralStyle: ProceduralTileStyle? {
+        switch self {
+        case .plannersMap: .plannersMap
+        case .toyBlocks: .toyBlocks
+        default: nil
+        }
+    }
+
+    /// Painted and vector-style art scales smoothly; pixel art keeps hard edges.
+    var smoothScaling: Bool {
+        self == .handInked || proceduralStyle != nil
+    }
 
     static let preferenceKey = "graphicsPackage"
 

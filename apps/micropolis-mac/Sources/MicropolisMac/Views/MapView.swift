@@ -156,8 +156,8 @@ class MapNSView: NSView, NSPopoverDelegate {
     func updateMap() {
         guard gameModel.mapVersion != lastMapVersion else { return }
         lastMapVersion = gameModel.mapVersion
-        contentLayer?.magnificationFilter = gameModel.graphicsPackage == .handInked ? .linear : .nearest
-        contentLayer?.minificationFilter = gameModel.graphicsPackage == .handInked ? .linear : .nearest
+        contentLayer?.magnificationFilter = gameModel.graphicsPackage.smoothScaling ? .linear : .nearest
+        contentLayer?.minificationFilter = gameModel.graphicsPackage.smoothScaling ? .linear : .nearest
         toolOutline.borderColor = NSColor(gameModel.graphicsPackage == .retroSquare ? Retro.cyan : DOS.lightBlue).cgColor
 
         let cells = gameModel.engine.mapSnapshot()

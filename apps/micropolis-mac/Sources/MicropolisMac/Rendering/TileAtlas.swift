@@ -29,6 +29,8 @@ final class TileAtlas {
             image = try RetroAtlasBuilder.makeImage(classic: cgImage)
         case .handInked:
             image = cgImage
+        case .plannersMap, .toyBlocks:
+            image = try ProceduralAtlasBuilder.makeImage(style: graphics.proceduralStyle!, classic: cgImage)
         }
         self.tileSize = image.width / tilesPerRow
 

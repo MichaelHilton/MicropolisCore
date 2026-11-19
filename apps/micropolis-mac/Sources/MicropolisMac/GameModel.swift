@@ -153,6 +153,7 @@ final class GameModel: EngineDelegate {
         do {
             let url = atlasURL ?? (package == .handInked ? Assets.handInkedAtlas() : Assets.tileAtlas)
             let atlas = try TileAtlas(atlasURL: url, graphics: package)
+            try spriteRenderer.setGraphics(package)
             tileAtlas = atlas
             renderer = MapRenderer(tileAtlas: atlas)
             graphicsPackage = package
