@@ -128,6 +128,7 @@ struct Stepper2: View {
             arrow("▲", +1, "increase")
             Text(label)
                 .frame(minWidth: 52, alignment: .trailing)
+                .accessibilityIdentifier(UIIdentifier.budget("\(identifier).value"))
                 .foregroundColor(DOS.white)
                 .background(DOS.blue)
             arrow("▼", -1, "decrease")

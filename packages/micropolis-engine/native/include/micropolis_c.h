@@ -80,6 +80,8 @@ int  mp_is_paused(MPEngine *e);
 void mp_set_auto_budget(MPEngine *e, int enable);
 void mp_set_auto_bulldoze(MPEngine *e, int enable);
 void mp_set_enable_disasters(MPEngine *e, int enable);
+void mp_set_enable_sound(MPEngine *e, int enable);
+int  mp_enable_sound(MPEngine *e);
 int  mp_passes(MPEngine *e);
 int  mp_speed(MPEngine *e);                         /* the speed last set; 0 while paused */
 int  mp_auto_budget(MPEngine *e);

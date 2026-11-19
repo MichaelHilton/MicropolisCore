@@ -30,6 +30,7 @@ struct MapsView: View {
         // The full city image is large, so redraw a few times a second at most.
         .onChange(of: model.mapVersion / 10) { redraw() }
         .onChange(of: model.mapOverlay) { redraw() }
+        .onChange(of: model.graphicsPackage) { redraw() }
     }
 
     private var buttonColumn: some View {
@@ -82,6 +83,9 @@ struct MapsView: View {
         }
         .frame(width: mapSize.width, height: mapSize.height)
         .clipped()
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("City overview")
+        .accessibilityIdentifier("map.overview")
         .overlay(Rectangle().stroke(DOS.white, lineWidth: 2))
         .padding(4)
         .contentShape(Rectangle())

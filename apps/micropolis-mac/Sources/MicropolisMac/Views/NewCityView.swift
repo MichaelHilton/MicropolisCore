@@ -34,6 +34,7 @@ struct NewCityView: View {
                 .buttonStyle(.plain)
                 .padding(.leading, 40)
                 .accessibilityIdentifier("newCity.level.\(option.rawValue)")
+                .accessibilityValue(level == option ? "1" : "0")
             }
 
             Button {

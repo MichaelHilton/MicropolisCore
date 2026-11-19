@@ -7,16 +7,16 @@ final class MapRenderer {
     private var lastCells: [UInt16]
     private(set) var lastRedrawCount: Int = 0
 
-    private let width = 1920
-    private let height = 1600
+    private var width: Int { mapWidth * tileSize }
+    private var height: Int { mapHeight * tileSize }
     private let mapWidth = 120
     private let mapHeight = 100
-    private let tileSize = 16
+    private var tileSize: Int { tileAtlas.tileSize }
     private let bytesPerPixel = 4
 
     init(tileAtlas: TileAtlas) {
         self.tileAtlas = tileAtlas
-        self.pixelBuffer = [UInt8](repeating: 0, count: 1920 * 1600 * 4)
+        self.pixelBuffer = [UInt8](repeating: 0, count: 120 * 100 * tileAtlas.tileSize * tileAtlas.tileSize * 4)
         self.lastCells = [UInt16](repeating: 0xFFFF, count: 120 * 100)
     }
 
@@ -32,7 +32,7 @@ final class MapRenderer {
                 let currentCell = cells[cellIndex] & 0x3FF
                 let lastCell = lastCells[cellIndex] & 0x3FF
 
-                if currentCell != lastCell {
+                if lastCells[cellIndex] == 0xFFFF || currentCell != lastCell {
                     redrawCount += 1
                     copyTile(x: x, y: y, tileIndex: Int(currentCell), atlasBytes: atlasBytes)
                     lastCells[cellIndex] = cells[cellIndex]
@@ -51,7 +51,7 @@ final class MapRenderer {
         let pixelY = y * tileSize
 
         for row in 0..<tileSize {
-            let atlasOffset = (tileY + row) * 512 * bytesPerPixel + tileX * bytesPerPixel
+            let atlasOffset = (tileY + row) * (32 * tileSize) * bytesPerPixel + tileX * bytesPerPixel
             let bufferOffset = (pixelY + row) * width * bytesPerPixel + pixelX * bytesPerPixel
 
             guard atlasOffset + tileSize * bytesPerPixel <= atlasBytes.count else { continue }

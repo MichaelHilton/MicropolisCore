@@ -32,7 +32,9 @@ struct AboutPanelContent: Equatable {
 @Observable
 final class GameModel: EngineDelegate {
     let engine = Engine()
-    let tileAtlas: TileAtlas
+    private(set) var tileAtlas: TileAtlas
+    private(set) var graphicsPackage: GraphicsPackage = .classic
+    var graphicsError: String?
     var renderer: MapRenderer!  // Initialized in init after tileAtlas
     let spriteRenderer = SpriteRenderer()
     let sound: SoundPlaying
@@ -68,7 +70,12 @@ final class GameModel: EngineDelegate {
     var autoBulldoze: Bool = true { didSet { engine.setAutoBulldoze(autoBulldoze) } }
     var autoBudget: Bool = false { didSet { engine.setAutoBudget(autoBudget) } }
     var autoGoto: Bool = true
-    var soundOn: Bool = true { didSet { sound.soundEnabled = soundOn } }
+    var soundOn: Bool = true {
+        didSet {
+            sound.soundEnabled = soundOn
+            engine.setSoundEnabled(soundOn)
+        }
+    }
     var animateAll: Bool = true { didSet { pushAnimation() } }
     var frequentAnimation: Bool = true { didSet { pushAnimation() } }
     var disastersEnabled: Bool = true { didSet { engine.setEnableDisasters(disastersEnabled) } }
@@ -140,6 +147,22 @@ final class GameModel: EngineDelegate {
         startTimer()
     }
 
+    /// Replace graphics only after the new package loads successfully. Simulation and city data stay intact.
+    func setGraphicsPackage(_ package: GraphicsPackage, atlasURL: URL? = nil) {
+        guard package != graphicsPackage else { return }
+        do {
+            let url = atlasURL ?? (package == .handInked ? Assets.handInkedAtlas() : Assets.tileAtlas)
+            let atlas = try TileAtlas(atlasURL: url, graphics: package)
+            tileAtlas = atlas
+            renderer = MapRenderer(tileAtlas: atlas)
+            graphicsPackage = package
+            graphicsError = nil
+            mapVersion += 1
+        } catch {
+            graphicsError = "Could not load \(package.title): \(error.localizedDescription)"
+        }
+    }
+
     private func startTimer() {
         let intervals: [TimeInterval] = [0, 0.1, 0.05, 1.0 / 30.0, 1.0 / 30.0]
         let interval = intervals[min(speed, 3)]
@@ -189,6 +212,7 @@ final class GameModel: EngineDelegate {
     }
 
     internal func frame() {
+        ButtonInventorySupport.didAdvanceFrame(engine)
         let passes = [1, 1, 1, 4][min(max(speed, 1) - 1, 3)]
         for _ in 0..<passes {
             engine.tick()
@@ -204,6 +228,10 @@ final class GameModel: EngineDelegate {
 
     /// Re-reads everything the windows show after the city is replaced.
     private func refreshCityState() {
+        // A saved city can carry its own engine sound flag; the current UI
+        // option controls both delivery from the engine and audio playback.
+        engine.setSoundEnabled(soundOn)
+        sound.soundEnabled = soundOn
         year = engine.year
         month = engine.month
         funds = engine.funds
@@ -313,6 +341,7 @@ final class GameModel: EngineDelegate {
     func printMap() {
         renderer.update(cells: engine.mapSnapshot())
         guard let image = renderer.makeImage() else { return }
+        ButtonInventorySupport.didPreparePrintImage(image)
         let size = NSSize(width: image.width, height: image.height)
         let imageView = NSImageView(frame: NSRect(origin: .zero, size: size))
         imageView.image = NSImage(cgImage: image, size: size)
@@ -562,7 +591,7 @@ final class GameModel: EngineDelegate {
         }
     }
     func engineUpdateTaxRate(tax: Int) {}
-    func engineStartEarthquake(strength: Int) {}
+    func engineStartEarthquake(strength: Int) { ButtonInventorySupport.didStartEarthquake() }
     func engineDidWinGame() {
         outcome = .won
     }

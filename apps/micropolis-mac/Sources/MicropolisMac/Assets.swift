@@ -32,6 +32,10 @@ enum Assets {
         root.appendingPathComponent("tiles/classic.png")
     }
 
+    static func handInkedAtlas(tileSize: Int = 32) -> URL {
+        root.appendingPathComponent("tiles/hand-inked/atlas-\(tileSize).png")
+    }
+
     static func spriteSheet(_ name: String) -> URL {
         root.appendingPathComponent("sprites/classic-sprite-\(name).png")
     }

@@ -34,7 +34,7 @@ struct EvaluationView: View {
                 VStack(spacing: 8) {
                     heading("STATISTICS")
                     box {
-                        row("Population", eval.population.formatted())
+                        row("Population", eval.population.formatted(), valueIdentifier: "evaluation.population")
                         row("Net Migration", eval.populationDelta.formatted())
                         Text("(last year)").font(DOS.font(10))
                         row("Assessed Value", "$" + eval.assessedValue.formatted())
@@ -43,7 +43,7 @@ struct EvaluationView: View {
                         Text("Overall CityScore").frame(maxWidth: .infinity)
                         Text("(0 - 1000)").font(DOS.font(10)).frame(maxWidth: .infinity)
                         row("current score:", "annual change")
-                        row("    \(eval.score)", "\(eval.scoreDelta)    ")
+                        row("    \(eval.score)", "\(eval.scoreDelta)    ", labelIdentifier: "evaluation.score")
                     }
                 }
             }
@@ -72,11 +72,14 @@ struct EvaluationView: View {
             .overlay(Rectangle().stroke(DOS.lightBlue, lineWidth: 3))
     }
 
-    private func row(_ label: String, _ value: String) -> some View {
+    private func row(_ label: String, _ value: String,
+                     labelIdentifier: String = "", valueIdentifier: String = "") -> some View {
         HStack {
             Text(label)
+                .accessibilityIdentifier(labelIdentifier)
             Spacer()
             Text(value)
+                .accessibilityIdentifier(valueIdentifier)
         }
     }
 }

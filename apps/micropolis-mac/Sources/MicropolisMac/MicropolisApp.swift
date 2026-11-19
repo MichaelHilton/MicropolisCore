@@ -61,21 +61,29 @@ struct ContentView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HUDView()
+            if model.graphicsPackage == .retroSquare { RetroHUDView() } else { HUDView() }
             HStack(spacing: 0) {
                 if model.editMode == .terrain {
                     TerrainPalette()
+                } else if model.graphicsPackage == .retroSquare {
+                    RetroToolPalette()
                 } else {
                     ToolPalette()
                 }
                 VStack(spacing: 0) {
                     MapView(gameModel: model)
-                    StatusLine()
+                    if model.graphicsPackage == .retroSquare { RetroStatusLine() } else { StatusLine() }
                 }
             }
         }
         .background(DOS.lightGray)
         .frame(minWidth: 800, minHeight: 600)
+        .alert("Graphics unavailable", isPresented: Binding(
+            get: { model.graphicsError != nil },
+            set: { if !$0 { model.graphicsError = nil } }
+        )) { Button("OK") { model.graphicsError = nil } } message: {
+            Text(model.graphicsError ?? "")
+        }
         .alert(outcomeTitle, isPresented: Binding(
             get: { model.outcome != nil },
             set: { if !$0 { model.outcome = nil } }

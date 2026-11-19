@@ -12,6 +12,9 @@ struct GraphsView: View {
     var body: some View {
         VStack(spacing: 0) {
             DOSWindowTitle(longRange ? "Last 120 years" : "Last 10 years")
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(longRange ? "Last 120 years" : "Last 10 years")
+                .accessibilityIdentifier("graph.rangeTitle")
             HStack(alignment: .top, spacing: 0) {
                 controls
                 chart
@@ -35,9 +38,11 @@ struct GraphsView: View {
                 Button { longRange = false } label: { DOSButtonLabel("10 YR", selected: !longRange) }
                     .buttonStyle(.plain)
                     .accessibilityIdentifier(UIIdentifier.graph("10Year"))
+                    .accessibilityValue(longRange ? "off" : "on")
                 Button { longRange = true } label: { DOSButtonLabel("120 YR", selected: longRange) }
                     .buttonStyle(.plain)
                     .accessibilityIdentifier(UIIdentifier.graph("120Year"))
+                    .accessibilityValue(longRange ? "on" : "off")
             }
         }
         .padding(4)
@@ -58,6 +63,7 @@ struct GraphsView: View {
         .buttonStyle(.plain)
         .help(GraphSeries.name(kind))
         .accessibilityIdentifier(UIIdentifier.graph(GraphSeries.shortName(kind)))
+        .accessibilityValue(shown.contains(kind) ? "on" : "off")
     }
 
     private var chart: some View {
@@ -73,6 +79,9 @@ struct GraphsView: View {
             }
             .frame(width: 360, height: 180)
             .background(DOS.white)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("City history chart")
+            .accessibilityIdentifier("graph.chart")
             HStack {
                 ForEach(Array(GraphSeries.yearLabels(year: model.year, longRange: longRange).enumerated()), id: \.offset) { i, label in
                     if i > 0 { Spacer() }

@@ -43,7 +43,33 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: org.micropolis.MicropolisMacUITests
         TEST_TARGET_NAME: MicropolisUITestHost
+  MicropolisButtonInventoryUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources:
+      - path: Tests/MicropolisButtonInventoryUITests
+    dependencies:
+      - target: MicropolisUITestHost
+    info:
+      path: Tests/MicropolisButtonInventoryUITests/Info.plist
+      properties:
+        CFBundleIdentifier: org.micropolis.MicropolisButtonInventoryUITests
+        CFBundlePackageType: BNDL
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.micropolis.MicropolisButtonInventoryUITests
+        TEST_TARGET_NAME: MicropolisUITestHost
 schemes:
+  MicropolisButtonInventory:
+    build:
+      targets:
+        MicropolisUITestHost: all
+        MicropolisButtonInventoryUITests: [test]
+    test:
+      targets:
+        - MicropolisButtonInventoryUITests
+      captureScreenshotsAutomatically: true
+      deleteScreenshotsWhenEachTestSucceeds: false
   MicropolisUITests:
     build:
       targets:

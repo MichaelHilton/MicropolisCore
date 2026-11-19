@@ -29,8 +29,8 @@ struct MapView: NSViewRepresentable {
 
 class MapNSView: NSView, NSPopoverDelegate {
     let gameModel: GameModel
-    let renderer: MapRenderer
-    let tileAtlas: TileAtlas
+    var renderer: MapRenderer { gameModel.renderer }
+    var tileAtlas: TileAtlas { gameModel.tileAtlas }
 
     var offset = CGPoint.zero
     var zoom: CGFloat = 1.0 {
@@ -54,8 +54,6 @@ class MapNSView: NSView, NSPopoverDelegate {
 
     init(gameModel: GameModel) {
         self.gameModel = gameModel
-        self.renderer = gameModel.renderer
-        self.tileAtlas = gameModel.tileAtlas
         super.init(frame: .zero)
 
         wantsLayer = true
@@ -67,6 +65,7 @@ class MapNSView: NSView, NSPopoverDelegate {
         clipsToBounds = true
         layer?.masksToBounds = true
 
+        if gameModel.graphicsPackage != .classic { zoom = 2 }
         setupLayers()
         addTrackingArea(NSTrackingArea(
             rect: .zero,
@@ -94,15 +93,17 @@ class MapNSView: NSView, NSPopoverDelegate {
         self.mapLayer = mapLayer
 
         let contentLayer = CALayer()
+        contentLayer.magnificationFilter = .nearest
+        contentLayer.minificationFilter = .nearest
         mapLayer.addSublayer(contentLayer)
         self.contentLayer = contentLayer
 
         let spriteLayer = CALayer()
-        layer?.addSublayer(spriteLayer)
+        mapLayer.addSublayer(spriteLayer)
         self.spriteLayer = spriteLayer
 
         // Like DOS: an unfilled box the size of what the tool builds.
-        toolOutline.borderColor = NSColor(DOS.lightBlue).cgColor
+        toolOutline.borderColor = NSColor(gameModel.graphicsPackage == .retroSquare ? Retro.cyan : DOS.lightBlue).cgColor
         toolOutline.borderWidth = 2
         toolOutline.isHidden = true
         toolOutline.actions = ["position": NSNull(), "bounds": NSNull(), "hidden": NSNull()]
@@ -155,12 +156,15 @@ class MapNSView: NSView, NSPopoverDelegate {
     func updateMap() {
         guard gameModel.mapVersion != lastMapVersion else { return }
         lastMapVersion = gameModel.mapVersion
+        contentLayer?.magnificationFilter = gameModel.graphicsPackage == .handInked ? .linear : .nearest
+        contentLayer?.minificationFilter = gameModel.graphicsPackage == .handInked ? .linear : .nearest
+        toolOutline.borderColor = NSColor(gameModel.graphicsPackage == .retroSquare ? Retro.cyan : DOS.lightBlue).cgColor
 
         let cells = gameModel.engine.mapSnapshot()
         renderer.update(cells: cells)
 
         if let image = renderer.makeImage() {
-            mapLayer?.contents = image
+            contentLayer?.contents = image
         }
 
         let sprites = gameModel.engine.sprites()
@@ -168,6 +172,11 @@ class MapNSView: NSView, NSPopoverDelegate {
             gameModel.spriteRenderer.updateSprites(sprites, in: spriteLayer)
         }
 
+        updateLayout()
+    }
+
+    override func layout() {
+        super.layout()
         updateLayout()
     }
 
@@ -187,7 +196,8 @@ class MapNSView: NSView, NSPopoverDelegate {
 
         mapLayer?.frame = bounds
         contentLayer?.frame = CGRect(x: -offset.x, y: -offset.y, width: mapWidth, height: mapHeight)
-        contentLayer?.contents = mapLayer?.contents
+        spriteLayer?.frame = contentLayer?.frame ?? .zero
+        spriteLayer?.sublayerTransform = CATransform3DMakeScale(zoom, zoom, 1)
         updateToolOutline()
         publishVisibleTiles()
     }
@@ -318,7 +328,7 @@ class MapNSView: NSView, NSPopoverDelegate {
         popover.contentViewController = NSHostingController(rootView: ZoneStatusPopover(
             info: info, onClose: { [weak self] in self?.closeZoneStatus() }))
         queryPopover = popover
-        let size = CGFloat(tileAtlas.tileSize) * zoom
+        let size = 16 * zoom
         let tileRect = NSRect(x: CGFloat(tile.x) * size - offset.x,
                               y: CGFloat(tile.y) * size - offset.y,
                               width: size, height: size)

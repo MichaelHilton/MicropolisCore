@@ -29,7 +29,12 @@ python3 -m unittest discover -s scripts -p 'test_*.py'
 
 ## What is tested
 
-Latest isolated verification (2026-11-13): 227 XCTest tests and 186 Swift Testing
+Latest working-copy verification (2026-11-13): 227 XCTest tests and 201 Swift
+Testing tests passed after the sound-option fix. Engine line coverage remains
+100% across 7,038 executable lines. This includes the current graphics work and
+the new inventory fixture tests.
+
+Earlier isolated verification (2026-11-13): 227 XCTest tests and 186 Swift Testing
 tests, including one opt-in benchmark skip, passed in about two minutes.
 This used the committed app plus the bulldozer fix, separate from in-progress
 graphics edits. All four original expected failures are resolved. The engine
@@ -134,6 +139,40 @@ rather than sleeping. The UI suite is not yet part of the hosted CI workflow.
 The road journey exposed deferred HUD/map refresh while paused. A matching unit
 regression checks that successful tools immediately publish funds and map
 changes, while failed tools preserve both.
+
+## Optional button inventory suite
+
+The separate `MicropolisButtonInventory` scheme contains one named UI test for
+each of the 139 rows in [the button inventory](apps/micropolis-mac/BUTTON-INVENTORY.md).
+It is excluded from SwiftPM, the eight-test desktop journey scheme, and normal
+CI runs. It requires an idle desktop and is intended for explicit interface or
+release checks:
+
+```bash
+cd apps/micropolis-mac
+bash scripts/run-button-inventory-tests.sh
+bash scripts/run-button-inventory-tests.sh --build-only
+```
+
+The runner checks that every inventory row maps to a distinct test method,
+executes serially, and retains its result bundle. Fixtures isolate preferences
+and temporary cities. Tests use actual controls and native dialogs, with
+read-only observations for engine state. Native menu marks are checked from
+the item screenshot because XCTest does not expose their checked state through
+its generic value or selected properties on the tested macOS version. Cropped
+mark images and contrast measurements are retained for diagnosis.
+
+The suite found a sound-option defect: loading a city with sound disabled in
+its saved engine settings left the engine silent even after enabling Sound On
+in the UI. The option now controls both the engine flag and audio sink, and
+city loads retain the current UI sound choice. A deterministic air-crash test
+checks delivery of `ExplosionHigh` only while enabled.
+
+Desktop verification on 2026-11-13 exercised all 139 named methods, each with a
+latest passing result after the initial run and focused reruns. This was not a
+single uninterrupted green full-suite run. The inventory records the remaining
+acceptance work, including reviewed rendering references and the complete
+native-menu/shortcut matrix.
 
 ## Coverage baseline
 

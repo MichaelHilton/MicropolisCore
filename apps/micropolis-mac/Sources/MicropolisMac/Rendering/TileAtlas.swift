@@ -2,7 +2,7 @@ import CoreGraphics
 import CoreImage
 
 final class TileAtlas {
-    let tileSize: Int = 16
+    let tileSize: Int
     let tilesPerRow: Int = 32
     let tileCount: Int = 1024
 
@@ -10,23 +10,35 @@ final class TileAtlas {
     private var atlasBytes: [UInt8]
     private var buildingCache: [Int: CGImage] = [:]
 
-    init(atlasURL: URL) throws {
+    init(atlasURL: URL, graphics: GraphicsPackage = .classic) throws {
         guard let imageSource = CGImageSourceCreateWithURL(atlasURL as CFURL, nil),
               let cgImage = CGImageSourceCreateImageAtIndex(imageSource, 0, nil) else {
             throw TileAtlasError.failedToLoadImage
         }
 
-        guard cgImage.width == 512 && cgImage.height == 512 else {
+        let validEdges = graphics == .handInked ? [1024, 2048] : [512]
+        guard cgImage.width == cgImage.height && validEdges.contains(cgImage.width) else {
             throw TileAtlasError.invalidSize
         }
 
+        let image: CGImage
+        switch graphics {
+        case .classic:
+            image = cgImage
+        case .retroSquare:
+            image = try RetroAtlasBuilder.makeImage(classic: cgImage)
+        case .handInked:
+            image = cgImage
+        }
+        self.tileSize = image.width / tilesPerRow
+
         // Extract raw RGBA bytes
-        self.atlasBytes = try Self.extractBytes(from: cgImage)
+        self.atlasBytes = try Self.extractBytes(from: image)
 
         // Create and cache all tile images
         var tiles: [CGImage] = []
         for tileIndex in 0..<tileCount {
-            let tile = try Self.cropTile(from: cgImage, index: tileIndex)
+            let tile = try Self.cropTile(from: image, index: tileIndex)
             tiles.append(tile)
         }
         self.tileImages = tiles
@@ -73,9 +85,10 @@ final class TileAtlas {
     }
 
     private static func cropTile(from atlas: CGImage, index: Int) throws -> CGImage {
-        let x = (index % 32) * 16
-        let y = (index / 32) * 16
-        let cropRect = CGRect(x: x, y: y, width: 16, height: 16)
+        let edge = atlas.width / 32
+        let x = (index % 32) * edge
+        let y = (index / 32) * edge
+        let cropRect = CGRect(x: x, y: y, width: edge, height: edge)
 
         guard let croppedImage = atlas.cropping(to: cropRect) else {
             throw TileAtlasError.failedToCrop

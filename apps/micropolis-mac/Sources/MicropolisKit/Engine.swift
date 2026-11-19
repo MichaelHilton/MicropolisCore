@@ -348,6 +348,12 @@ public final class Engine {
         mp_enable_disasters(handle) != 0
     }
 
+    public func setSoundEnabled(_ enable: Bool) {
+        mp_set_enable_sound(handle, enable ? 1 : 0)
+    }
+
+    public var soundEnabled: Bool { mp_enable_sound(handle) != 0 }
+
     public func generateMap(seed: Int) {
         mp_generate_map(handle, Int32(seed))
     }

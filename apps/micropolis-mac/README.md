@@ -26,9 +26,30 @@ build fails without it.
 
 ## Tests
 
+### Background-safe tests
+
+These tests run without launching or controlling a real application window. They
+are safe to run while using this Mac, although a full run can use CPU:
+
 ```sh
 swift test
 ```
+
+### Exclusive-desktop UI tests
+
+The app itself is a SwiftPM executable, so its XCUITest runner is generated
+locally from `project.yml` rather than maintained as an Xcode project:
+
+```sh
+scripts/run-ui-tests.sh
+```
+
+This requires [XcodeGen](https://github.com/yonaskolb/XcodeGen). It launches
+and controls a real macOS app, including windows, menus, pointer gestures, and
+native panels. Run it only when the desktop is available, or preferably on a
+dedicated macOS CI runner or VM. The runner launches a fixed, paused Haight
+fixture with sound disabled and uses stable accessibility identifiers rather
+than screen coordinates.
 
 `MicropolisKitTests` exercises the engine wrapper (loading and generating
 cities, ticking, tools, taxes, saving, delegate callbacks, sprites, history).
@@ -97,3 +118,9 @@ Resize are ordinary macOS window dragging.
 
 Not done yet: packaging as a double-clickable `Micropolis.app` (Step 20 in
 [PLAN.md](PLAN.md)), a macOS CI job, and the items under "Later" in the plan.
+
+## Hand-inked Town graphics pilot
+
+The optional **Options → Appearance → Hand-inked Town (Preview)** package uses high-quality source masters with 32-pixel game exports; a 64-pixel candidate is also preserved. The current package replaces 828 tile slots, including the complete static residential, commercial and industrial families plus hospital, police, power plants, both stadium states, port, airport and all extended church variants, and explicitly retains Classic artwork for the unfinished families. The simulation and saved city remain unchanged when switching appearances.
+
+See [the pilot guide](../../content/micropolis/tilesets/hand-inked/PILOT.md) for source artwork, coverage, reproduction commands and review images. Run `scripts/sync-resources.sh` before rebuilding after regenerating the art package. Only runtime atlases and the coverage manifest are copied into the app; authoring masters stay in the source tree.

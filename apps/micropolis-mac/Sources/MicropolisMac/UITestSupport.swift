@@ -28,10 +28,19 @@ enum UITestLaunchConfiguration {
 
     @MainActor
     static func makeModel(environment: [String: String] = ProcessInfo.processInfo.environment) -> GameModel {
-        guard isEnabled(in: environment) else { return GameModel() }
-        let model = GameModel(city: Assets.city("haight"), seed: 1, runsTimer: false)
+        guard isEnabled(in: environment) else {
+            let model = GameModel()
+            let saved = UserDefaults.standard.string(forKey: GraphicsPackage.preferenceKey)
+            model.setGraphicsPackage(saved.flatMap(GraphicsPackage.init(rawValue:)) ?? .retroSquare)
+            return model
+        }
+        let inventory = environment["MICROPOLIS_INVENTORY_STATE"] != nil
+        let sound: SoundPlaying = inventory ? InventorySoundSink() : SoundManager.shared
+        let model = GameModel(city: Assets.city("haight"), sound: sound, seed: 1,
+                              runsTimer: environment["MICROPOLIS_INVENTORY_TIMERS"] == "1")
         model.setSpeed(0)
         model.soundOn = false
+        ButtonInventorySupport.configure(model, environment: environment)
         return model
     }
 }

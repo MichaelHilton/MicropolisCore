@@ -252,6 +252,14 @@ void mp_set_enable_disasters(MPEngine *e, int enable) {
     e->sim.setEnableDisasters(enable != 0);
 }
 
+void mp_set_enable_sound(MPEngine *e, int enable) {
+    e->sim.setEnableSound(enable != 0);
+}
+
+int mp_enable_sound(MPEngine *e) {
+    return e->sim.enableSound ? 1 : 0;
+}
+
 int mp_passes(MPEngine *e) {
     return e->sim.simPasses;
 }

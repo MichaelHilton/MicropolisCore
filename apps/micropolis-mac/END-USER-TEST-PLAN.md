@@ -6,6 +6,14 @@ control and assert an observable result.
 
 ## Principles
 
+- Keep two test lanes:
+  - **Background-safe:** `swift test`, including pure logic, engine/model,
+    rendering, off-screen `NSHostingView`, mocked panel, and temporary-file
+    tests. These must not launch or control a real application window.
+  - **Exclusive desktop:** `scripts/run-ui-tests.sh`, including every XCUITest,
+    live-map gesture, menu/window, native-panel, exit/hide/close, and live-app
+    screenshot test. Run this lane in a VM, CI runner, or otherwise idle user
+    session.
 - Use XCUITest in a new `MicropolisMacUITests` target.
 - Add stable accessibility identifiers to custom SwiftUI/AppKit controls. Do not
   locate image-only buttons or repeated arrow buttons by screen coordinates.
