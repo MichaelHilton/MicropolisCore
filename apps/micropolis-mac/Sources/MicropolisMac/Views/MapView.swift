@@ -103,7 +103,7 @@ class MapNSView: NSView, NSPopoverDelegate {
         self.spriteLayer = spriteLayer
 
         // Like DOS: an unfilled box the size of what the tool builds.
-        toolOutline.borderColor = NSColor(gameModel.graphicsPackage == .retroSquare ? Retro.cyan : DOS.lightBlue).cgColor
+        toolOutline.borderColor = NSColor(gameModel.graphicsPackage.chrome?.outline ?? DOS.lightBlue).cgColor
         toolOutline.borderWidth = 2
         toolOutline.isHidden = true
         toolOutline.actions = ["position": NSNull(), "bounds": NSNull(), "hidden": NSNull()]
@@ -158,7 +158,7 @@ class MapNSView: NSView, NSPopoverDelegate {
         lastMapVersion = gameModel.mapVersion
         contentLayer?.magnificationFilter = gameModel.graphicsPackage.smoothScaling ? .linear : .nearest
         contentLayer?.minificationFilter = gameModel.graphicsPackage.smoothScaling ? .linear : .nearest
-        toolOutline.borderColor = NSColor(gameModel.graphicsPackage == .retroSquare ? Retro.cyan : DOS.lightBlue).cgColor
+        toolOutline.borderColor = NSColor(gameModel.graphicsPackage.chrome?.outline ?? DOS.lightBlue).cgColor
 
         let cells = gameModel.engine.mapSnapshot()
         renderer.update(cells: cells)
@@ -326,7 +326,11 @@ class MapNSView: NSView, NSPopoverDelegate {
         popover.behavior = .transient
         popover.delegate = self
         popover.contentViewController = NSHostingController(rootView: ZoneStatusPopover(
-            info: info, onClose: { [weak self] in self?.closeZoneStatus() }))
+            info: info, onClose: { [weak self] in self?.closeZoneStatus() },
+            theme: gameModel.graphicsPackage.chrome))
+        if let theme = gameModel.graphicsPackage.chrome {
+            popover.appearance = NSAppearance(named: theme.windowScheme == .dark ? .darkAqua : .aqua)
+        }
         queryPopover = popover
         let size = 16 * zoom
         let tileRect = NSRect(x: CGFloat(tile.x) * size - offset.x,

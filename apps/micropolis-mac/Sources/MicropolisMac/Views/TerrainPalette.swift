@@ -39,11 +39,25 @@ struct TerrainPalette: View {
             Spacer(minLength: 0)
         }
         .padding(6)
-        .frame(width: 96)
-        .background(DOS.lightGray)
+        .frame(width: model.graphicsPackage.chrome == nil ? 96 : 126)
+        .background(model.graphicsPackage.chrome?.palette ?? DOS.lightGray)
     }
 
+    @ViewBuilder
     private func face(_ text: String, selected: Bool) -> some View {
+        if let theme = model.graphicsPackage.chrome {
+            Text(theme.label(text.capitalized)).font(theme.font(13))
+                .foregroundStyle(theme.buttonText)
+                .frame(width: 108, height: 34)
+                .background(theme.cornerShape.fill(selected ? theme.selectedFill : theme.button))
+                .overlay(theme.cornerShape.stroke(selected ? theme.selectedBorder : theme.buttonBorder,
+                                                  lineWidth: selected ? 2 : 1))
+        } else {
+            dosFace(text, selected: selected)
+        }
+    }
+
+    private func dosFace(_ text: String, selected: Bool) -> some View {
         Text(text)
             .font(DOS.font(14))
             .foregroundColor(DOS.white)

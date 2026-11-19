@@ -9,6 +9,7 @@ struct MapsView: View {
 
     @State private var cityImage: CGImage?
     @State private var overlayImage: CGImage?
+    private var theme: ChromeTheme? { model.graphicsPackage.chrome }
 
     private let tileScale: CGFloat = 3
     private var mapSize: CGSize {
@@ -23,8 +24,7 @@ struct MapsView: View {
                 mapArea
             }
         }
-        .background(DOS.lightGray)
-        .font(DOS.font())
+        .themedOrDOSWindow(theme)
         .fixedSize()
         .onAppear(perform: redraw)
         // The full city image is large, so redraw a few times a second at most.
@@ -55,14 +55,14 @@ struct MapsView: View {
 
     private var legend: some View {
         VStack(spacing: 2) {
-            Text("Max").font(DOS.font(10))
+            Text("Max").font(theme?.font(10) ?? DOS.font(10))
             LinearGradient(colors: (0...6).reversed().map { color(OverlayRenderer.ramp(Double($0) / 6)) },
                            startPoint: .top, endPoint: .bottom)
                 .frame(width: 20, height: 34)
                 .overlay(Rectangle().stroke(DOS.black, lineWidth: 1))
-            Text("Min").font(DOS.font(10))
+            Text("Min").font(theme?.font(10) ?? DOS.font(10))
         }
-        .foregroundColor(DOS.black)
+        .foregroundStyle(theme?.ink ?? DOS.black)
     }
 
     private var mapArea: some View {
@@ -71,7 +71,7 @@ struct MapsView: View {
             if let cityImage {
                 Image(decorative: cityImage, scale: 1)
                     .resizable()
-                    .interpolation(.medium)
+                    .interpolation(theme?.smoothIcons == true ? .high : .medium)
                     .opacity(model.mapOverlay == .cityForm ? 1 : 0.45)
             }
             if let overlayImage {
@@ -86,7 +86,7 @@ struct MapsView: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("City overview")
         .accessibilityIdentifier("map.overview")
-        .overlay(Rectangle().stroke(DOS.white, lineWidth: 2))
+        .overlay(Rectangle().stroke(theme?.cardBorder ?? DOS.white, lineWidth: theme == nil ? 2 : 1))
         .padding(4)
         .contentShape(Rectangle())
         .gesture(DragGesture(minimumDistance: 0).onChanged { value in
@@ -156,10 +156,22 @@ struct MapsView: View {
 /// the title in a white box.
 struct DOSWindowTitle: View {
     let title: String
+    @Environment(\.chromeTheme) private var theme
 
     init(_ title: String) { self.title = title }
 
     var body: some View {
+        if let theme {
+            Text(theme.label(title)).font(theme.font(14)).foregroundStyle(theme.heading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 10).padding(.vertical, 8)
+                .overlay(alignment: .bottom) { Rectangle().fill(theme.rule).frame(height: theme.raised ? 3 : 1) }
+        } else {
+            dosBody
+        }
+    }
+
+    private var dosBody: some View {
         Text(title)
             .foregroundColor(DOS.blue)
             .padding(.horizontal, 8)
@@ -175,6 +187,7 @@ struct DOSWindowTitle: View {
 struct DOSButtonLabel: View {
     let text: String
     let selected: Bool
+    @Environment(\.chromeTheme) private var theme
 
     init(_ text: String, selected: Bool = false) {
         self.text = text
@@ -182,6 +195,18 @@ struct DOSButtonLabel: View {
     }
 
     var body: some View {
+        if let theme {
+            Text(theme.label(text.capitalized)).font(theme.font(11)).foregroundStyle(theme.ink)
+                .frame(width: 58, height: 23)
+                .background(theme.cornerShape.fill(selected ? theme.selectedFill : theme.card))
+                .overlay(theme.cornerShape.stroke(selected ? theme.selectedBorder : theme.cardBorder,
+                                                  lineWidth: selected ? 1.5 : 1))
+        } else {
+            dosBody
+        }
+    }
+
+    private var dosBody: some View {
         Text(text)
             .font(DOS.font(11))
             .foregroundColor(DOS.black)

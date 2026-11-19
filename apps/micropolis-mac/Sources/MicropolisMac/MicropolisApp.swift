@@ -61,22 +61,22 @@ struct ContentView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if model.graphicsPackage == .retroSquare { RetroHUDView() } else { HUDView() }
+            if model.graphicsPackage.chrome != nil { RetroHUDView() } else { HUDView() }
             HStack(spacing: 0) {
                 if model.editMode == .terrain {
                     TerrainPalette()
-                } else if model.graphicsPackage == .retroSquare {
+                } else if model.graphicsPackage.chrome != nil {
                     RetroToolPalette()
                 } else {
                     ToolPalette()
                 }
                 VStack(spacing: 0) {
                     MapView(gameModel: model)
-                    if model.graphicsPackage == .retroSquare { RetroStatusLine() } else { StatusLine() }
+                    if model.graphicsPackage.chrome != nil { RetroStatusLine() } else { StatusLine() }
                 }
             }
         }
-        .background(DOS.lightGray)
+        .background(model.graphicsPackage.chrome?.palette ?? DOS.lightGray)
         .frame(minWidth: 800, minHeight: 600)
         .alert("Graphics unavailable", isPresented: Binding(
             get: { model.graphicsError != nil },

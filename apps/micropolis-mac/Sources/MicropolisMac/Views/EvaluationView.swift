@@ -7,8 +7,69 @@ struct EvaluationView: View {
     @Environment(GameModel.self) var model
 
     var body: some View {
+        if let theme = model.graphicsPackage.chrome { themed(theme) } else { dosBody }
+    }
+
+    /// The same evaluation in a themed window. Identifiers match the DOS layout.
+    private func themed(_ theme: ChromeTheme) -> some View {
         let eval = model.evaluation
-        VStack(spacing: 10) {
+        return VStack(alignment: .leading, spacing: 12) {
+            Text(theme.label("\(String(model.year)) City Evaluation")).font(theme.font(18)).foregroundStyle(theme.heading)
+            HStack(alignment: .top, spacing: 14) {
+                VStack(alignment: .leading, spacing: 8) {
+                    themedHeading(theme.label("Public Opinion"), theme)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Is the mayor doing a good job?")
+                        HStack(spacing: 16) {
+                            Text("\(eval.yes)% Yes").foregroundStyle(theme.heading)
+                            Text("\(100 - eval.yes)% No")
+                        }
+                    }
+                    .frame(width: 280, alignment: .leading).themedCard(theme)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("What are the worst problems?")
+                        ForEach(Array(eval.problems.enumerated()), id: \.offset) { _, problem in
+                            HStack {
+                                Text(EvaluationText.problemName(problem.id).capitalized)
+                                Spacer()
+                                Text("\(problem.votes)%").monospacedDigit()
+                            }
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    .frame(width: 280, alignment: .leading).frame(minHeight: 110).themedCard(theme)
+                }
+                VStack(alignment: .leading, spacing: 8) {
+                    themedHeading(theme.label("Statistics"), theme)
+                    VStack(alignment: .leading, spacing: 4) {
+                        row("Population", eval.population.formatted(), valueIdentifier: "evaluation.population")
+                        row("Net Migration (last year)", eval.populationDelta.formatted())
+                        row("Assessed Value", "$" + eval.assessedValue.formatted())
+                        row("Category", EvaluationText.className(eval.cityClass).capitalized)
+                        row("Game Level", EvaluationText.levelName(eval.gameLevel))
+                        Rectangle().fill(theme.cardBorder).frame(height: 1).padding(.vertical, 2)
+                        Text("Overall CityScore (0–1000)").foregroundStyle(theme.heading)
+                        row("Current score", "Annual change")
+                        row("\(eval.score)", "\(eval.scoreDelta)", labelIdentifier: "evaluation.score")
+                            .font(theme.font(16))
+                    }
+                    .frame(width: 280, alignment: .leading).themedCard(theme)
+                }
+            }
+        }
+        .padding(16)
+        .themedWindow(theme)
+        .fixedSize()
+        .onAppear { model.evaluation = model.engine.evaluation() }
+    }
+
+    private func themedHeading(_ text: String, _ theme: ChromeTheme) -> some View {
+        Text(text).font(theme.font(12)).foregroundStyle(theme.heading)
+    }
+
+    private var dosBody: some View {
+        let eval = model.evaluation
+        return VStack(spacing: 10) {
             Text("\(String(model.year)) City Evaluation")
                 .foregroundColor(DOS.blue)
                 .padding(.horizontal, 6)

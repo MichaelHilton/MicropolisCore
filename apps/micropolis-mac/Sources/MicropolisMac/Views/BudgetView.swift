@@ -34,18 +34,79 @@ struct BudgetView: View {
     @State private var sheet: BudgetSheet?
 
     var body: some View {
-        VStack(spacing: 10) {
-            if let sheet = Binding($sheet) {
-                content(sheet)
+        if let theme = model.graphicsPackage.chrome {
+            VStack(spacing: 12) {
+                if let sheet = Binding($sheet) {
+                    themedContent(sheet, theme)
+                }
+            }
+            .padding(18)
+            .frame(width: 520)
+            .themedWindow(theme)
+            .onAppear { sheet = model.makeBudgetSheet() }
+        } else {
+            VStack(spacing: 10) {
+                if let sheet = Binding($sheet) {
+                    content(sheet)
+                }
+            }
+            .font(DOS.font())
+            .foregroundColor(DOS.blue)
+            .padding(16)
+            .frame(width: 520)
+            .background(DOS.white)
+            .overlay(Rectangle().stroke(DOS.lightBlue, lineWidth: 4))
+            .onAppear { sheet = model.makeBudgetSheet() }
+        }
+    }
+
+    /// The same budget in a themed window. Identifiers match the DOS layout.
+    @ViewBuilder
+    private func themedContent(_ sheet: Binding<BudgetSheet>, _ theme: ChromeTheme) -> some View {
+        let s = sheet.wrappedValue
+        Text(theme.label("\(String(model.year)) Fiscal Budget")).font(theme.font(18)).foregroundStyle(theme.heading)
+        Rectangle().fill(theme.rule).frame(height: theme.raised ? 3 : 1)
+
+        HStack(spacing: 16) {
+            Text("Tax Rate")
+            Stepper2(value: sheet.taxRate, range: BudgetSheet.taxRange, label: "\(s.taxRate)%", identifier: "tax")
+            Spacer()
+            Text("Taxes collected").foregroundStyle(theme.ink.opacity(0.7))
+            Text(BudgetSheet.money(s.figures.taxesCollected))
+        }
+
+        Grid(alignment: .trailing, horizontalSpacing: 16, verticalSpacing: 10) {
+            GridRow {
+                Text("")
+                Text("Requested").fixedSize()
+                Text("Allocated").fixedSize()
+                Text("Funding").fixedSize()
+            }
+            .font(theme.font(11)).foregroundStyle(theme.heading)
+            Rectangle().fill(theme.cardBorder).frame(height: 1).gridCellUnsizedAxes(.horizontal)
+            departmentRow("Trans", s.figures.roadRequested, s.roadAllocated, sheet.roadLevel)
+            departmentRow("Police", s.figures.policeRequested, s.policeAllocated, sheet.policeLevel)
+            departmentRow("Fire", s.figures.fireRequested, s.fireAllocated, sheet.fireLevel)
+        }
+        .frame(maxWidth: .infinity)
+        .themedCard(theme, padding: 12)
+
+        Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 3) {
+            GridRow { Text("Cash Flow"); Text(BudgetSheet.money(s.cashFlow)).gridColumnAlignment(.trailing) }
+            GridRow { Text("Previous Fund"); Text(BudgetSheet.money(s.funds)) }
+            Rectangle().fill(theme.cardBorder).frame(height: 1).gridCellColumns(2)
+            GridRow {
+                Text("Current Funds").foregroundStyle(theme.heading)
+                Text(BudgetSheet.money(s.currentFunds)).foregroundStyle(theme.heading)
             }
         }
-        .font(DOS.font())
-        .foregroundColor(DOS.blue)
-        .padding(16)
-        .frame(width: 520)
-        .background(DOS.white)
-        .overlay(Rectangle().stroke(DOS.lightBlue, lineWidth: 4))
-        .onAppear { sheet = model.makeBudgetSheet() }
+
+        Button(action: apply) {
+            Text("Go with these figures").themedPrimary(theme)
+        }
+        .buttonStyle(.plain)
+        .keyboardShortcut(.defaultAction)
+        .accessibilityIdentifier(UIIdentifier.budget("apply"))
     }
 
     @ViewBuilder
@@ -122,8 +183,45 @@ struct Stepper2: View {
     let range: ClosedRange<Int>
     let label: String
     let identifier: String
+    @Environment(\.chromeTheme) private var theme
 
     var body: some View {
+        if let theme {
+            HStack(spacing: 3) {
+                themedArrow("chevron.down", -1, "decrease", theme)
+                Text(label)
+                    .frame(minWidth: 52, alignment: .center)
+                    .padding(.vertical, 2)
+                    .foregroundStyle(theme.onAccent)
+                    .background(theme.cornerShape.fill(theme.accentFill))
+                    .accessibilityIdentifier(UIIdentifier.budget("\(identifier).value"))
+                themedArrow("chevron.up", +1, "increase", theme)
+            }
+        } else {
+            dosBody
+        }
+    }
+
+    private func step(_ direction: Int) {
+        let step = NSEvent.modifierFlags.contains(.option) ? 10 : 1
+        value = min(range.upperBound, max(range.lowerBound, value + direction * step))
+    }
+
+    private func themedArrow(_ symbol: String, _ direction: Int, _ directionName: String,
+                             _ theme: ChromeTheme) -> some View {
+        Button { step(direction) } label: {
+            Image(systemName: symbol).font(.system(size: 10, weight: .bold))
+                .foregroundStyle(theme.ink)
+                .frame(width: 22, height: 20)
+                .background(theme.cornerShape.fill(theme.card))
+                .overlay(theme.cornerShape.stroke(theme.cardBorder, lineWidth: 1))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier(UIIdentifier.budget("\(identifier).\(directionName)"))
+    }
+
+    private var dosBody: some View {
         HStack(spacing: 0) {
             arrow("▲", +1, "increase")
             Text(label)

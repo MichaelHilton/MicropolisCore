@@ -8,6 +8,7 @@ struct GraphsView: View {
 
     @State private var shown: Set<HistoryKind> = Set(HistoryKind.allCases)
     @State private var longRange = false
+    private var theme: ChromeTheme? { model.graphicsPackage.chrome }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -20,8 +21,7 @@ struct GraphsView: View {
                 chart
             }
         }
-        .background(DOS.lightGray)
-        .font(DOS.font())
+        .themedOrDOSWindow(theme)
         .fixedSize()
     }
 
@@ -52,6 +52,27 @@ struct GraphsView: View {
         Button {
             if shown.contains(kind) { shown.remove(kind) } else { shown.insert(kind) }
         } label: {
+            seriesFace(kind)
+        }
+        .buttonStyle(.plain)
+        .help(GraphSeries.name(kind))
+        .accessibilityIdentifier(UIIdentifier.graph(GraphSeries.shortName(kind)))
+        .accessibilityValue(shown.contains(kind) ? "on" : "off")
+    }
+
+    @ViewBuilder
+    private func seriesFace(_ kind: HistoryKind) -> some View {
+        if let theme {
+            let on = shown.contains(kind)
+            HStack(spacing: 4) {
+                Circle().fill(on ? GraphSeries.color(kind, theme: theme) : theme.cardBorder).frame(width: 8, height: 8)
+                Text(theme.label(GraphSeries.shortName(kind).capitalized)).font(theme.font(11))
+            }
+            .foregroundStyle(on ? theme.ink : theme.ink.opacity(0.45))
+            .frame(width: 64, height: 26)
+            .background(theme.cornerShape.fill(on ? theme.selectedFill : theme.card))
+            .overlay(theme.cornerShape.stroke(on ? theme.selectedBorder : theme.cardBorder, lineWidth: on ? 1.5 : 1))
+        } else {
             Text(GraphSeries.shortName(kind))
                 .font(DOS.font(11))
                 .foregroundColor(GraphSeries.color(kind))
@@ -60,10 +81,6 @@ struct GraphsView: View {
                 .overlay(Rectangle().strokeBorder(shown.contains(kind) ? DOS.yellow : DOS.darkGray,
                                             lineWidth: shown.contains(kind) ? 3 : 2))
         }
-        .buttonStyle(.plain)
-        .help(GraphSeries.name(kind))
-        .accessibilityIdentifier(UIIdentifier.graph(GraphSeries.shortName(kind)))
-        .accessibilityValue(shown.contains(kind) ? "on" : "off")
     }
 
     private var chart: some View {
@@ -74,11 +91,14 @@ struct GraphsView: View {
             Canvas { context, size in
                 drawGrid(context, size)
                 for (kind, values) in series {
-                    context.stroke(GraphSeries.path(values, in: size), with: .color(GraphSeries.color(kind)), lineWidth: 2)
+                    context.stroke(GraphSeries.path(values, in: size),
+                                   with: .color(GraphSeries.color(kind, theme: theme)), lineWidth: 2)
                 }
             }
             .frame(width: 360, height: 180)
-            .background(DOS.white)
+            .background(theme?.card ?? DOS.white)
+            .clipShape(theme?.cornerShape ?? RoundedRectangle(cornerRadius: 0))
+            .overlay((theme?.cornerShape ?? RoundedRectangle(cornerRadius: 0)).stroke(theme?.cardBorder ?? .clear))
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("City history chart")
             .accessibilityIdentifier("graph.chart")
@@ -88,8 +108,8 @@ struct GraphsView: View {
                     Text(label)
                 }
             }
-            .font(DOS.font(11))
-            .foregroundColor(DOS.blue)
+            .font(theme?.font(11) ?? DOS.font(11))
+            .foregroundStyle(theme?.ink ?? DOS.blue)
             .frame(width: 360)
         }
         .padding(4)
@@ -102,7 +122,7 @@ struct GraphsView: View {
             grid.move(to: CGPoint(x: x, y: 0))
             grid.addLine(to: CGPoint(x: x, y: size.height))
         }
-        context.stroke(grid, with: .color(DOS.lightBlue.opacity(0.5)), lineWidth: 1)
+        context.stroke(grid, with: .color(theme?.cardBorder ?? DOS.lightBlue.opacity(0.5)), lineWidth: 1)
     }
 }
 
@@ -127,6 +147,19 @@ enum GraphSeries {
         case .money: "CASH"
         case .crime: "CRIME"
         case .pollution: "POLL"
+        }
+    }
+
+    /// Series colors on a themed chart: the zone colors match the demand gauge.
+    static func color(_ kind: HistoryKind, theme: ChromeTheme?) -> Color {
+        guard let theme else { return color(kind) }
+        switch kind {
+        case .residential: return theme.demand.r
+        case .commercial: return theme.windowScheme == .dark ? theme.demand.c : Color(red: 0.18, green: 0.5, blue: 0.82)
+        case .industrial: return theme.windowScheme == .dark ? theme.demand.i : Color(red: 0.85, green: 0.6, blue: 0.1)
+        case .money: return Color(red: 0, green: 0.6, blue: 0.6)
+        case .crime: return Color(red: 0.85, green: 0.25, blue: 0.22)
+        case .pollution: return Color(red: 0.6, green: 0.38, blue: 0.2)
         }
     }
 

@@ -10,6 +10,62 @@ struct NewCityView: View {
     @State private var level: GameLevel = .easy
 
     var body: some View {
+        if let theme = model.graphicsPackage.chrome { themed(theme) } else { dosBody }
+    }
+
+    /// The same dialog in a themed window. Identifiers match the DOS layout.
+    private func themed(_ theme: ChromeTheme) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(theme.label("Start a New City")).font(theme.font(18)).foregroundStyle(theme.heading)
+            Text("City name").font(theme.font(11)).foregroundStyle(theme.ink.opacity(0.7))
+            TextField("", text: $name)
+                .textFieldStyle(.plain)
+                .padding(6)
+                .background(theme.cornerShape.fill(theme.card))
+                .overlay(theme.cornerShape.stroke(theme.cardBorder, lineWidth: 1))
+                .accessibilityIdentifier("newCity.name")
+
+            Text("Game level").font(theme.font(11)).foregroundStyle(theme.ink.opacity(0.7))
+            HStack(spacing: 6) {
+                ForEach(GameLevel.allCases, id: \.self) { option in
+                    let selected = level == option
+                    Button { level = option } label: {
+                        Text(EvaluationText.levelName(option.rawValue))
+                            .frame(maxWidth: .infinity).padding(.vertical, 6)
+                            .foregroundStyle(selected ? theme.onAccent : theme.ink)
+                            .background(theme.cornerShape.fill(selected ? theme.accentFill : theme.card))
+                            .overlay(theme.cornerShape.stroke(selected ? theme.accentFill : theme.cardBorder, lineWidth: 1))
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("newCity.level.\(option.rawValue)")
+                    .accessibilityValue(selected ? "1" : "0")
+                }
+            }
+
+            HStack {
+                Spacer()
+                Button("Cancel") { dismiss() }
+                    .buttonStyle(.plain)
+                    .keyboardShortcut(.cancelAction)
+                    .accessibilityIdentifier("newCity.cancel")
+                Button {
+                    model.newCity(name: name, level: level)
+                    dismiss()
+                } label: {
+                    Text("Start").themedPrimary(theme)
+                }
+                .buttonStyle(.plain)
+                .keyboardShortcut(.defaultAction)
+                .accessibilityIdentifier("newCity.ok")
+            }
+        }
+        .padding(18)
+        .frame(width: 320)
+        .themedWindow(theme)
+    }
+
+    private var dosBody: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("SIMCITY city name:")
             TextField("", text: $name)
