@@ -90,6 +90,61 @@ struct ProceduralPackageTests {
         }
     }
 
+    /// Built lots carry a border in their type's color along their edges, like the classic tiles;
+    /// buildings may overlap it in places, so most of each lot's edge samples must match.
+    @Test(arguments: packages)
+    func builtLotsHaveTypeColoredBorders(_ package: GraphicsPackage) throws {
+        let atlas = try TileAtlas(atlasURL: Assets.tileAtlas, graphics: package)
+        let style = try #require(package.proceduralStyle)
+        let edge: CGFloat = style.extruded ? 0.06 : 0.05
+        var framed = 0
+        for lot in ProceduralAtlasBuilder.lots {
+            guard let color = ProceduralAtlasBuilder.zoneFrameColor(lot.base, style: style) else {
+                #expect([240, 423, 612].contains(lot.base), "lot \(lot.base) has no border color")
+                continue
+            }
+            var hits = 0, samples = 0
+            for i in 0..<lot.size {
+                // Middle of each edge cell on all four sides: (tile, x, y) in tile units.
+                let sides: [(Int, CGFloat, CGFloat)] = [
+                    (lot.base + i, 0.5, edge),
+                    (lot.base + (lot.size - 1) * lot.size + i, 0.5, 1 - edge),
+                    (lot.base + i * lot.size, edge, 0.5),
+                    (lot.base + i * lot.size + lot.size - 1, 1 - edge, 0.5),
+                ]
+                for (tile, x, y) in sides {
+                    samples += 1
+                    // Toy Blocks' kerb has a lighter face over a darker lip; either counts.
+                    let sample = pixel(atlas, tile: tile, x: x, y: y)
+                    if close(sample, color, tolerance: 0.12) || close(sample, color.darker(0.18), tolerance: 0.12) {
+                        hits += 1
+                    }
+                }
+            }
+            #expect(Double(hits) / Double(samples) >= 0.6, "lot \(lot.base): \(hits) of \(samples) edge samples")
+            framed += 1
+        }
+        #expect(framed == ProceduralAtlasBuilder.lots.count - 3)
+    }
+
+    @Test
+    func borderColorsFollowTheClassicCode() {
+        let style = ProceduralTileStyle.toyBlocks
+        #expect(ProceduralAtlasBuilder.zoneFrameColor(261, style: style) == style.zoneR)
+        #expect(ProceduralAtlasBuilder.zoneFrameColor(405, style: style) == style.zoneR)
+        #expect(ProceduralAtlasBuilder.zoneFrameColor(779, style: style) == style.zoneR)
+        #expect(ProceduralAtlasBuilder.zoneFrameColor(432, style: style) == style.zoneC)
+        #expect(ProceduralAtlasBuilder.zoneFrameColor(770, style: style) == style.zoneC)
+        #expect(ProceduralAtlasBuilder.zoneFrameColor(693, style: style) == style.zoneC)
+        #expect(ProceduralAtlasBuilder.zoneFrameColor(621, style: style) == style.zoneI)
+        #expect(ProceduralAtlasBuilder.zoneFrameColor(811, style: style) == style.zoneI)
+        #expect(ProceduralAtlasBuilder.zoneFrameColor(761, style: style) == style.accent)
+        #expect(ProceduralAtlasBuilder.zoneFrameColor(240, style: style) == nil)
+        #expect(ProceduralAtlasBuilder.zoneFrameOpening(639) == .topOfLastColumn)
+        #expect(ProceduralAtlasBuilder.zoneFrameOpening(648) == .rightOfFirstRow)
+        #expect(ProceduralAtlasBuilder.zoneFrameOpening(621) == .none)
+    }
+
     @Test(arguments: packages)
     func switchingPreservesTheCity(_ package: GraphicsPackage) throws {
         let model = GameModel(city: Assets.city("haight"), sound: RecordingSound(), seed: 1, runsTimer: false)

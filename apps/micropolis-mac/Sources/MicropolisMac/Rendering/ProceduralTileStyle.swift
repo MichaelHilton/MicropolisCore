@@ -32,6 +32,11 @@ enum BuildingUse: CaseIterable {
     case residential, commercial, industrial, civic, police, fire, hospital, church, power, transport, stadium
 }
 
+/// Where a lot's border leaves a gap; see `TilePainter.zoneFrame`.
+enum ZoneFrameOpening: Equatable {
+    case none, topOfLastColumn, rightOfFirstRow
+}
+
 enum RoofShape {
     case hip, gableAcross, gableDown, flat, sawtooth
 }
@@ -135,6 +140,8 @@ final class TilePainter {
     let style: ProceduralTileStyle
     let size: CGFloat
     var random: TileRandom
+    /// Drawn once, straight after the next `ground` fill, so a lot's border sits under its buildings.
+    var afterGround: ((TilePainter) -> Void)?
 
     init(context: CGContext, style: ProceduralTileStyle, size: Int, seed: Int) {
         cg = context
@@ -191,11 +198,59 @@ final class TilePainter {
 
     func ground(_ color: RGB, specks: Int = 0) {
         fill(CGRect(x: 0, y: 0, width: size, height: size), color)
-        guard style.extruded, specks > 0 else { return }
-        let speck = color.darker(0.07)
-        for _ in 0..<(specks * Int(size * size)) {
-            let x = random.next() * size, y = random.next() * size
-            fill(CGRect(x: x, y: y, width: 0.06, height: 0.04), speck)
+        if style.extruded, specks > 0 {
+            let speck = color.darker(0.07)
+            for _ in 0..<(specks * Int(size * size)) {
+                let x = random.next() * size, y = random.next() * size
+                fill(CGRect(x: x, y: y, width: 0.06, height: 0.04), speck)
+            }
+        }
+        if let after = afterGround {
+            afterGround = nil
+            after(self)
+        }
+    }
+
+    /// The colored border that marks a lot's type, like the frames in the classic tiles.
+    /// Planner's Map draws a thin property line; Toy Blocks a raised, rounded kerb.
+    /// `opening` leaves the top-right corner open where a factory's two chimney tiles are swapped.
+    func zoneFrame(_ color: RGB, opening: ZoneFrameOpening) {
+        let inset: CGFloat = style.extruded ? 0.075 : 0.05
+        let width: CGFloat = style.extruded ? 0.11 : 0.06
+        let radius: CGFloat = style.extruded ? 0.16 : 0
+        let lo = inset, hi = size - inset
+        let path = CGMutablePath()
+        func corner(_ a: CGPoint, _ b: CGPoint) {
+            if radius > 0 { path.addArc(tangent1End: a, tangent2End: b, radius: radius) } else { path.addLine(to: a) }
+        }
+        switch opening {
+        case .none:
+            path.addRoundedRect(in: CGRect(x: lo, y: lo, width: hi - lo, height: hi - lo),
+                                cornerWidth: radius, cornerHeight: radius)
+        case .topOfLastColumn:
+            // The top line stops short of the last column; the right line runs to the top edge.
+            path.move(to: CGPoint(x: size - 1, y: lo))
+            corner(CGPoint(x: lo, y: lo), CGPoint(x: lo, y: hi))
+            corner(CGPoint(x: lo, y: hi), CGPoint(x: hi, y: hi))
+            corner(CGPoint(x: hi, y: hi), CGPoint(x: hi, y: 0))
+            path.addLine(to: CGPoint(x: hi, y: 0))
+        case .rightOfFirstRow:
+            // The top line runs to the right edge; the right line starts below the first row.
+            path.move(to: CGPoint(x: size, y: lo))
+            corner(CGPoint(x: lo, y: lo), CGPoint(x: lo, y: hi))
+            corner(CGPoint(x: lo, y: hi), CGPoint(x: hi, y: hi))
+            corner(CGPoint(x: hi, y: hi), CGPoint(x: hi, y: 1))
+            path.addLine(to: CGPoint(x: hi, y: 1))
+        }
+        if style.extruded {
+            stroke(path, color.darker(0.18), width: width, cap: .butt)
+            cg.saveGState()
+            cg.translateBy(x: -0.015, y: -0.02)
+            stroke(path, color, width: width * 0.72, cap: .butt)
+            cg.restoreGState()
+            stroke(path, RGB(0xFFFFFF).mix(color, 0.45), width: 0.022, cap: .butt)
+        } else {
+            stroke(path, color, width: width, cap: .butt)
         }
     }
 

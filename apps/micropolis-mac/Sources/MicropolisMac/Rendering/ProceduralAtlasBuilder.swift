@@ -90,6 +90,27 @@ enum ProceduralAtlasBuilder {
         621: [(0, 0)], 639: [(0, 2), (1, 2)], 648: [(0, 1), (0, 2)], 675: [(0, 1), (0, 2)], 684: [(0, 2), (1, 2)],
     ]
 
+    /// The border color that marks a built lot's type, after the classic tiles: green for homes,
+    /// parks-like civic lots and the stadium, blue for commerce, police and the port, yellow for
+    /// industry and power, red for fire. Empty zones keep their dashed outline instead.
+    static func zoneFrameColor(_ base: Int, style: ProceduralTileStyle) -> RGB? {
+        switch base {
+        case 240, 423, 612: nil
+        case 261...422, 956...1018, 779, 795: style.zoneR
+        case 432...611, 693, 770: style.zoneC
+        case 621...692, 709, 745, 811: style.zoneI
+        case 761: style.accent
+        default: nil
+        }
+    }
+
+    /// Factories whose two chimney tiles swap leave the border open at that corner, so the
+    /// swapped tiles stay identical (see `interchangeableChimneys`).
+    static func zoneFrameOpening(_ base: Int) -> ZoneFrameOpening {
+        guard let cells = industrialChimneys[base], cells.count == 2 else { return .none }
+        return cells[0].0 == cells[1].0 ? .rightOfFirstRow : .topOfLastColumn
+    }
+
     /// Tiles the engine shows in another tile's place, as (shown tile, cell it must also fit).
     static var interchangeableChimneys: [(tile: Int, sameAs: Int)] {
         industrialChimneys.compactMap { lot, cells in
@@ -737,6 +758,10 @@ private struct Scenes {
     // MARK: Lots
 
     func lot(_ base: Int, _ p: TilePainter, frame: Int?) {
+        if let color = B.zoneFrameColor(base, style: style) {
+            let opening = B.zoneFrameOpening(base)
+            p.afterGround = { $0.zoneFrame(color, opening: opening) }
+        }
         switch base {
         case 240: emptyZone("R", color: style.zoneR, p)
         case 423: emptyZone("C", color: style.zoneC, p)
@@ -949,7 +974,6 @@ private struct Scenes {
 
     private func seaport(_ p: TilePainter) {
         p.ground(style.paving.mix(style.yard, 0.4))
-        p.stroke(CGPath(rect: CGRect(x: 0.04, y: 0.04, width: 3.92, height: 3.92), transform: nil), style.ink, width: 0.05)
         p.building(CGRect(x: 0.3, y: 0.55, width: 1.6, height: 1.0), height: 0.34, roof: .gableAcross, color: style.roof(.transport))
         p.building(CGRect(x: 0.3, y: 1.95, width: 1.6, height: 1.0), height: 0.34, roof: .gableAcross, color: style.roof(.transport).darker(0.05))
         let containers: [RGB] = [style.accent, style.zoneC, style.zoneI, style.zoneR]
